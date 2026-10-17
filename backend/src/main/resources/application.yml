@@ -1,22 +1,41 @@
-# Defaults target local development (compose.yaml + compose.dev.yaml). Every secret or
-# host comes from the environment, see ../.env.example.
+# Defaults target the local compose services (compose.yaml + compose.dev.yaml); the dev profile relaxes
+# what must stay strict in production (secure cookie). Every secret or host comes from the environment,
+# see ../.env.example. Design reference: docs/03-backend/README.md §4.
 spring:
   application:
-    name: virtual-clubroom
+    name: vclubroom
+
+  threads:
+    virtual:
+      enabled: true   # Java 21 virtual threads for MVC + @Async listeners
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:vclubroom}
     username: ${DB_USER:vclubroom}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:vclubroom}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
 
   flyway:
     # Migrations live in one folder per module: db/migration/<module>/V<yyyyMMddHHmm>__<description>.sql
     locations: classpath:db/migration
+    # One schema per module (no cross-schema FKs). Flyway creates them only on an empty database;
+    # db/migration/shared creates them too, so databases migrated before this list existed get them as well.
+    create-schemas: true
+    schemas: identity,club,membership,groups,space,forum,media,chat,calendar,notification,discovery,history
+    default-schema: public   # flyway_schema_history and event_publication stay in public
 
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate   # the schema is owned by Flyway, never by Hibernate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        default_batch_fetch_size: 50
 
   data:
     redis:
@@ -24,21 +43,24 @@ spring:
       port: ${REDIS_PORT:6379}
 
   session:
-    store-type: redis
+    timeout: 14d
     redis:
       namespace: vclubroom:session
+      repository-type: indexed   # allows "invalidate all sessions of user X"
 
   security:
     oauth2:
       client:
         registration:
           fortytwo:   # registration id → /oauth2/authorization/fortytwo, /login/oauth2/code/fortytwo
+            provider: fortytwo
             # Placeholders keep the app bootable without a 42 OAuth app; 42 login then fails until FT_* are set.
             client-id: ${FT_CLIENT_ID:not-configured}
             client-secret: ${FT_CLIENT_SECRET:not-configured}
+            client-authentication-method: client_secret_post
             client-name: 42 Intranet
             authorization-grant-type: authorization_code
-            redirect-uri: "${APP_PUBLIC_URL:http://localhost:8080}/login/oauth2/code/{registrationId}"
+            redirect-uri: "${app.public-url}/login/oauth2/code/{registrationId}"
             scope: public
         provider:
           fortytwo:
@@ -47,22 +69,31 @@ spring:
             user-info-uri: https://api.intra.42.fr/v2/me
             user-name-attribute: login
 
-  mail:
+  mail:   # any SMTP provider: Mailpit (dev), Resend (demo, D-35)
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}
     username: ${SMTP_USER:}
     password: ${SMTP_PASSWORD:}
     properties:
       mail.smtp.auth: ${SMTP_AUTH:false}
-      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
-      mail.smtp.ssl.enable: ${SMTP_SSL:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}     # port 587
+      mail.smtp.starttls.required: ${SMTP_STARTTLS:false}
+      mail.smtp.ssl.enable: ${SMTP_SSL:false}               # port 465 (implicit TLS)
+      mail.smtp.connectiontimeout: 5000                     # never let a slow provider block the email job
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
 
   mvc:
     problemdetails:
       enabled: true   # RFC 9457 error bodies for every module
 
+  servlet:
+    multipart:
+      enabled: false   # media never goes through the app (presigned uploads)
+
   modulith:
     events:
+      republish-outstanding-events-on-restart: true
       # Transactional outbox: the table is created by db/migration/shared, not by Modulith
       jdbc:
         schema-initialization:
@@ -70,11 +101,12 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
   forward-headers-strategy: framework   # behind the Cloudflare tunnel / reverse proxy
   servlet:
     session:
       cookie:
-        secure: ${COOKIE_SECURE:false}
+        secure: ${COOKIE_SECURE:true}   # application-dev.yml sets false for plain-http localhost
         http-only: true
         same-site: lax
 
@@ -82,6 +114,7 @@ management:
   endpoints:
     web:
       exposure:
+        # The design adds metrics,modulith once SecurityConfig denies non-public actuator URLs (E02-S01-T5).
         include: health,info
   endpoint:
     health:
@@ -98,7 +131,53 @@ springdoc:
     path: /swagger-ui.html
 
 app:
-  public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+  public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   admin:
     # Comma-separated 42 logins that receive ROLE_ADMIN at login (R-09 bootstrap)
     bootstrap-logins: ${APP_ADMIN_BOOTSTRAP_LOGINS:}
+    bootstrap-local-username: ${APP_BOOTSTRAP_ADMIN_USERNAME:}
+    bootstrap-local-password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+  clubs:
+    categories: [Tech, Games, Arts, Music, Sports, Culture, Social, Science, Other]
+  forum:
+    reactions:   # code -> emoji (fixed platform set, D-26)
+      thumbs_up: "👍"
+      heart: "❤️"
+      laugh: "😂"
+      party: "🎉"
+      wow: "😮"
+      sad: "😢"
+  media:
+    public-bucket: media-public
+    private-bucket: media-private
+    upload-url-ttl: 10m
+    download-url-ttl: 15m
+    orphan-ttl: 24h
+    limits:
+      IMAGE:
+        max-bytes: 10485760
+        content-types: [image/jpeg, image/png, image/webp, image/gif]
+      AUDIO:
+        max-bytes: 52428800
+        content-types: [audio/mpeg, audio/ogg, audio/wav, audio/webm]
+      VIDEO:
+        max-bytes: 94371840   # 90 MiB: Cloudflare rejects request bodies > 100 MB (R-12)
+        content-types: [video/mp4, video/webm]
+  storage:
+    endpoint: ${S3_ENDPOINT:http://localhost:8333}            # used by the backend (inside docker: http://seaweedfs:8333)
+    public-endpoint: ${S3_PUBLIC_ENDPOINT:${app.public-url}}  # used in presigned URLs (what browsers reach)
+    region: us-east-1
+    access-key: ${S3_ACCESS_KEY:vclubroom}
+    secret-key: ${S3_SECRET_KEY:vclubroom-secret}
+  realtime:
+    allowed-origins: ${app.public-url}
+    redis-channel: vclubroom:rt
+  calendar:
+    reminder-offsets: [24h, 1h]
+    display-zone: Europe/Lisbon
+  fortytwo:
+    campus-groups-enabled: true
+  mail:
+    transport: ${MAIL_TRANSPORT:smtp}   # smtp | log (log = print emails instead of sending, for offline dev)
+    from: ${MAIL_FROM:Virtual Clubroom <no-reply@localhost>}   # demo: Virtual Clubroom <no-reply@42clubroom.ensui.dev>
+    reply-to: ${MAIL_REPLY_TO:}

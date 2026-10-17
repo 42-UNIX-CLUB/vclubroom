@@ -1,0 +1,11 @@
+# Production / demo (compose.prod.yaml sets SPRING_PROFILES_ACTIVE=prod): JSON logs, no API docs.
+logging:
+  structured:
+    format:
+      console: ecs
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

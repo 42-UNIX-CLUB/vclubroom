@@ -1,0 +1,14 @@
+# Local development (run-dev.sh): plain-http localhost, verbose logs, Swagger UI on.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+
+logging:
+  level:
+    pt.vclubroom: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true

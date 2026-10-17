@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -27,6 +28,20 @@ class ClubroomApplicationTests {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Test
+    void migrationsCreateModuleSchemasExtensionsAndOutbox() {
+        List<String> schemas = jdbc.queryForList("SELECT schema_name FROM information_schema.schemata", String.class);
+        assertThat(schemas).contains("identity", "club", "membership", "groups", "space", "media", "forum", "chat",
+            "calendar", "notification", "discovery", "history");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'", Integer.class))
+            .isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT to_regclass('public.event_publication') IS NOT NULL", Boolean.class))
+            .isTrue();
+    }
 
     @Test
     void apiRequiresAuthentication() throws Exception {
