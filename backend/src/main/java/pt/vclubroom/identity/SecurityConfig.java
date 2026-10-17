@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
@@ -30,7 +29,8 @@ class SecurityConfig {
                     "/actuator/info",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/api/auth/csrf"
                 ).permitAll()
                 .anyRequest().authenticated())
             // Browser flow: 42 intranet login. API clients get 401 instead of a redirect to the 42 login page.
@@ -39,9 +39,10 @@ class SecurityConfig {
                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                 PathPatternRequestMatcher.withDefaults().matcher("/api/**")))
             // SPA-friendly CSRF: the XSRF-TOKEN cookie is readable by the frontend and echoed in X-XSRF-TOKEN.
+            // The SPA handler loads the deferred token so the cookie is actually written on every response.
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
         return http.build();
     }
 }
