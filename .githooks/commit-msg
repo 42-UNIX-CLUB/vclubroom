@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Conventional Commits with a backlog-ID scope (D-37, R-28).
+set -euo pipefail
+header="$(head -n1 "$1")"
+
+# Allow Git-generated messages.
+if [[ "$header" =~ ^(Merge\ |Revert\ \"|fixup!\ |squash!\ ) ]]; then
+  exit 0
+fi
+
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+id='E[0-9]{2}(-S[0-9]{2}(-T[0-9]+)?)?'
+pattern="^(${types})\((${id})\)!?: [^A-Z].{0,99}$"
+
+if [[ ! "$header" =~ $pattern ]]; then
+  echo "✖ Invalid commit message header:"
+  echo "    $header"
+  echo "  Expected: <type>(<ID>)[!]: <description>   e.g.  feat(E04-S01): add club creation endpoint"
+  echo "  Types: ${types//|/, }   ID: E04 | E04-S01 | E04-S01-T3"
+  exit 1
+fi

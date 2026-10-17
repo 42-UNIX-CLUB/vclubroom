@@ -1,0 +1,15 @@
+{
+  "identities": [
+    {
+      "name": "vclubroom-backend",
+      "credentials": [
+        { "accessKey": "vclubroom", "secretKey": "change-me-s3-secret" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    },
+    {
+      "name": "anonymous",
+      "actions": ["Read:media-public"]
+    }
+  ]
+}

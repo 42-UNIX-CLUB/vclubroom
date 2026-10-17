@@ -1,0 +1,13 @@
+services:
+  postgres:
+    ports: ["5432:5432"]
+  redis:
+    ports: ["6379:6379"]
+  seaweedfs:
+    ports: ["8333:8333"]
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # web UI → http://localhost:8025
+    restart: unless-stopped

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Branch naming (D-36) and protection of main / UNIX_CLUB/main.
+set -euo pipefail
+zero='0000000000000000000000000000000000000000'
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+id='E[0-9]{2}(-S[0-9]{2}(-T[0-9]+)?)?'
+feature="^UNIX_CLUB/dev/(${types})\((${id})\)/[a-z0-9]+(-[a-z0-9]+)*$"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ "$remote_ref" == refs/heads/* ]] || continue
+  [[ "$local_sha" == "$zero" ]] && continue            # branch deletion
+  branch="${remote_ref#refs/heads/}"
+
+  if [[ "$branch" == "main" ]]; then
+    echo "✖ Never push to main. The submission goes through a merge request UNIX_CLUB/main → main."
+    exit 1
+  fi
+  if [[ "$branch" == "UNIX_CLUB/main" && "${ALLOW_INTEGRATION_PUSH:-0}" != "1" ]]; then
+    echo "✖ UNIX_CLUB/main is updated through squash-merged PRs."
+    echo "  (Bootstrap or local squash merge: ALLOW_INTEGRATION_PUSH=1 git push …)"
+    exit 1
+  fi
+  if [[ "$branch" != "UNIX_CLUB/main" && ! "$branch" =~ $feature ]]; then
+    echo "✖ Branch name '$branch' does not match UNIX_CLUB/dev/<type>(<ID>)/<short-desc>"
+    echo "  e.g. UNIX_CLUB/dev/feat(E04-S01)/club-creation-request"
+    exit 1
+  fi
+done
