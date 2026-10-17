@@ -32,7 +32,7 @@ spring:
     oauth2:
       client:
         registration:
-          "42":
+          fortytwo:   # registration id → /oauth2/authorization/fortytwo, /login/oauth2/code/fortytwo
             # Placeholders keep the app bootable without a 42 OAuth app; 42 login then fails until FT_* are set.
             client-id: ${FT_CLIENT_ID:not-configured}
             client-secret: ${FT_CLIENT_SECRET:not-configured}
@@ -41,7 +41,7 @@ spring:
             redirect-uri: "${APP_PUBLIC_URL:http://localhost:8080}/login/oauth2/code/{registrationId}"
             scope: public
         provider:
-          "42":
+          fortytwo:
             authorization-uri: https://api.intra.42.fr/oauth/authorize
             token-uri: https://api.intra.42.fr/oauth/token
             user-info-uri: https://api.intra.42.fr/v2/me
