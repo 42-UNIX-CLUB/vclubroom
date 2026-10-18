@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dev/storage-spike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["spike"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{idOrSlug}": {
         parameters: {
             query?: never;
@@ -124,6 +140,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/member-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -223,6 +255,18 @@ export interface components {
         };
         ReasonRequest: {
             reason: string;
+        };
+        MemberSummaryResponse: {
+            /** Format: int64 */
+            memberCount?: number;
+            owners?: components["schemas"]["UserSummary"][];
+        };
+        UserSummary: {
+            /** Format: uuid */
+            id?: string;
+            login?: string;
+            displayName?: string;
+            avatarUrl?: string;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
@@ -398,6 +442,28 @@ export interface operations {
             };
         };
     };
+    spike: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     get: {
         parameters: {
             query?: never;
@@ -416,6 +482,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MemberSummaryResponse"];
                 };
             };
         };

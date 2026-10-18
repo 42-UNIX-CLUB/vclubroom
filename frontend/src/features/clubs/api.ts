@@ -21,6 +21,18 @@ export function useCategories() {
   });
 }
 
+/**
+ * One club by slug or id. 404 when it does not exist or the viewer may not see it
+ * (a club waiting for approval is visible to its founder and the admins only).
+ */
+export function useClub(slugOrId: string) {
+  return useQuery({
+    queryKey: clubKeys.detail(slugOrId),
+    queryFn: async () =>
+      (await api.GET("/api/clubs/{idOrSlug}", { params: { path: { idOrSlug: slugOrId } } })).data as Club,
+  });
+}
+
 /** My pending and rejected club requests, newest first. */
 export function useMyClubRequests() {
   return useQuery({
