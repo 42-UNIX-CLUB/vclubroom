@@ -1,16 +1,16 @@
-import { Badge } from "./badge";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 
-/** Club lifecycle status as stored by the backend (club.clubs.status). */
-export type ClubStatus = "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
-
-const LOOK: Record<ClubStatus, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  ACTIVE: { label: "Active", variant: "default" },
-  ARCHIVED: { label: "Archived", variant: "secondary" },
-  PENDING_APPROVAL: { label: "Pending approval", variant: "outline" },
-  REJECTED: { label: "Rejected", variant: "destructive" },
-};
-
-export function StatusBadge({ status }: { status: ClubStatus }) {
-  const { label, variant } = LOOK[status];
-  return <Badge variant={variant}>{label}</Badge>;
+/** Club (or user) picture with initials as the fallback while loading or when there is none. */
+export function ClubAvatar({ name, url, size = "default" }: {
+  name: string;
+  url?: string | null;
+  size?: "sm" | "default" | "lg";
+}) {
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]!.toUpperCase()).join("");
+  return (
+    <Avatar size={size}>
+      {url && <AvatarImage src={url} alt="" />}
+      <AvatarFallback>{initials || "?"}</AvatarFallback>
+    </Avatar>
+  );
 }
