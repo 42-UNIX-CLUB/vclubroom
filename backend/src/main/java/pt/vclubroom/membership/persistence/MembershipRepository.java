@@ -42,6 +42,12 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
     long countActiveWithRole(@Param("clubId") UUID clubId, @Param("roleId") UUID roleId);
 
     @Query("""
+           select count(m) from Membership m
+           where m.clubId = :clubId and m.status = pt.vclubroom.membership.domain.MembershipStatus.ACTIVE
+           """)
+    long countActive(@Param("clubId") UUID clubId);
+
+    @Query("""
            select m.userId from Membership m
            where m.clubId = :clubId and m.status = pt.vclubroom.membership.domain.MembershipStatus.ACTIVE
            """)

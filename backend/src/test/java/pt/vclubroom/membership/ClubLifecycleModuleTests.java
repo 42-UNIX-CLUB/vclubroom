@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.club.api.ClubCatalog;
 import pt.vclubroom.club.events.ClubApproved;
+import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.membership.domain.ClubRole;
 import pt.vclubroom.membership.domain.SystemRole;
@@ -29,6 +30,9 @@ class ClubLifecycleModuleTests {
 
     @MockitoBean
     ClubCatalog clubCatalog;                   // from module "club": mocked, because the club module is not started
+
+    @MockitoBean
+    UserDirectory userDirectory;               // from module "identity", same reason
 
     @Autowired
     ClubAuthorization authorization;
