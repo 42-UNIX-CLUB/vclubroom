@@ -1,1 +1,1 @@
-export {};
+export { CampusCalendarPage } from "./CampusCalendarPage";
