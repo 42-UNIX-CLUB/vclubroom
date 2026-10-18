@@ -36,7 +36,7 @@ export const routes: RouteObject[] = [
           {
             element: <RequireAuth><Outlet /></RequireAuth>,
             children: [
-              { path: "clubs/new", element: soon("Start a club", "E04-S01") },
+              { path: "clubs/new", lazy: () => import("@/features/clubs").then((m) => ({ Component: m.CreateClubPage })) },
               {
                 path: "c/:slug",
                 element: <ClubLayout />,
