@@ -16,11 +16,10 @@ import pt.vclubroom.club.api.ClubStatus;
 import pt.vclubroom.club.application.ClubDetails;
 import pt.vclubroom.club.application.ClubService;
 import pt.vclubroom.club.application.CreateClubCommand;
-import pt.vclubroom.club.spi.ClubManagementGuard;
 import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 
-/** The contract other modules compile against (club::api, club::spi). Same annotations: cached context. */
+/** The contract other modules compile against (club::api). Same annotations: cached context. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -31,9 +30,6 @@ class ClubCatalogTests {
 
     @Autowired
     ClubService clubs;
-
-    @Autowired
-    ClubManagementGuard guard;
 
     @Test
     void otherModulesSeeClubsAsSnapshots() {
@@ -48,12 +44,5 @@ class ClubCatalogTests {
         assertThat(catalog.findBySlug(created.slug())).isPresent();
         assertThat(catalog.findByIds(List.of(created.id(), UUID.randomUUID()))).containsOnlyKeys(created.id());
         assertThatThrownBy(() -> catalog.require(UUID.randomUUID())).isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void untilMembershipExistsOnlyAdminsManageClubSettings() {
-        UUID clubId = UUID.randomUUID();
-        assertThat(guard.canManageSettings(clubId, new Actor(UUID.randomUUID(), true))).isTrue();
-        assertThat(guard.canManageSettings(clubId, new Actor(UUID.randomUUID(), false))).isFalse();
     }
 }
