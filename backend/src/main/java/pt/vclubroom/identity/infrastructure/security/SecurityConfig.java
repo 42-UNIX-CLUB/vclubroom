@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.logout.HttpStatusReturnin
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
@@ -46,6 +47,7 @@ class SecurityConfig {
                 .requestMatchers("/api/**", "/ws", "/ws/**").authenticated()
                 .anyRequest().denyAll())
             .securityContext(ctx -> ctx.securityContextRepository(securityContextRepository))
+            .requestCache(cache -> cache.requestCache(new NullRequestCache()))
             // SPA-friendly CSRF: the XSRF-TOKEN cookie is readable by the frontend and echoed in X-XSRF-TOKEN.
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())

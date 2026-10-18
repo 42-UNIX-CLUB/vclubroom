@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,6 +82,14 @@ class IdentityIntegrationTests {
 
         mvc.perform(get("/api/me").cookie(session))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void anonymousApiCallsDoNotCreateASession() throws Exception {
+        // The SPA calls /api/me on every page while logged out; each 401 must not leave a 14-day Redis session behind.
+        mvc.perform(get("/api/me"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(cookie().doesNotExist("SESSION"));
     }
 
     @Test
