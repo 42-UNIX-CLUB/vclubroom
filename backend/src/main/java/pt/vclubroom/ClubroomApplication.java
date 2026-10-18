@@ -3,10 +3,12 @@ package pt.vclubroom;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.modulith.Modulithic;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@Modulithic(sharedModules = "shared")   // module tests (@ApplicationModuleTest) always start the shared kernel too
 @ConfigurationPropertiesScan
 @EnableAsync        // @ApplicationModuleListener runs asynchronously after commit
 @EnableScheduling   // reminders, email outbox, event-publication maintenance jobs

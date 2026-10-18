@@ -4,7 +4,6 @@ import { LoginPage, RequireAdmin, RequireAuth } from "@/features/auth";
 import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
 import { ErrorPage } from "./ErrorPage";
-import { AdminLayout } from "./layouts/AdminLayout";
 import { AppLayout } from "./layouts/AppLayout";
 import { ClubLayout } from "./layouts/ClubLayout";
 import { NotFoundPage } from "./NotFoundPage";
@@ -63,17 +62,22 @@ export const routes: RouteObject[] = [
             ],
           },
 
-          // Admins
+          // Admins: the whole console (layout + pages) is one lazily loaded chunk of the admin feature
           {
             path: "admin",
-            element: <RequireAdmin><AdminLayout /></RequireAdmin>,
+            element: <RequireAdmin><Outlet /></RequireAdmin>,
             children: [
-              { index: true, element: <Navigate to="approvals" replace /> },
-              { path: "approvals", element: soon("Club approvals", "E04-S02") },
-              { path: "revivals", element: soon("Revival requests", "E14-S02") },
-              { path: "clubs", element: soon("All clubs", "E15-S01") },
-              { path: "users", element: soon("Users", "E15-S02") },
-              { path: "campus-groups", element: soon("Campus groups", "E15-S03") },
+              {
+                lazy: () => import("@/features/admin").then((m) => ({ Component: m.AdminLayout })),
+                children: [
+                  { index: true, element: <Navigate to="approvals" replace /> },
+                  { path: "approvals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.ApprovalQueuePage })) },
+                  { path: "revivals", element: soon("Revival requests", "E14-S02") },
+                  { path: "clubs", lazy: () => import("@/features/admin").then((m) => ({ Component: m.AdminClubsPage })) },
+                  { path: "users", element: soon("Users", "E15-S02") },
+                  { path: "campus-groups", element: soon("Campus groups", "E15-S03") },
+                ],
+              },
             ],
           },
 
