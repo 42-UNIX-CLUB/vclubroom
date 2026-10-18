@@ -3,3 +3,4 @@ export { PostLoginRedirect } from "./PostLoginRedirect";
 export { RequireAdmin } from "./RequireAdmin";
 export { RequireAuth } from "./RequireAuth";
 export { useMe, type Me } from "./useMe";
+export { LoginPage } from "./LoginPage";
