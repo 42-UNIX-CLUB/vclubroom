@@ -174,7 +174,6 @@ app:
     redis-channel: vclubroom:rt
   calendar:
     reminder-offsets: [24h, 1h]
-    max-range-days: 62
     display-zone: Europe/Lisbon
   fortytwo:
     campus-groups-enabled: true
