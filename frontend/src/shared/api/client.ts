@@ -10,11 +10,15 @@ function readCookie(name: string): string | undefined {
 }
 
 /** Spring Security CSRF: echo the XSRF-TOKEN cookie in the X-XSRF-TOKEN header. */
+export function csrfHeader(): Record<string, string> {
+  const token = readCookie("XSRF-TOKEN");
+  return token ? { "X-XSRF-TOKEN": token } : {};
+}
+
 const csrfMiddleware: Middleware = {
   async onRequest({ request }) {
     if (UNSAFE_METHODS.has(request.method)) {
-      const token = readCookie("XSRF-TOKEN");
-      if (token) request.headers.set("X-XSRF-TOKEN", token);
+      for (const [name, value] of Object.entries(csrfHeader())) request.headers.set(name, value);
     }
     return request;
   },

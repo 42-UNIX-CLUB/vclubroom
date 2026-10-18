@@ -1,25 +1,87 @@
-// Placeholder: replaced by the full route table`
-import { useQuery } from "@tanstack/react-query";
-import { createBrowserRouter } from "react-router";
-import { api } from "@/shared/api/client";
+import type { RouteObject } from "react-router";
+import { createBrowserRouter, Navigate, Outlet } from "react-router";
+import { LoginPage, RequireAdmin, RequireAuth } from "@/features/auth";
+import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
+import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { ErrorPage } from "./ErrorPage";
+import { AdminLayout } from "./layouts/AdminLayout";
+import { AppLayout } from "./layouts/AppLayout";
+import { ClubLayout } from "./layouts/ClubLayout";
+import { NotFoundPage } from "./NotFoundPage";
 
-function PipelineCheck() {
-  const categories = useQuery({
-    queryKey: ["categories"],
-    queryFn: async (): Promise<string[]> => (await api.GET("/api/public/categories")).data ?? [],
-  });
-  return (
-    <div className="p-8">
-      <p className="text-2xl font-semibold text-primary">Virtual Clubroom</p>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {categories.isPending
-          ? "Loading categories…"
-          : categories.isError
-            ? `API error: ${categories.error.message}`
-            : categories.data.join(" · ")}
-      </p>
-    </div>
-  );
-}
+/**
+ * Placeholder until the named story lands. Then replace it with the feature's page, loaded lazily
+ * from the feature's public index so each feature becomes its own chunk, e.g.:
+ *   { path: "clubs", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.ClubDirectoryPage })) },
+ */
+const soon = (title: string, story: string) => <PlaceholderPage title={title} story={story} />;
 
-export const router = createBrowserRouter([{ path: "*", element: <PipelineCheck /> }]);
+/** Every route of 08-frontend §4. Exported separately so tests can mount it in a memory router. */
+export const routes: RouteObject[] = [
+  {
+    element: <AppLayout />,
+    errorElement: <ErrorPage />,          // the layout itself failed
+    HydrateFallback: FullPageSpinner,     // shown while lazy routes load on the first page view
+    children: [
+      {
+        errorElement: <ErrorPage />,      // a page failed: the top bar stays
+        children: [
+          // Public
+          { index: true, element: soon("Welcome to Virtual Clubroom", "E06-S02") },
+          { path: "clubs", element: soon("Clubs", "E06-S03") },
+          { path: "clubs/:slug/about", element: soon("Club profile", "E06-S03") },
+          { path: "login", element: <LoginPage /> },
+
+          // Logged-in users
+          {
+            element: <RequireAuth><Outlet /></RequireAuth>,
+            children: [
+              { path: "clubs/new", element: soon("Start a club", "E04-S01") },
+              {
+                path: "c/:slug",
+                element: <ClubLayout />,
+                children: [
+                  { index: true, element: soon("Club home", "E04-S03") },
+                  { path: "s/:spaceSlug/:channelSlug", element: soon("Channel", "E05-S02") },
+                  { path: "events", element: soon("Club events", "E11-S02") },
+                  { path: "members", element: soon("Members", "E07-S04") },
+                  { path: "history", element: soon("Club history", "E14-S03") },
+                  { path: "settings", element: <Navigate to="profile" replace /> },
+                  { path: "settings/profile", element: soon("Club profile settings", "E04-S04") },
+                  { path: "settings/roles", element: soon("Roles", "E13-S02") },
+                  { path: "settings/groups", element: soon("Groups", "E13-S03") },
+                  { path: "settings/spaces", element: soon("Spaces", "E05-S03") },
+                  { path: "settings/requests", element: soon("Join requests", "E07-S03") },
+                  { path: "settings/ownership", element: soon("Ownership", "E13-S01") },
+                ],
+              },
+              { path: "posts/:postId", element: soon("Post", "E12-S01") },
+              { path: "events/:eventId", element: soon("Event", "E11-S01") },
+              { path: "calendar", element: soon("Campus calendar", "E11-S02") },
+              { path: "notifications", element: soon("Notifications", "E12-S01") },
+              { path: "settings", element: soon("Settings", "E12-S02") },
+            ],
+          },
+
+          // Admins
+          {
+            path: "admin",
+            element: <RequireAdmin><AdminLayout /></RequireAdmin>,
+            children: [
+              { index: true, element: <Navigate to="approvals" replace /> },
+              { path: "approvals", element: soon("Club approvals", "E04-S02") },
+              { path: "revivals", element: soon("Revival requests", "E14-S02") },
+              { path: "clubs", element: soon("All clubs", "E15-S01") },
+              { path: "users", element: soon("Users", "E15-S02") },
+              { path: "campus-groups", element: soon("Campus groups", "E15-S03") },
+            ],
+          },
+
+          { path: "*", element: <NotFoundPage /> },
+        ],
+      },
+    ],
+  },
+];
+
+export const router = createBrowserRouter(routes);
