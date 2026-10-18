@@ -5,7 +5,6 @@ import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
 import { ErrorPage } from "./ErrorPage";
 import { AppLayout } from "./layouts/AppLayout";
-import { ClubLayout } from "./layouts/ClubLayout";
 import { NotFoundPage } from "./NotFoundPage";
 
 /**
@@ -38,9 +37,9 @@ export const routes: RouteObject[] = [
               { path: "clubs/new", lazy: () => import("@/features/clubs").then((m) => ({ Component: m.CreateClubPage })) },
               {
                 path: "c/:slug",
-                element: <ClubLayout />,
+                lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubLayout })),
                 children: [
-                  { index: true, element: soon("Club home", "E04-S03") },
+                  { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubHome })) },
                   { path: "s/:spaceSlug/:channelSlug", element: soon("Channel", "E05-S02") },
                   { path: "events", element: soon("Club events", "E11-S02") },
                   { path: "members", element: soon("Members", "E07-S04") },
