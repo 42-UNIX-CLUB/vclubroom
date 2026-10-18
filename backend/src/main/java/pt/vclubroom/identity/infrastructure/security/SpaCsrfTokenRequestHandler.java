@@ -1,4 +1,4 @@
-package pt.vclubroom.identity;
+package pt.vclubroom.identity.infrastructure.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
