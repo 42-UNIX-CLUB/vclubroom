@@ -2,22 +2,26 @@ package pt.vclubroom.club.application;
 
 import java.time.Clock;
 import java.time.Instant;
-
+import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import pt.vclubroom.club.api.ClubStatus;
 import pt.vclubroom.club.domain.Club;
 import pt.vclubroom.club.domain.Slug;
+import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubCreationRequested;
+import pt.vclubroom.club.events.ClubProfileUpdated;
+import pt.vclubroom.club.events.ClubRejected;
 import pt.vclubroom.club.persistence.ClubRepository;
 import pt.vclubroom.shared.error.BusinessRuleException;
+import pt.vclubroom.shared.error.ForbiddenException;
+import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 
 /**
- * Club use cases that change state. E04-S01 needs only requestCreation; E04-S02 adds approve/reject,
- * E04-S04 updateProfile (through ClubManagementGuard and media), E14-S01 archive (club.md §9.3).
+ * Club use cases that change state. E04-S04 adds updateProfile (through ClubManagementGuard and media),
+ * E14-S01 archive (club.md §9.3).
  */
 @Service
 public class ClubService {
@@ -53,6 +57,36 @@ public class ClubService {
         return assembler.toDetails(club);
     }
 
+    /** PENDING_APPROVAL → ACTIVE, era 1. Membership, space, discovery and history react to the events (club.md §8.2). */
+    @Transactional
+    public ClubDetails approve(Actor actor, UUID clubId) {
+        requireAdmin(actor);
+        Club club = load(clubId);
+        Instant now = clock.instant();
+        club.approve(actor.userId(), now);
+        events.publishEvent(new ClubApproved(club.id(), club.slug(), club.name(), club.founderId(),
+            actor.userId(), club.currentEra(), now));
+        events.publishEvent(profileUpdated(club, now));
+        return assembler.toDetails(club);
+    }
+
+    /** PENDING_APPROVAL → REJECTED (final). The reason is shown to the founder in "My requests". */
+    @Transactional
+    public ClubDetails reject(Actor actor, UUID clubId, String reason) {
+        requireAdmin(actor);
+        Club club = load(clubId);
+        Instant now = clock.instant();
+        club.reject(actor.userId(), reason, now);
+        events.publishEvent(new ClubRejected(club.id(), club.name(), club.founderId(), actor.userId(), reason, now));
+        return assembler.toDetails(club);
+    }
+
+    private ClubProfileUpdated profileUpdated(Club club, Instant now) {
+        return new ClubProfileUpdated(club.id(), club.slug(), club.name(), club.tagline(), club.description(),
+            club.category(), club.tags(), club.avatarMediaId(), club.bannerMediaId(), club.joinPolicy(),
+            club.status(), club.currentEra(), now);
+    }
+
     /** "chess-club", then "chess-club-2", "chess-club-3"… (BR-01: slugs are unique). */
     private Slug uniqueSlug(Slug base) {
         Slug candidate = base;
@@ -61,5 +95,17 @@ public class ClubService {
             candidate = base.withSuffix(n++);
         }
         return candidate;
+    }
+
+    private Club load(UUID clubId) {
+        return clubs.findWithErasById(clubId)
+            .orElseThrow(() -> new NotFoundException("CLUB_NOT_FOUND", "Club not found"));
+    }
+
+    /** /api/admin/** already requires ROLE_ADMIN; the service checks again so no other caller can skip it. */
+    private static void requireAdmin(Actor actor) {
+        if (!actor.admin()) {
+            throw new ForbiddenException("ADMIN_ONLY", "Only admins can do this.");
+        }
     }
 }
