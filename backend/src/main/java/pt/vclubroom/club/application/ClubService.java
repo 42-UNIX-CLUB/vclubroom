@@ -10,6 +10,7 @@ import pt.vclubroom.club.api.ClubStatus;
 import pt.vclubroom.club.domain.Club;
 import pt.vclubroom.club.domain.Slug;
 import pt.vclubroom.club.events.ClubApproved;
+import pt.vclubroom.club.events.ClubArchived;
 import pt.vclubroom.club.events.ClubCreationRequested;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.club.events.ClubRejected;
@@ -21,7 +22,7 @@ import pt.vclubroom.shared.security.Actor;
 
 /**
  * Club use cases that change state. E04-S04 adds updateProfile (through ClubManagementGuard and media),
- * E14-S01 archive (club.md §9.3).
+ * E14-S02 the revival.
  */
 @Service
 public class ClubService {
@@ -78,6 +79,22 @@ public class ClubService {
         Instant now = clock.instant();
         club.reject(actor.userId(), reason, now);
         events.publishEvent(new ClubRejected(club.id(), club.name(), club.founderId(), actor.userId(), reason, now));
+        return assembler.toDetails(club);
+    }
+
+    /**
+     * ACTIVE → ARCHIVED (D-13): the current era ends. From now on every write is refused, because the other modules
+     * accept writes only in ACTIVE clubs (BR-02), and everything stays readable. The reason is public.
+     */
+    @Transactional
+    public ClubDetails archive(Actor actor, UUID clubId, String reason) {
+        requireAdmin(actor);
+        Club club = load(clubId);
+        Instant now = clock.instant();
+        int endedEra = club.currentEra();
+        club.archive(actor.userId(), reason, now);                         // CLUB_NOT_ACTIVE unless ACTIVE
+        events.publishEvent(new ClubArchived(club.id(), club.name(), endedEra, actor.userId(), reason, now));
+        events.publishEvent(profileUpdated(club, now));                    // discovery: the "Archived" badge
         return assembler.toDetails(club);
     }
 

@@ -53,4 +53,10 @@ class ClubAdminController {
                         @Valid @RequestBody ReasonRequest body) {
         return ClubResponse.from(clubs.reject(me.actor(), clubId, body.reason()));
     }
+
+    @PostMapping("/clubs/{clubId}/archive")
+    ClubResponse archive(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("clubId") UUID clubId,
+                         @Valid @RequestBody ReasonRequest body) {
+        return ClubResponse.from(clubs.archive(me.actor(), clubId, body.reason()));
+    }
 }
