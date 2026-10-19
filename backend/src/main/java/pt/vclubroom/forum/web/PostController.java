@@ -37,6 +37,11 @@ class PostController {
         return queries.list(me.actor(), channelId, era, cursor, Math.clamp(limit, 1, 50)).map(PostResponse::from);
     }
 
+    @GetMapping("/api/posts/{postId}")
+    PostResponse get(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId) {
+        return PostResponse.from(queries.get(me.actor(), postId));
+    }
+
     @PostMapping("/api/channels/{channelId}/posts")
     @ResponseStatus(HttpStatus.CREATED)
     PostResponse create(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("channelId") UUID channelId,
