@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/{eventId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs": {
         parameters: {
             query?: never;
@@ -206,6 +222,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["schedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -306,6 +338,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["edit"];
         trace?: never;
     };
     "/api/users": {
@@ -507,7 +555,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -796,6 +844,44 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
         };
+        CancelEventRequest: {
+            reason?: string;
+        };
+        EventView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            clubId?: string;
+            clubSlug?: string;
+            clubName?: string;
+            /** Format: uuid */
+            spaceId?: string;
+            /** Format: int32 */
+            era?: number;
+            title?: string;
+            description?: string;
+            location?: string;
+            onlineUrl?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** @enum {string} */
+            status?: "SCHEDULED" | "CANCELLED";
+            cancelReason?: string;
+            cover?: components["schemas"]["MediaView"];
+            canManage?: boolean;
+        };
+        MediaView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            kind?: "IMAGE" | "VIDEO" | "AUDIO";
+            contentType?: string;
+            /** Format: int64 */
+            sizeBytes?: number;
+            url?: string;
+        };
         CreateClubRequest: {
             name: string;
             tagline?: string;
@@ -855,20 +941,24 @@ export interface components {
             /** Format: uuid */
             requestId?: string;
         };
+        ScheduleEventRequest: {
+            /** Format: uuid */
+            spaceId: string;
+            title: string;
+            description?: string;
+            location?: string;
+            onlineUrl?: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            coverMediaId?: string;
+        };
         CreatePostRequest: {
             title?: string;
             body?: string;
             mediaIds?: string[];
-        };
-        MediaView: {
-            /** Format: uuid */
-            id?: string;
-            /** @enum {string} */
-            kind?: "IMAGE" | "VIDEO" | "AUDIO";
-            contentType?: string;
-            /** Format: int64 */
-            sizeBytes?: number;
-            url?: string;
         };
         PostResponse: {
             /** Format: uuid */
@@ -917,6 +1007,16 @@ export interface components {
         AssignOwnerRequest: {
             /** Format: uuid */
             userId: string;
+        };
+        EditEventRequest: {
+            title: string;
+            description?: string;
+            location?: string;
+            onlineUrl?: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
         };
         ChannelView: {
             /** Format: uuid */
@@ -1367,6 +1467,32 @@ export interface operations {
             };
         };
     };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEventRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
     requestCreation: {
         parameters: {
             query?: never;
@@ -1524,6 +1650,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
+                };
             };
         };
     };
@@ -1697,6 +1849,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
+    edit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditEventRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
                 };
             };
         };
@@ -1958,7 +2158,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
