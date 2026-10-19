@@ -1,5 +1,6 @@
-import { MessageCircleIcon, NewspaperIcon, SearchXIcon } from "lucide-react";
+import { MessageCircleIcon, SearchXIcon } from "lucide-react";
 import { useOutletContext, useParams } from "react-router";
+import { ChannelFeed } from "@/features/forum";
 import { Badge } from "@/shared/ui/badge";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
@@ -35,8 +36,7 @@ export function ChannelPage() {
       {channel.type === "CHAT"
         // E10-S02 replaces this with <ChatRoom channel={channel} /> from the chat feature.
         ? <EmptyState icon={MessageCircleIcon} title="Chat is coming" description="Live chat arrives with E10-S02." />
-        // E09-S01 replaces this with <ChannelFeed channel={channel} /> from the forum feature.
-        : <EmptyState icon={NewspaperIcon} title="Posts are coming" description="The forum arrives with E09-S01." />}
+        : <ChannelFeed channel={channel} />}
     </div>
   );
 }
