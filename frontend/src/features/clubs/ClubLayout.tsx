@@ -11,17 +11,19 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { type ClubStatus, StatusBadge } from "@/shared/ui/StatusBadge";
 import { type Club, useClub } from "./api";
+import { ArchivedBanner } from "./ArchivedBanner";
 import { ClubAboutPanel } from "./ClubAboutPanel";
 import { visibleSettingsTabs } from "./settingsTabs";
 
-type Viewer = { membership: MembershipView | undefined; admin: boolean };
+type Viewer = { membership: MembershipView | undefined; admin: boolean; active: boolean };
 
 const SECTIONS: { path: string; label: string; visible?: (viewer: Viewer) => boolean }[] = [
   { path: "", label: "Home" },
   { path: "events", label: "Events" },
   { path: "members", label: "Members", visible: ({ membership, admin }) => !!membership?.member || admin },
   { path: "history", label: "History" },
-  { path: "settings", label: "Settings", visible: ({ membership }) => visibleSettingsTabs(membership).length > 0 },
+  // An archived club is read-only: nothing left to manage until a revival (E14-S02).
+  { path: "settings", label: "Settings", visible: ({ membership, active }) => active && visibleSettingsTabs(membership).length > 0 },
 ];
 
 const sectionClass = ({ isActive }: { isActive: boolean }) => cn(
@@ -59,11 +61,12 @@ export function ClubLayout() {
     <div className="space-y-6">
       <ClubHeader club={club} />
       {!open && <ReviewNotice club={club} />}
+      {club.status === "ARCHIVED" && <ArchivedBanner club={club} />}
       <div className={cn("grid gap-6", open && "md:grid-cols-[12rem_minmax(0,1fr)] lg:grid-cols-[12rem_minmax(0,1fr)_16rem]")}>
         {open && (
           <aside aria-label="Club sections">
             <nav className="flex gap-1 overflow-x-auto md:flex-col">
-              {SECTIONS.filter(({ visible }) => !visible || visible({ membership, admin: !!me?.admin })).map(({ path, label }) => (
+              {SECTIONS.filter(({ visible }) => !visible || visible({ membership, admin: !!me?.admin, active: club.status === "ACTIVE" })).map(({ path, label }) => (
                 <NavLink key={label} to={path ? `/c/${slug}/${path}` : `/c/${slug}`} end={!path} className={sectionClass}>
                   {label}
                 </NavLink>
