@@ -1,5 +1,6 @@
-import { SearchXIcon } from "lucide-react";
-import { Link, NavLink, Outlet, useParams } from "react-router";
+import { ChevronDownIcon, SearchXIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useParams } from "react-router";
 import { useMe } from "@/features/auth";
 import { JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
 import { SpaceSidebar } from "@/features/spaces";
@@ -40,6 +41,10 @@ export function ClubLayout() {
   const { data: club, error, isPending } = useClub(slug);
   const { data: me } = useMe();
   const { data: membership } = useMyMembership(club?.id ?? "", !!club?.id);
+  // Phones: the channels fold away behind a button (they would push the page down), and fold back after a choice.
+  const [channelsOpen, setChannelsOpen] = useState(false);
+  const { pathname } = useLocation();
+  useEffect(() => setChannelsOpen(false), [pathname]);
 
   if (isPending) return <FullPageSpinner />;
   if (error) {
@@ -64,7 +69,7 @@ export function ClubLayout() {
       {club.status === "ARCHIVED" && <ArchivedBanner club={club} />}
       <div className={cn("grid gap-6", open && "md:grid-cols-[12rem_minmax(0,1fr)] lg:grid-cols-[12rem_minmax(0,1fr)_16rem]")}>
         {open && (
-          <aside aria-label="Club sections">
+          <aside aria-label="Club sections" className="min-w-0">
             <nav className="flex gap-1 overflow-x-auto md:flex-col">
               {SECTIONS.filter(({ visible }) => !visible || visible({ membership, admin: !!me?.admin, active: club.status === "ACTIVE" })).map(({ path, label }) => (
                 <NavLink key={label} to={path ? `/c/${slug}/${path}` : `/c/${slug}`} end={!path} className={sectionClass}>
@@ -72,7 +77,19 @@ export function ClubLayout() {
                 </NavLink>
               ))}
             </nav>
-            <SpaceSidebar clubId={club.id ?? ""} clubSlug={slug} />
+            <button
+              type="button"
+              aria-expanded={channelsOpen}
+              aria-controls="club-channels"
+              onClick={() => setChannelsOpen((open) => !open)}
+              className="mt-3 flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
+            >
+              Channels
+              <ChevronDownIcon className={cn("size-4 transition-transform", channelsOpen && "rotate-180")} aria-hidden="true" />
+            </button>
+            <div id="club-channels" className={cn(!channelsOpen && "hidden md:block")}>
+              <SpaceSidebar clubId={club.id ?? ""} clubSlug={slug} />
+            </div>
           </aside>
         )}
         <section className="min-w-0">
@@ -96,12 +113,15 @@ function ClubHeader({ club }: { club: Club }) {
         </div>
         <div className="min-w-0 flex-1 space-y-1 pt-3">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{club.name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight break-words">{club.name}</h1>
             <StatusBadge status={club.status as ClubStatus} />
           </div>
           {club.tagline && <p className="text-muted-foreground">{club.tagline}</p>}
         </div>
-        <JoinButton club={{ id: club.id ?? "", name: club.name ?? "", status: club.status ?? "", joinPolicy: club.joinPolicy ?? "" }} />
+        {/* Its own row on phones, so the club's name keeps the width it needs. */}
+        <div className="w-full sm:w-auto">
+          <JoinButton club={{ id: club.id ?? "", name: club.name ?? "", status: club.status ?? "", joinPolicy: club.joinPolicy ?? "" }} />
+        </div>
       </div>
     </header>
   );
