@@ -1,14 +1,19 @@
 import { MessageSquareIcon } from "lucide-react";
+import { useState } from "react";
 import { MediaView } from "@/features/media";
 import { formatDateTime, formatRelative } from "@/shared/lib/dates";
+import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/ui/card";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Markdown } from "@/shared/ui/Markdown";
 import type { Post } from "./api";
+import { Comments } from "./Comments";
 
-/** One post: author and time, optional title, Markdown body, players for its media. */
+/** One post: author and time, optional title, Markdown body, players for its media, and its thread on demand. */
 export function PostCard({ post }: { post: Post }) {
   const author = post.author?.displayName ?? "Unknown user";
+  const [showComments, setShowComments] = useState(false);       // closed by default: no request per post on a page
+  const count = post.commentCount ?? 0;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3">
@@ -38,11 +43,12 @@ export function PostCard({ post }: { post: Post }) {
             )}
           </>
         )}
-        {/* E09-S02 turns this into the comments thread. */}
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MessageSquareIcon className="size-3.5" aria-hidden="true" />
-          {post.commentCount ?? 0} {post.commentCount === 1 ? "comment" : "comments"}
-        </p>
+        <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" aria-expanded={showComments}
+          onClick={() => setShowComments((open) => !open)}>
+          <MessageSquareIcon aria-hidden="true" />
+          {count} {count === 1 ? "comment" : "comments"}
+        </Button>
+        {showComments && <Comments post={post} />}
       </CardContent>
     </Card>
   );

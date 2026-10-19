@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/posts/{postId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ownership-invitations/{invitationId}/decline": {
         parameters: {
             query?: never;
@@ -171,9 +187,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
-        post: operations["create"];
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -491,7 +507,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -539,7 +555,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -616,6 +632,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CreateCommentRequest: {
+            body: string;
+            /** Format: uuid */
+            parentId?: string;
+        };
+        CommentResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            postId?: string;
+            /** Format: uuid */
+            parentId?: string;
+            author?: components["schemas"]["UserSummary"];
+            body?: string;
+            deleted?: boolean;
+            deletedByModerator?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            editedAt?: string;
+        };
+        UserSummary: {
+            /** Format: uuid */
+            id?: string;
+            login?: string;
+            displayName?: string;
+            avatarUrl?: string;
+        };
         MediaResponse: {
             /** Format: uuid */
             id?: string;
@@ -743,13 +787,6 @@ export interface components {
             /** Format: date-time */
             editedAt?: string;
         };
-        UserSummary: {
-            /** Format: uuid */
-            id?: string;
-            login?: string;
-            displayName?: string;
-            avatarUrl?: string;
-        };
         LoginRequest: {
             username: string;
             password: string;
@@ -874,6 +911,10 @@ export interface components {
             /** Format: date-time */
             lastActivityAt?: string;
         };
+        CursorPageCommentResponse: {
+            items?: components["schemas"]["CommentResponse"][];
+            nextCursor?: string;
+        };
         InvitationView: {
             /** Format: uuid */
             id?: string;
@@ -964,6 +1005,57 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPageCommentResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommentResponse"];
+                };
+            };
+        };
+    };
     decline: {
         parameters: {
             query?: never;
@@ -1210,7 +1302,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_1: {
         parameters: {
             query?: {
                 era?: number;
@@ -1236,7 +1328,7 @@ export interface operations {
             };
         };
     };
-    create: {
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1685,7 +1777,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -1749,7 +1841,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
