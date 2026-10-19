@@ -10,10 +10,15 @@ export type ReactionOption = components["schemas"]["ReactionOption"];
 type ReactionsState = components["schemas"]["ReactionsResponse"];
 type PostPage = components["schemas"]["CursorPagePostResponse"];
 
-/** Query keys of this feature (08-frontend §5.1): ["channel", channelId, "posts", { era }], ["post", postId, "comments"]. */
+/**
+ * Query keys of this feature (08-frontend §5.1): ["channel", channelId, "posts", { era }], ["feed", clubId, { era }],
+ * ["post", postId, "comments"]. A post can sit in its channel's pages and in a club feed: changes go to both.
+ */
 export const forumKeys = {
   allPosts: (channelId: string) => ["channel", channelId, "posts"] as const,
   posts: (channelId: string, era: number | null) => ["channel", channelId, "posts", { era }] as const,
+  allFeeds: ["feed"] as const,
+  feed: (clubId: string, era: number | null) => ["feed", clubId, { era }] as const,
   comments: (postId: string) => ["post", postId, "comments"] as const,
   reactionOptions: ["reactions"] as const,
 };
@@ -30,13 +35,25 @@ export function useChannelPosts(channelId: string, era: number | null) {
   });
 }
 
+/** The club feed (E09-S05): every forum channel of the club the viewer can read, newest first, 20 per page. */
+export function useClubFeed(clubId: string, era: number | null) {
+  return useInfiniteQuery({
+    queryKey: forumKeys.feed(clubId, era),
+    queryFn: async ({ pageParam }) => (await api.GET("/api/clubs/{clubId}/feed", {
+      params: { path: { clubId }, query: { era: era ?? undefined, cursor: pageParam, limit: 20 } },
+    })).data ?? { items: [] },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+
 export function useCreatePost(channelId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (body: NewPost) =>
       (await api.POST("/api/channels/{channelId}/posts", { params: { path: { channelId } }, body })).data as Post,
-    // The new post must appear on top: reload the channel's pages (E10-S01 adds the real-time push for others).
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: forumKeys.allPosts(channelId) }),
+    // The new post must appear on top: reload the channel's pages and the feeds (E10-S01 pushes it to the others).
+    onSuccess: () => Promise.all(postKeys(channelId).map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
   });
 }
 
@@ -57,14 +74,25 @@ export function useAddComment(postId: string, channelId: string) {
   return useMutation({
     mutationFn: async (body: { body: string; parentId?: string }) =>
       (await api.POST("/api/posts/{postId}/comments", { params: { path: { postId } }, body })).data as Comment,
-    onSuccess: () => {
-      // The post's counter goes up in the cached channel pages: cheaper than reloading every page of posts.
-      updateCachedItems<PostPage>(queryClient, forumKeys.allPosts(channelId), postId,
-        (post) => ({ ...post, commentCount: (post.commentCount ?? 0) + 1 }));
+    onSuccess: (comment) => {
+      // The post's counter goes up in the cached pages: cheaper than reloading every page of posts.
+      if (!countedByPush.has(comment.id ?? "")) {
+        postKeys(channelId).forEach((key) => updateCachedItems<PostPage>(queryClient, key, postId,
+          (post) => ({ ...post, commentCount: (post.commentCount ?? 0) + 1 })));
+      }
       return queryClient.invalidateQueries({ queryKey: forumKeys.comments(postId) });
     },
   });
 }
+
+/**
+ * Comments whose push has already set their post's count. The push can arrive before the POST's answer: the mutation
+ * must not count such a comment a second time.
+ */
+const countedByPush = new Set<string>();
+
+/** Where a post of this channel may be cached: the channel's pages (every era) and the club feeds. */
+const postKeys = (channelId: string): QueryKey[] => [forumKeys.allPosts(channelId), forumKeys.allFeeds];
 
 /** Changes one post or comment wherever it sits in the cached pages under key (every era of a channel, for posts). */
 function updateCachedItems<P extends { items?: { id?: string }[] }>(
@@ -107,7 +135,7 @@ function toggled<T extends Reacted>(item: T, code: string, add: boolean): T {
  */
 export function useToggleReaction(target: ReactionTarget) {
   const queryClient = useQueryClient();
-  const key = target.kind === "post" ? forumKeys.allPosts(target.channelId) : forumKeys.comments(target.postId);
+  const keys = target.kind === "post" ? postKeys(target.channelId) : [forumKeys.comments(target.postId)];
   return useMutation({
     // Quick clicks on one target run one after the other, so the server sees them in the order they were made.
     scope: { id: `reaction:${target.kind}:${target.id}` },
@@ -122,17 +150,18 @@ export function useToggleReaction(target: ReactionTarget) {
                   : await api.DELETE("/api/comments/{commentId}/reactions/{code}", { params })).data as ReactionsState;
     },
     onMutate: async ({ code, add }) => {
-      await queryClient.cancelQueries({ queryKey: key });          // a refetch landing now would undo the guess
-      const previous = queryClient.getQueriesData({ queryKey: key });
-      updateCachedItems<{ items?: (Reacted & { id?: string })[] }>(queryClient, key, target.id, (item) => toggled(item, code, add));
+      await Promise.all(keys.map((queryKey) => queryClient.cancelQueries({ queryKey })));   // a refetch would undo the guess
+      const previous = keys.flatMap((queryKey) => queryClient.getQueriesData({ queryKey }));
+      keys.forEach((key) => updateCachedItems<{ items?: (Reacted & { id?: string })[] }>(queryClient, key, target.id,
+        (item) => toggled(item, code, add)));
       return { previous };
     },
     onError: (_error, _variables, context) => {
       context?.previous.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
     },
     onSuccess: (state) => {
-      updateCachedItems<{ items?: (Reacted & { id?: string })[] }>(queryClient, key, target.id,
-        (item) => ({ ...item, reactionCounts: state.counts ?? {}, myReactions: state.mine ?? [] }));
+      keys.forEach((key) => updateCachedItems<{ items?: (Reacted & { id?: string })[] }>(queryClient, key, target.id,
+        (item) => ({ ...item, reactionCounts: state.counts ?? {}, myReactions: state.mine ?? [] })));
     },
   });
 }
@@ -141,19 +170,22 @@ type LivePayload = { postId?: string; commentId?: string; commentCount?: number;
 
 /**
  * A feed listens to its channel (realtime, E10-S01): new posts reload the pages, comment counts and post reactions
- * are written into the cached posts. Pushes carry values, not changes, so my own actions are never counted twice.
+ * are written into the cached posts (the channel's and the club feeds'). Pushes carry values, not changes, and a
+ * comment whose push came first is not counted again by its own mutation (countedByPush): never twice.
  */
 export function useChannelLive(channelId: string) {
   const queryClient = useQueryClient();
   useTopic<LivePayload>(channelId ? `/topic/channels/${channelId}/posts` : null, ({ type, payload }) => {
-    const key = forumKeys.allPosts(channelId);
-    if (type === "post.created") void queryClient.invalidateQueries({ queryKey: key });
-    if (type === "comment.created" && payload.postId && payload.commentCount !== undefined) {
-      updateCachedItems<PostPage>(queryClient, key, payload.postId, (post) => ({ ...post, commentCount: payload.commentCount }));
-    }
-    if (type === "reactions.changed" && payload.targetId) {
-      updateCachedItems<PostPage>(queryClient, key, payload.targetId, (post) => ({ ...post, reactionCounts: payload.counts ?? {} }));
-    }
+    postKeys(channelId).forEach((key) => {
+      if (type === "post.created") void queryClient.invalidateQueries({ queryKey: key });
+      if (type === "comment.created" && payload.postId && payload.commentCount !== undefined) {
+        if (payload.commentId) countedByPush.add(payload.commentId);
+        updateCachedItems<PostPage>(queryClient, key, payload.postId, (post) => ({ ...post, commentCount: payload.commentCount }));
+      }
+      if (type === "reactions.changed" && payload.targetId) {
+        updateCachedItems<PostPage>(queryClient, key, payload.targetId, (post) => ({ ...post, reactionCounts: payload.counts ?? {} }));
+      }
+    });
   });
 }
 

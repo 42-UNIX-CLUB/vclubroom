@@ -1,5 +1,5 @@
 import { MessageSquareIcon } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { MediaView } from "@/features/media";
 import { formatDateTime, formatRelative } from "@/shared/lib/dates";
 import { Button } from "@/shared/ui/button";
@@ -10,8 +10,11 @@ import type { Post } from "./api";
 import { Comments } from "./Comments";
 import { Reactions } from "./Reactions";
 
-/** One post: author and time, optional title, Markdown body, players for its media, and its thread on demand. */
-export function PostCard({ post }: { post: Post }) {
+/**
+ * One post: author and time, optional title, Markdown body, players for its media, and its thread on demand.
+ * context: where it was posted, for lists that mix channels (the club feed).
+ */
+export function PostCard({ post, context }: { post: Post; context?: ReactNode }) {
   const author = post.author?.displayName ?? "Unknown user";
   const [showComments, setShowComments] = useState(false);       // closed by default: no request per post on a page
   const count = post.commentCount ?? 0;
@@ -26,6 +29,7 @@ export function PostCard({ post }: { post: Post }) {
               {formatRelative(post.createdAt)}{post.editedAt && " · edited"}
             </time>
           )}
+          {context && <span className="text-muted-foreground"> · {context}</span>}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

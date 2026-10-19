@@ -884,6 +884,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["feed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/channels/{channelId}": {
         parameters: {
             query?: never;
@@ -1601,6 +1617,10 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        CursorPagePostResponse: {
+            items?: components["schemas"]["PostResponse"][];
+            nextCursor?: string;
+        };
         CalendarItem: {
             /** Format: uuid */
             id?: string;
@@ -1621,10 +1641,6 @@ export interface components {
             interested?: number;
             /** @enum {string} */
             myRsvp?: "GOING" | "INTERESTED" | "NOT_GOING";
-        };
-        CursorPagePostResponse: {
-            items?: components["schemas"]["PostResponse"][];
-            nextCursor?: string;
         };
         ChatPage: {
             items?: components["schemas"]["ChatMessageView"][];
@@ -3165,6 +3181,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["JoinRequestView"][];
+                };
+            };
+        };
+    };
+    feed: {
+        parameters: {
+            query?: {
+                era?: number;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPagePostResponse"];
                 };
             };
         };
