@@ -1,11 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
 import type { Post } from "./api";
 import { Comments } from "./Comments";
 
 vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), POST: vi.fn() } }));
+const live = vi.hoisted(() => ({ handlers: new Map<string, (envelope: { type: string; payload: unknown }) => void>() }));
+vi.mock("@/shared/realtime/RealtimeProvider", () => ({
+  useTopic: (destination: string | null, handler: (envelope: { type: string; payload: unknown }) => void) => {
+    if (destination) live.handlers.set(destination, handler);
+  },
+}));
 
 const now = new Date().toISOString();
 const thread = [
@@ -63,6 +69,17 @@ describe("Comments", () => {
     await waitFor(() => expect(api.POST).toHaveBeenCalledWith("/api/posts/{postId}/comments",
       { params: { path: { postId: "p1" } }, body: { body: "Agreed", parentId: "c1" } }));
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "Write a reply" })).toBeNull());
+  });
+
+  it("reloads when someone else comments", async () => {
+    renderThread(post);
+    expect(await screen.findByText("Sweet is the point")).toBeTruthy();
+
+    const threadRequests = () => (vi.mocked(api.GET).mock.calls as unknown as [string][])
+      .filter(([path]) => path === "/api/posts/{postId}/comments").length;
+    const before = threadRequests();
+    act(() => live.handlers.get("/topic/posts/p1")?.({ type: "comment.created", payload: { postId: "p1", commentId: "c4" } }));
+    await waitFor(() => expect(threadRequests()).toBeGreaterThan(before));
   });
 
   it("only reads on a read-only post", async () => {

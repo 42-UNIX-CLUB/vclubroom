@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
-import { type Comment, type Post, useAddComment, useComments } from "./api";
+import { type Comment, type Post, useAddComment, useComments, usePostLive } from "./api";
 import { Reactions } from "./Reactions";
 
 /**
@@ -15,6 +15,7 @@ import { Reactions } from "./Reactions";
 export function Comments({ post }: { post: Post }) {
   const postId = post.id ?? "";
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useComments(postId);
+  usePostLive(postId);                                      // other people's comments and reactions, live
   // One mutation for the thread: it stays mounted when the reply box closes, so the error toast still runs.
   const add = useAddComment(postId, post.channelId ?? "");
   const [replyTo, setReplyTo] = useState<string | null>(null);

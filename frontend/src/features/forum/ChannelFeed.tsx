@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { useChannelPosts } from "./api";
+import { useChannelLive, useChannelPosts } from "./api";
 import { PostCard } from "./PostCard";
 import { PostComposer } from "./PostComposer";
 
@@ -24,6 +24,7 @@ export function ChannelFeed({ channel }: { channel: FeedChannel }) {
   const era = params.get("era") ? Number(params.get("era")) : null;
   const viewingHistory = era !== null && era !== channel.currentEra;
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useChannelPosts(channel.id ?? "", era);
+  useChannelLive(channel.id ?? "");                         // new posts, counts and reactions as they happen
   const posts = data?.pages.flatMap((page) => page.items ?? []) ?? [];
 
   // Infinite scroll: load the next page when the end of the list comes into view (the button works without it).
