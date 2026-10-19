@@ -19,6 +19,7 @@ import pt.vclubroom.membership.domain.ClubRole;
 import pt.vclubroom.membership.domain.JoinRequest;
 import pt.vclubroom.membership.domain.JoinRequestStatus;
 import pt.vclubroom.membership.domain.Membership;
+import pt.vclubroom.membership.domain.OwnershipInvitation;
 import pt.vclubroom.membership.domain.SystemRole;
 import pt.vclubroom.membership.persistence.ClubRoleRepository;
 import pt.vclubroom.membership.persistence.JoinRequestRepository;
@@ -105,6 +106,33 @@ public class MemberQueryService {
         Map<UUID, UserSummary> requesters = users.findByIds(requests.stream().map(JoinRequest::userId).toList());
         return requests.stream()
             .map(r -> new JoinRequestView(r.id(), r.userId(), requesters.get(r.userId()), r.message(), r.createdAt()))
+            .toList();
+    }
+
+    /** The viewer's pending ownership invitations, newest first. */
+    public List<InvitationView> myInvitations(Actor actor) {
+        return invitationViews(invitations.findPendingForInvitee(actor.userId()));
+    }
+
+    /** What the club's owners have sent and is still waiting (owners only). */
+    public List<InvitationView> clubInvitations(UUID clubId, Actor actor) {
+        if (!authorization.isOwner(clubId, actor.userId())) {
+            throw new ForbiddenException("NOT_OWNER", "Only owners can see the club's invitations.");
+        }
+        return invitationViews(invitations.findPendingForClub(clubId));
+    }
+
+    private List<InvitationView> invitationViews(List<OwnershipInvitation> pending) {
+        Map<UUID, ClubSnapshot> clubById = clubs.findByIds(pending.stream().map(OwnershipInvitation::clubId).toList());
+        Map<UUID, UserSummary> people = users.findByIds(pending.stream()
+            .flatMap(i -> java.util.stream.Stream.of(i.inviteeId(), i.invitedBy())).distinct().toList());
+        return pending.stream()
+            .filter(i -> clubById.containsKey(i.clubId()))
+            .map(i -> {
+                ClubSnapshot club = clubById.get(i.clubId());
+                return new InvitationView(i.id(), club.id(), club.slug(), club.name(), people.get(i.inviteeId()),
+                    people.get(i.invitedBy()), i.stepDownOnAccept(), i.expiresAt());
+            })
             .toList();
     }
 

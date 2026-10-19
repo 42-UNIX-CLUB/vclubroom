@@ -110,4 +110,5 @@ public class OwnershipInvitation {
     public boolean stepDownOnAccept() { return stepDownOnAccept; }
     public InvitationStatus status() { return status; }
     public Instant expiresAt() { return expiresAt; }
+    public Instant createdAt() { return createdAt; }
 }

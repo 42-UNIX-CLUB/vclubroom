@@ -54,7 +54,7 @@ export const routes: RouteObject[] = [
                       { path: "roles", element: soon("Roles", "E13-S02") },
                       { path: "groups", element: soon("Groups", "E13-S03") },
                       { path: "spaces", element: soon("Spaces", "E05-S03") },
-                      { path: "ownership", element: soon("Ownership", "E13-S01") },
+                      { path: "ownership", lazy: () => import("@/features/membership").then((m) => ({ Component: m.OwnershipPanel })) },
                     ],
                   },
                 ],
