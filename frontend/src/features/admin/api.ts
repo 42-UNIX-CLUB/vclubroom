@@ -32,6 +32,20 @@ export function useApproveClub() {
   });
 }
 
+/** Archiving changes the club page and the directory too, so their queries are refreshed with the console's. */
+export function useArchiveClub() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ clubId, reason }: { clubId: string; reason: string }) =>
+      (await api.POST("/api/admin/clubs/{clubId}/archive", { params: { path: { clubId } }, body: { reason } })).data as AdminClub,
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: adminKeys.all() }),
+      queryClient.invalidateQueries({ queryKey: ["club"] }),
+      queryClient.invalidateQueries({ queryKey: ["public"] }),
+    ]),
+  });
+}
+
 export function useRejectClub() {
   const queryClient = useQueryClient();
   return useMutation({
