@@ -2,6 +2,7 @@ import { SearchXIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useParams } from "react-router";
 import { useMe } from "@/features/auth";
 import { JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
+import { SpaceSidebar } from "@/features/spaces";
 import { ApiError } from "@/shared/api/errors";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
@@ -68,7 +69,7 @@ export function ClubLayout() {
                 </NavLink>
               ))}
             </nav>
-            {/* E05-S02: the readable spaces and channels of the club go here. */}
+            <SpaceSidebar clubId={club.id ?? ""} clubSlug={slug} />
           </aside>
         )}
         <section className="min-w-0">

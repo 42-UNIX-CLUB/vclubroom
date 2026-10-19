@@ -112,7 +112,8 @@ class SpaceAccessEvaluator implements SpaceAccessPolicy, SpaceAudience {
         return audience;
     }
 
-    private SpaceAccess evaluate(Space space, Actor actor, ClubSnapshot club) {
+    /** Package-private: SpaceQueryService evaluates every space of a club with one club lookup. */
+    SpaceAccess evaluate(Space space, Actor actor, ClubSnapshot club) {
         Set<ClubPermission> permissions = clubAuthorization.permissionsOf(club.id(), actor);
         boolean bypass = permissions.contains(ClubPermission.SPACE_ACCESS_ALL);    // D-29; admins hold every permission
         boolean canRead = bypass || passes(space.readRule(), actor, club);

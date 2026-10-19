@@ -38,17 +38,17 @@ describe("routes", () => {
     expect(screen.getByText("Page not found")).toBeTruthy();
   });
 
-  it("protects user pages", async () => {
+  it("protects user pages", () => {
     const router = renderApp("/calendar");
-    // The calendar page loads lazily: the guard redirects once its route is resolved.
-    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+    expect(router.state.location.pathname).toBe("/login");
     expect(router.state.location.search).toBe("?returnTo=%2Fcalendar");
   });
 
   it("opens the admin console on its first page for admins", async () => {
     vi.mocked(api.GET).mockResolvedValue({ data: { items: [], page: 0, size: 100, totalElements: 0 } } as never);
     const router = renderApp("/admin", admin);
-    expect(await screen.findByRole("heading", { name: "Club approvals" }, { timeout: 5000 })).toBeTruthy();   // lazy chunk loaded
+    // The admin chunk loads lazily; on a cold first run Vite transforms it on demand, which can take over a second.
+    expect(await screen.findByRole("heading", { name: "Club approvals" }, { timeout: 5000 })).toBeTruthy();
     await waitFor(() => expect(router.state.location.pathname).toBe("/admin/approvals"));
   });
 
