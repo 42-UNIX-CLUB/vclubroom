@@ -38,9 +38,10 @@ describe("routes", () => {
     expect(screen.getByText("Page not found")).toBeTruthy();
   });
 
-  it("protects user pages", () => {
+  it("protects user pages", async () => {
     const router = renderApp("/calendar");
-    expect(router.state.location.pathname).toBe("/login");
+    // The calendar page loads lazily: the guard redirects once its route is resolved.
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
     expect(router.state.location.search).toBe("?returnTo=%2Fcalendar");
   });
 
