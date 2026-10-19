@@ -17,6 +17,9 @@ public interface SpaceAccessPolicy {
     /** Batch read filter (campus calendar, club feed): returns the subset the actor can read. */
     Set<UUID> filterReadableSpaces(Actor actor, Collection<UUID> spaceIds);
 
+    /** The channels of one type in a club that the actor can read. */
+    Set<UUID> readableChannels(UUID clubId, Actor actor, ChannelType type);
+
     /** Forum channels of a club the actor can read (club feed). */
     Set<UUID> readableForumChannels(UUID clubId, Actor actor);
 }

@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByLoginIgnoreCase(String login);
 
+    Optional<User> findByLoginIgnoreCase(String login);
+
     @Query("select u from User u where lower(u.login) = lower(:login) and u.provider = pt.vclubroom.identity.domain.AuthProvider.LOCAL")
     Optional<User> findLocalByLogin(@Param("login") String login);
 

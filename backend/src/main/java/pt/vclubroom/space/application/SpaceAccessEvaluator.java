@@ -86,12 +86,17 @@ class SpaceAccessEvaluator implements SpaceAccessPolicy, SpaceAudience {
 
     @Override
     public Set<UUID> readableForumChannels(UUID clubId, Actor actor) {
+        return readableChannels(clubId, actor, ChannelType.FORUM);
+    }
+
+    @Override
+    public Set<UUID> readableChannels(UUID clubId, Actor actor, ChannelType type) {
         ClubSnapshot club = clubs.require(clubId);
         Set<UUID> result = new HashSet<>();
         for (Space space : spaces.findByClubIdOrderByPositionAsc(clubId)) {
             if (evaluate(space, actor, club).canRead()) {
                 space.channels().stream()
-                    .filter(c -> c.type() == ChannelType.FORUM)
+                    .filter(c -> c.type() == type)
                     .forEach(c -> result.add(c.id()));
             }
         }
