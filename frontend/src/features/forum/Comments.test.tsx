@@ -16,7 +16,8 @@ const thread = [
 const post: Post = { id: "p1", channelId: "ch1", commentCount: 3, readOnly: false };
 
 function renderThread(target: Post, queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
-  vi.mocked(api.GET).mockResolvedValue({ data: { items: thread, nextCursor: null } } as never);
+  vi.mocked(api.GET).mockImplementation(((path: string) =>
+    Promise.resolve({ data: path === "/api/reactions" ? [] : { items: thread, nextCursor: null } })) as never);
   vi.mocked(api.POST).mockResolvedValue({ data: { id: "new" } } as never);
   render(<QueryClientProvider client={queryClient}><Comments post={target} /></QueryClientProvider>);
   return queryClient;

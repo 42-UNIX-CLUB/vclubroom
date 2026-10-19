@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/posts/{postId}/reactions/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reactToPost"];
+        post?: never;
+        delete: operations["unreactToPost"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comments/{commentId}/reactions/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reactToComment"];
+        post?: never;
+        delete: operations["unreactToComment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{postId}/comments": {
         parameters: {
             query?: never;
@@ -316,6 +348,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["space"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["options"];
         put?: never;
         post?: never;
         delete?: never;
@@ -648,6 +696,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReactionsResponse: {
+            counts?: {
+                [key: string]: number;
+            };
+            mine?: string[];
+        };
         CreateCommentRequest: {
             body: string;
             /** Format: uuid */
@@ -662,6 +716,10 @@ export interface components {
             parentId?: string;
             author?: components["schemas"]["UserSummary"];
             body?: string;
+            reactionCounts?: {
+                [key: string]: number;
+            };
+            myReactions?: string[];
             deleted?: boolean;
             deletedByModerator?: boolean;
             /** Format: date-time */
@@ -795,6 +853,10 @@ export interface components {
             media?: components["schemas"]["MediaView"][];
             /** Format: int32 */
             commentCount?: number;
+            reactionCounts?: {
+                [key: string]: number;
+            };
+            myReactions?: string[];
             deleted?: boolean;
             deletedByModerator?: boolean;
             readOnly?: boolean;
@@ -859,6 +921,10 @@ export interface components {
             canWrite?: boolean;
             canModerate?: boolean;
             channels?: components["schemas"]["ChannelView"][];
+        };
+        ReactionOption: {
+            code?: string;
+            emoji?: string;
         };
         CategoryCount: {
             name?: string;
@@ -1021,6 +1087,98 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    reactToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
+    unreactToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
+    reactToComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
+    unreactToComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -1555,6 +1713,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SpaceView"];
+                };
+            };
+        };
+    };
+    options: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReactionOption"][];
                 };
             };
         };

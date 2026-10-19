@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.vclubroom.forum.domain.Comment;
 import pt.vclubroom.forum.domain.Post;
+import pt.vclubroom.forum.domain.ReactionTarget;
 import pt.vclubroom.forum.events.CommentAdded;
 import pt.vclubroom.forum.persistence.CommentRepository;
 import pt.vclubroom.forum.persistence.PostRepository;
@@ -38,15 +39,17 @@ public class CommentService {
     private final CommentRepository comments;
     private final SpaceAccessPolicy spaceAccess;
     private final UserDirectory users;
+    private final ReactionSummary reactions;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     CommentService(PostRepository posts, CommentRepository comments, SpaceAccessPolicy spaceAccess,
-                   UserDirectory users, ApplicationEventPublisher events, Clock clock) {
+                   UserDirectory users, ReactionSummary reactions, ApplicationEventPublisher events, Clock clock) {
         this.posts = posts;
         this.comments = comments;
         this.spaceAccess = spaceAccess;
         this.users = users;
+        this.reactions = reactions;
         this.events = events;
         this.clock = clock;
     }
@@ -69,7 +72,7 @@ public class CommentService {
 
         events.publishEvent(new CommentAdded(comment.id(), postId, comment.parentId(), post.clubId(), post.spaceId(),
             actor.userId(), post.authorId(), parent == null ? null : parent.authorId(), comment.excerpt(), now));
-        return toViews(List.of(comment)).getFirst();
+        return toViews(List.of(comment), actor.userId()).getFirst();
     }
 
     /** Oldest first, replies by time among the comments; the SPA groups them under their parents. */
@@ -82,14 +85,20 @@ public class CommentService {
         List<Comment> rows = comments.findPage(postId, after.createdAt(), after.id(), Limit.of(limit + 1));
         List<Comment> page = rows.size() > limit ? rows.subList(0, limit) : rows;
         String next = rows.size() > limit ? new TimeCursor(page.getLast().createdAt(), page.getLast().id()).encode() : null;
-        return new CursorPage<>(toViews(page), next);
+        return new CursorPage<>(toViews(page, actor.userId()), next);
     }
 
-    private List<CommentView> toViews(List<Comment> page) {
+    private List<CommentView> toViews(List<Comment> page, UUID viewerId) {
         Map<UUID, UserSummary> authors = users.findByIds(page.stream().map(Comment::authorId).distinct().toList());
+        Map<UUID, ReactionSummary.Reactions> reacted =
+            reactions.of(ReactionTarget.COMMENT, page.stream().map(Comment::id).toList(), viewerId);
         return page.stream()
-            .map(c -> new CommentView(c.id(), c.postId(), c.parentId(), authors.get(c.authorId()),
-                c.isDeleted() ? null : c.body(), c.isDeleted(), c.deletedByModerator(), c.createdAt(), c.editedAt()))
+            .map(c -> {
+                ReactionSummary.Reactions r = reacted.getOrDefault(c.id(), ReactionSummary.Reactions.NONE);
+                return new CommentView(c.id(), c.postId(), c.parentId(), authors.get(c.authorId()),
+                    c.isDeleted() ? null : c.body(), r.counts(), r.mine(), c.isDeleted(), c.deletedByModerator(),
+                    c.createdAt(), c.editedAt());
+            })
             .toList();
     }
 }
