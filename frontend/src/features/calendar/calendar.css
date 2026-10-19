@@ -22,3 +22,5 @@
 .fc .fc-button { border-radius: 0.5rem; text-transform: capitalize; box-shadow: none !important; }
 .fc .fc-event { cursor: pointer; }
 .fc .event-cancelled { text-decoration: line-through; opacity: 0.6; }
+.fc .event-going { font-weight: 600; }
+.fc .event-going .fc-event-title::before, .fc .event-going .fc-list-event-title a::before { content: "✓ "; }
