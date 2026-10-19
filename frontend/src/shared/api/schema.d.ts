@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -100,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["myMemberships"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/club-requests": {
         parameters: {
             query?: never;
@@ -140,6 +172,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/membership/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["membership"];
         put?: never;
         post?: never;
         delete?: never;
@@ -196,12 +244,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["leave"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-
-
         CreateClubRequest: {
             name: string;
             tagline?: string;
@@ -241,6 +303,17 @@ export interface components {
             createdAt?: string;
             eras?: components["schemas"]["ClubEraResponse"][];
         };
+        JoinBody: {
+            message?: string;
+        };
+        JoinResponse: {
+            /** @enum {string} */
+            status?: "JOINED" | "REQUESTED";
+            /** Format: uuid */
+            membershipId?: string;
+            /** Format: uuid */
+            requestId?: string;
+        };
         LoginRequest: {
             username: string;
             password: string;
@@ -257,6 +330,46 @@ export interface components {
         };
         ReasonRequest: {
             reason: string;
+        };
+        MyClubMembership: {
+            /** Format: uuid */
+            clubId?: string;
+            slug?: string;
+            name?: string;
+            /** @enum {string} */
+            status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
+            owner?: boolean;
+            roles?: components["schemas"]["RoleView"][];
+            /** Format: date-time */
+            joinedAt?: string;
+        };
+        RoleView: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            color?: string;
+            system?: boolean;
+        };
+        MembershipView: {
+            member?: boolean;
+            owner?: boolean;
+            roles?: components["schemas"]["RoleView"][];
+            permissions?: ("CLUB_SETTINGS_MANAGE" | "MEMBER_APPROVE" | "MEMBER_REMOVE" | "ROLE_MANAGE" | "GROUP_MANAGE" | "SPACE_MANAGE" | "SPACE_ACCESS_ALL" | "CONTENT_MODERATE" | "EVENT_MANAGE")[];
+            pendingRequest?: components["schemas"]["PendingRequest"];
+            pendingInvitation?: components["schemas"]["PendingInvitation"];
+        };
+        PendingInvitation: {
+            /** Format: uuid */
+            id?: string;
+            transfer?: boolean;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        PendingRequest: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         MemberSummaryResponse: {
             /** Format: int64 */
@@ -308,6 +421,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    join: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["JoinBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["JoinResponse"];
                 };
             };
         };
@@ -424,6 +563,26 @@ export interface operations {
             };
         };
     };
+    myMemberships: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MyClubMembership"][];
+                };
+            };
+        };
+    };
     myRequests: {
         parameters: {
             query?: never;
@@ -484,6 +643,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    membership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MembershipView"];
                 };
             };
         };
@@ -549,6 +730,26 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PageResponseClubResponse"];
                 };
+            };
+        };
+    };
+    leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

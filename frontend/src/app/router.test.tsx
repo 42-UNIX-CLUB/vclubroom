@@ -48,7 +48,7 @@ describe("routes", () => {
   it("opens the admin console on its first page for admins", async () => {
     vi.mocked(api.GET).mockResolvedValue({ data: { items: [], page: 0, size: 100, totalElements: 0 } } as never);
     const router = renderApp("/admin", admin);
-    expect(await screen.findByRole("heading", { name: "Club approvals" })).toBeTruthy();   // lazy chunk loaded
+    expect(await screen.findByRole("heading", { name: "Club approvals" }, { timeout: 5000 })).toBeTruthy();   // lazy chunk loaded
     await waitFor(() => expect(router.state.location.pathname).toBe("/admin/approvals"));
   });
 

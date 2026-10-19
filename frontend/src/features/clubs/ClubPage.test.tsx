@@ -19,11 +19,16 @@ const summary = {
   owners: [{ id: "u1", login: "ada", displayName: "Ada Founder" }, { id: "u2", login: "bob", displayName: "Bob Co-owner" }],
 };
 
-/** The API answers per path, like the backend: the club, then its member summary. */
-function backend(club: object | ApiError) {
+const visitor = { member: false, owner: false, roles: [], permissions: [] };
+const owner = { member: true, owner: true, roles: [{ name: "Owner" }, { name: "Member" }], permissions: ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE"] };
+
+/** The API answers per path, like the backend: who I am, the club, its member summary, my membership. */
+function backend(club: object | ApiError, membership: object = visitor) {
   vi.mocked(api.GET).mockImplementation(((path: string) => {
+    if (path === "/api/me") return Promise.resolve({ data: { id: "u9", login: "student", admin: false } });
     if (path === "/api/clubs/{idOrSlug}") return club instanceof ApiError ? Promise.reject(club) : Promise.resolve({ data: club });
     if (path === "/api/clubs/{clubId}/member-summary") return Promise.resolve({ data: summary });
+    if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: membership });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
@@ -60,7 +65,27 @@ describe("club page", () => {
     expect(await within(about).findByText("3 members")).toBeTruthy();
     expect(within(about).getByText("Ada Founder")).toBeTruthy();
     expect(within(about).getByText("@bob")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Members" }).getAttribute("href")).toBe("/c/chess-club/members");
+  });
+
+  it("shows a visitor the join button and only the public sections", async () => {
+    backend(chess);
+    renderClubPage();
+
+    expect(await screen.findByRole("button", { name: "Join club" })).toBeTruthy();
+    const sections = screen.getByRole("complementary", { name: "Club sections" });
+    expect(within(sections).getByRole("link", { name: "History" })).toBeTruthy();
+    expect(within(sections).queryByRole("link", { name: "Members" })).toBeNull();
+    expect(within(sections).queryByRole("link", { name: "Settings" })).toBeNull();
+  });
+
+  it("shows an owner the member menu, the members and the settings", async () => {
+    backend(chess, owner);
+    renderClubPage();
+
+    expect(await screen.findByRole("button", { name: /Member/ })).toBeTruthy();
+    const sections = screen.getByRole("complementary", { name: "Club sections" });
+    expect((await within(sections).findByRole("link", { name: "Members" })).getAttribute("href")).toBe("/c/chess-club/members");
+    expect(within(sections).getByRole("link", { name: "Settings" })).toBeTruthy();
   });
 
   it("tells the founder that a new club is waiting for approval", async () => {

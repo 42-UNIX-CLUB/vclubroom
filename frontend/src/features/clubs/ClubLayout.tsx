@@ -1,5 +1,7 @@
 import { SearchXIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useParams } from "react-router";
+import { useMe } from "@/features/auth";
+import { can, type ClubPermission, JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
 import { ApiError } from "@/shared/api/errors";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
@@ -10,12 +12,17 @@ import { type ClubStatus, StatusBadge } from "@/shared/ui/StatusBadge";
 import { type Club, useClub } from "./api";
 import { ClubAboutPanel } from "./ClubAboutPanel";
 
-const SECTIONS = [
+/** Any of these opens at least one settings tab (08-frontend §4: each tab needs its permission). */
+const MANAGE: ClubPermission[] = ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE", "ROLE_MANAGE", "GROUP_MANAGE", "SPACE_MANAGE"];
+
+type Viewer = { membership: MembershipView | undefined; admin: boolean };
+
+const SECTIONS: { path: string; label: string; visible?: (viewer: Viewer) => boolean }[] = [
   { path: "", label: "Home" },
   { path: "events", label: "Events" },
-  { path: "members", label: "Members" },
+  { path: "members", label: "Members", visible: ({ membership, admin }) => !!membership?.member || admin },
   { path: "history", label: "History" },
-  { path: "settings", label: "Settings" },
+  { path: "settings", label: "Settings", visible: ({ membership }) => MANAGE.some((p) => can(membership, p)) },
 ];
 
 const sectionClass = ({ isActive }: { isActive: boolean }) => cn(
@@ -30,6 +37,8 @@ const sectionClass = ({ isActive }: { isActive: boolean }) => cn(
 export function ClubLayout() {
   const { slug = "" } = useParams();
   const { data: club, error, isPending } = useClub(slug);
+  const { data: me } = useMe();
+  const { data: membership } = useMyMembership(club?.id ?? "", !!club?.id);
 
   if (isPending) return <FullPageSpinner />;
   if (error) {
@@ -55,7 +64,7 @@ export function ClubLayout() {
         {open && (
           <aside aria-label="Club sections">
             <nav className="flex gap-1 overflow-x-auto md:flex-col">
-              {SECTIONS.map(({ path, label }) => (
+              {SECTIONS.filter(({ visible }) => !visible || visible({ membership, admin: !!me?.admin })).map(({ path, label }) => (
                 <NavLink key={label} to={path ? `/c/${slug}/${path}` : `/c/${slug}`} end={!path} className={sectionClass}>
                   {label}
                 </NavLink>
@@ -90,7 +99,7 @@ function ClubHeader({ club }: { club: Club }) {
           </div>
           {club.tagline && <p className="text-muted-foreground">{club.tagline}</p>}
         </div>
-        {/* E07-S02: <JoinButton /> goes here. */}
+        <JoinButton club={{ id: club.id ?? "", name: club.name ?? "", status: club.status ?? "", joinPolicy: club.joinPolicy ?? "" }} />
       </div>
     </header>
   );
