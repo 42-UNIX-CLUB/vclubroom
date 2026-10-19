@@ -6,11 +6,13 @@ export type ClubEvent = components["schemas"]["EventView"];
 export type ScheduleEventInput = components["schemas"]["ScheduleEventRequest"];
 export type EditEventInput = components["schemas"]["EditEventRequest"];
 export type CalendarItem = components["schemas"]["CalendarItem"];
+export type RsvpStatus = NonNullable<ClubEvent["myRsvp"]>;
 export type CalendarRange = { from: string; to: string };
 
 /** Query keys of this feature (08-frontend §5.1): every calendar view lives under ["calendar"]. */
 export const calendarKeys = {
   event: (eventId: string) => ["event", eventId] as const,
+  attendees: (eventId: string) => ["event", eventId, "attendees"] as const,
   all: ["calendar"] as const,
   campus: (scope: "all" | "mine", range: CalendarRange | null) => ["calendar", scope, range] as const,
   club: (clubId: string, range: CalendarRange | null) => ["calendar", "club", clubId, range] as const,
@@ -37,16 +39,38 @@ export function useClubCalendar(clubId: string, range: CalendarRange | null) {
   });
 }
 
-/** After any change to an event, its page shows the answer and every calendar asks again. */
+/** After any change to an event (or an answer), its page shows the answer and every calendar asks again. */
 function eventChanged(queryClient: QueryClient, event: ClubEvent) {
   queryClient.setQueryData(calendarKeys.event(event.id ?? ""), event);
-  return queryClient.invalidateQueries({ queryKey: calendarKeys.all });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: calendarKeys.attendees(event.id ?? "") }),
+    queryClient.invalidateQueries({ queryKey: calendarKeys.all }),
+  ]);
 }
 
 export function useEvent(eventId: string) {
   return useQuery({
     queryKey: calendarKeys.event(eventId),
     queryFn: async () => (await api.GET("/api/events/{eventId}", { params: { path: { eventId } } })).data as ClubEvent,
+  });
+}
+
+/** Going and interested people, by name (readers of the event's space). */
+export function useAttendees(eventId: string) {
+  return useQuery({
+    queryKey: calendarKeys.attendees(eventId),
+    queryFn: async () => (await api.GET("/api/events/{eventId}/attendees", { params: { path: { eventId } } })).data ?? [],
+  });
+}
+
+/** Answer (a status), or take the answer back (null). The server returns the event with its new counts. */
+export function useRsvp(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (status: RsvpStatus | null) => (status
+      ? await api.PUT("/api/events/{eventId}/rsvp", { params: { path: { eventId } }, body: { status } })
+      : await api.DELETE("/api/events/{eventId}/rsvp", { params: { path: { eventId } } })).data as ClubEvent,
+    onSuccess: (event) => eventChanged(queryClient, event),
   });
 }
 

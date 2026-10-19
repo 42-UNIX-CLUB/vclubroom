@@ -15,10 +15,15 @@ const blitz = {
   status: "SCHEDULED", canManage: true,
 };
 
+const attendees = [
+  { user: { id: "u1", login: "ada", displayName: "Ada Lopes" }, status: "GOING" },
+  { user: { id: "u2", login: "bob", displayName: "Bob Martins" }, status: "INTERESTED" },
+];
+
 function renderPage(event: object | ApiError) {
   vi.mocked(api.GET).mockImplementation(((path: string) => path === "/api/events/{eventId}"
     ? (event instanceof ApiError ? Promise.reject(event) : Promise.resolve({ data: event }))
-    : Promise.resolve({ data: [] })) as never);
+    : Promise.resolve({ data: path === "/api/events/{eventId}/attendees" ? attendees : [] })) as never);
   vi.mocked(api.POST).mockResolvedValue({ data: { ...blitz, status: "CANCELLED", cancelReason: "Room taken", canManage: false } } as never);
   const router = createMemoryRouter([{ path: "/events/:eventId", element: <EventPage /> }], { initialEntries: ["/events/e1"] });
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><RouterProvider router={router} /></QueryClientProvider>);
@@ -38,6 +43,8 @@ describe("EventPage", () => {
     expect(screen.getByText("Cluster 2")).toBeTruthy();
     expect(screen.getByText("clock").tagName).toBe("STRONG");
     expect(screen.getByRole("link", { name: "Chess Club" }).getAttribute("href")).toBe("/c/chess");
+    expect(await screen.findByText("Ada Lopes")).toBeTruthy();                              // who's coming (E11-S03)
+    expect(screen.getByText("Interested")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
   });
 
