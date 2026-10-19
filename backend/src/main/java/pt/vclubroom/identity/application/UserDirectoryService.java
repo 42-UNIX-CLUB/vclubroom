@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.vclubroom.identity.api.PlatformRole;
@@ -58,6 +59,18 @@ public class UserDirectoryService implements UserDirectory {
     @Override
     public List<UUID> adminIds() {
         return users.findIdsByRole(PlatformRole.ADMIN);
+    }
+
+    /**
+     * Active users whose login starts with, or whose display name contains, the query (ownership invitations,
+     * groups). Fewer than 2 characters finds nobody: a one-letter search would list half the campus.
+     */
+    public List<UserSummary> search(String query, int limit) {
+        String q = query == null ? "" : query.strip();
+        if (q.length() < 2) {
+            return List.of();
+        }
+        return users.search(q, Limit.of(Math.clamp(limit, 1, 20))).stream().map(UserDirectoryService::summary).toList();
     }
 
     public MeResponse requireMe(UUID userId) {
