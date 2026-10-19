@@ -61,7 +61,7 @@ export const routes: RouteObject[] = [
               },
               { path: "posts/:postId", element: soon("Post", "E12-S01") },
               { path: "events/:eventId", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.EventPage })) },
-              { path: "calendar", element: soon("Campus calendar", "E11-S02") },
+              { path: "calendar", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.CampusCalendarPage })) },
               { path: "notifications", element: soon("Notifications", "E12-S01") },
               { path: "settings", element: soon("Settings", "E12-S02") },
             ],

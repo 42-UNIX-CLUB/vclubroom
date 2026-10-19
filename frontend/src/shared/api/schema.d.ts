@@ -235,7 +235,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["club"];
         put?: never;
         post: operations["schedule"];
         delete?: never;
@@ -459,7 +459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["club"];
+        get: operations["club_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -668,6 +668,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["channel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["campus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1216,6 +1232,21 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        CalendarItem: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            /** Format: uuid */
+            clubId?: string;
+            clubSlug?: string;
+            clubName?: string;
+            /** @enum {string} */
+            status?: "SCHEDULED" | "CANCELLED";
+        };
         CursorPagePostResponse: {
             items?: components["schemas"]["PostResponse"][];
             nextCursor?: string;
@@ -1653,6 +1684,31 @@ export interface operations {
             };
         };
     };
+    club: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CalendarItem"][];
+                };
+            };
+        };
+    };
     schedule: {
         parameters: {
             query?: never;
@@ -2036,7 +2092,7 @@ export interface operations {
             };
         };
     };
-    club: {
+    club_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2337,6 +2393,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ChannelView"];
+                };
+            };
+        };
+    };
+    campus: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                scope?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CalendarItem"][];
                 };
             };
         };
