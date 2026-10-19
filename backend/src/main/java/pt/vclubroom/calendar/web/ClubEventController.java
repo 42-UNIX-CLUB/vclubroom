@@ -18,7 +18,7 @@ import pt.vclubroom.calendar.web.dto.EditEventRequest;
 import pt.vclubroom.calendar.web.dto.ScheduleEventRequest;
 import pt.vclubroom.shared.security.AuthenticatedUser;
 
-/** One club event (calendar.md §7). E11-S02 adds the calendars (/api/calendar, /api/clubs/{clubId}/events). */
+/** One club event (calendar.md §7); the calendars are in CalendarController. */
 @RestController
 class ClubEventController {
 
