@@ -1,11 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
 import { ChannelFeed, type FeedChannel } from "./ChannelFeed";
 
 vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), POST: vi.fn() } }));
+// The live connection is replaced by a record of who listens where, so the test can play a push.
+const live = vi.hoisted(() => ({ handlers: new Map<string, (envelope: { type: string; payload: unknown }) => void>() }));
+vi.mock("@/shared/realtime/RealtimeProvider", () => ({
+  useTopic: (destination: string | null, handler: (envelope: { type: string; payload: unknown }) => void) => {
+    if (destination) live.handlers.set(destination, handler);
+  },
+}));
 
 const post = (n: number) => ({ id: `p${n}`, body: `Post ${n}`, author: { displayName: "Ada" }, createdAt: new Date().toISOString(), commentCount: 0 });
 
@@ -64,6 +71,21 @@ describe("ChannelFeed", () => {
     expect(screen.queryByRole("textbox", { name: "Write a post" })).toBeNull();
     expect(queryOf(0)).toMatchObject({ era: 1 });
     expect(screen.getByRole("link", { name: "Back to era 2" })).toBeTruthy();
+  });
+
+  it("follows the channel live: new posts, comment counts and reactions", async () => {
+    backend();
+    renderFeed({ id: "ch1", canWrite: true, currentEra: 1 });
+    expect(await screen.findByText("Post 3")).toBeTruthy();
+    const push = (type: string, payload: unknown) => act(() => live.handlers.get("/topic/channels/ch1/posts")?.({ type, payload }));
+
+    const before = vi.mocked(api.GET).mock.calls.length;
+    push("post.created", { postId: "p4" });
+    await waitFor(() => expect(vi.mocked(api.GET).mock.calls.length).toBeGreaterThan(before));   // the feed reloads
+    push("comment.created", { postId: "p3", commentId: "c9", commentCount: 4 });
+    expect(await screen.findByRole("button", { name: "4 comments" })).toBeTruthy();
+    push("comment.created", { postId: "p3", commentId: "c9", commentCount: 4 });              // a repeat changes nothing
+    expect(screen.getByRole("button", { name: "4 comments" })).toBeTruthy();
   });
 
   it("invites the first post in an empty channel", async () => {

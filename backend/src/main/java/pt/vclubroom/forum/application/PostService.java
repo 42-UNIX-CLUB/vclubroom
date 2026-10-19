@@ -3,6 +3,7 @@ package pt.vclubroom.forum.application;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -12,14 +13,15 @@ import pt.vclubroom.forum.events.PostPublished;
 import pt.vclubroom.forum.persistence.PostRepository;
 import pt.vclubroom.media.api.MediaCatalog;
 import pt.vclubroom.media.api.MediaPurpose;
+import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.space.api.ChannelAccess;
 import pt.vclubroom.space.api.ChannelType;
 import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
- * Writing posts (forum.md §8.1). Access is decided by the space module, never here.
- * E10-S01 adds the real-time push of new posts; E09-S04 edit, delete and pin.
+ * Writing posts (forum.md §8.1). Access is decided by the space module, never here. Readers of the channel are told
+ * at once (after the commit); E09-S04 adds edit, delete and pin.
  */
 @Service
 public class PostService {
@@ -29,15 +31,17 @@ public class PostService {
     private final MediaCatalog mediaCatalog;
     private final PostAssembler assembler;
     private final ApplicationEventPublisher events;
+    private final RealtimePublisher realtime;
     private final Clock clock;
 
     PostService(PostRepository posts, SpaceAccessPolicy spaceAccess, MediaCatalog mediaCatalog,
-                PostAssembler assembler, ApplicationEventPublisher events, Clock clock) {
+                PostAssembler assembler, ApplicationEventPublisher events, RealtimePublisher realtime, Clock clock) {
         this.posts = posts;
         this.spaceAccess = spaceAccess;
         this.mediaCatalog = mediaCatalog;
         this.assembler = assembler;
         this.events = events;
+        this.realtime = realtime;
         this.clock = clock;
     }
 
@@ -55,6 +59,7 @@ public class PostService {
 
         events.publishEvent(new PostPublished(post.id(), channelId, access.spaceId(), access.clubId(),
             actor.userId(), post.era(), post.title(), post.excerpt(), now));
+        realtime.toTopic(ForumTopics.channelPosts(channelId), "post.created", Map.of("postId", post.id()));
         return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
     }
 }

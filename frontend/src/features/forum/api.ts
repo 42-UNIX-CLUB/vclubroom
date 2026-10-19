@@ -1,6 +1,7 @@
 import { type InfiniteData, type QueryClient, type QueryKey, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
+import { useTopic } from "@/shared/realtime/RealtimeProvider";
 
 export type Post = components["schemas"]["PostResponse"];
 export type NewPost = components["schemas"]["CreatePostRequest"];
@@ -133,5 +134,37 @@ export function useToggleReaction(target: ReactionTarget) {
       updateCachedItems<{ items?: (Reacted & { id?: string })[] }>(queryClient, key, target.id,
         (item) => ({ ...item, reactionCounts: state.counts ?? {}, myReactions: state.mine ?? [] }));
     },
+  });
+}
+
+type LivePayload = { postId?: string; commentId?: string; commentCount?: number; targetType?: string; targetId?: string; counts?: Record<string, number> };
+
+/**
+ * A feed listens to its channel (realtime, E10-S01): new posts reload the pages, comment counts and post reactions
+ * are written into the cached posts. Pushes carry values, not changes, so my own actions are never counted twice.
+ */
+export function useChannelLive(channelId: string) {
+  const queryClient = useQueryClient();
+  useTopic<LivePayload>(channelId ? `/topic/channels/${channelId}/posts` : null, ({ type, payload }) => {
+    const key = forumKeys.allPosts(channelId);
+    if (type === "post.created") void queryClient.invalidateQueries({ queryKey: key });
+    if (type === "comment.created" && payload.postId && payload.commentCount !== undefined) {
+      updateCachedItems<PostPage>(queryClient, key, payload.postId, (post) => ({ ...post, commentCount: payload.commentCount }));
+    }
+    if (type === "reactions.changed" && payload.targetId) {
+      updateCachedItems<PostPage>(queryClient, key, payload.targetId, (post) => ({ ...post, reactionCounts: payload.counts ?? {} }));
+    }
+  });
+}
+
+/** An open thread listens to its post: new comments reload it, comment reactions update their counts. */
+export function usePostLive(postId: string) {
+  const queryClient = useQueryClient();
+  useTopic<LivePayload>(postId ? `/topic/posts/${postId}` : null, ({ type, payload }) => {
+    const key = forumKeys.comments(postId);
+    if (type === "comment.created") void queryClient.invalidateQueries({ queryKey: key });
+    if (type === "reactions.changed" && payload.targetId) {
+      updateCachedItems<{ items?: Comment[] }>(queryClient, key, payload.targetId, (comment) => ({ ...comment, reactionCounts: payload.counts ?? {} }));
+    }
   });
 }

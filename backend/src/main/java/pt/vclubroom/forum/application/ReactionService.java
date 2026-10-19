@@ -11,6 +11,7 @@ import pt.vclubroom.forum.domain.ReactionTarget;
 import pt.vclubroom.forum.persistence.CommentRepository;
 import pt.vclubroom.forum.persistence.PostRepository;
 import pt.vclubroom.forum.persistence.ReactionRepository;
+import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.error.BusinessRuleException;
 import pt.vclubroom.shared.error.InvalidRequestException;
 import pt.vclubroom.shared.error.NotFoundException;
@@ -20,8 +21,8 @@ import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
  * Adding and removing reactions (forum.md §8.3). Both are idempotent, so the SPA can toggle optimistically and
- * simply retry. Same access as commenting: write access in the post's channel, current era only.
- * E10-S01 pushes reactions.changed to /topic/posts/{postId}.
+ * simply retry. Same access as commenting: write access in the post's channel, current era only. The new counts
+ * are pushed: a post's to its channel's feed, a comment's to its post's thread.
  */
 @Service
 public class ReactionService {
@@ -32,15 +33,18 @@ public class ReactionService {
     private final ReactionSummary summary;
     private final SpaceAccessPolicy spaceAccess;
     private final ForumProperties properties;
+    private final RealtimePublisher realtime;
 
     ReactionService(PostRepository posts, CommentRepository comments, ReactionRepository reactions,
-                    ReactionSummary summary, SpaceAccessPolicy spaceAccess, ForumProperties properties) {
+                    ReactionSummary summary, SpaceAccessPolicy spaceAccess, ForumProperties properties,
+                    RealtimePublisher realtime) {
         this.posts = posts;
         this.comments = comments;
         this.reactions = reactions;
         this.summary = summary;
         this.spaceAccess = spaceAccess;
         this.properties = properties;
+        this.realtime = realtime;
     }
 
     /** The reactions of the target afterwards, as the viewer sees them. */
@@ -62,6 +66,8 @@ public class ReactionService {
             reactions.remove(target, targetId, actor.userId(), code);
         }
         ReactionSummary.Reactions now = summary.of(target, targetId, actor.userId());
+        realtime.toTopic(target == ReactionTarget.POST ? ForumTopics.channelPosts(post.channelId()) : ForumTopics.post(post.id()),
+            "reactions.changed", Map.of("targetType", target.name(), "targetId", targetId, "counts", now.counts()));
         return new ReactionState(now.counts(), now.mine());
     }
 
