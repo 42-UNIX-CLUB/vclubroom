@@ -41,7 +41,7 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubHome })) },
                   { path: "s/:spaceSlug/:channelSlug", lazy: () => import("@/features/spaces").then((m) => ({ Component: m.ChannelPage })) },
-                  { path: "events", element: soon("Club events", "E11-S02") },
+                  { path: "events", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.ClubEventsPage })) },
                   { path: "members", element: soon("Members", "E07-S04") },
                   { path: "history", lazy: () => import("@/features/history").then((m) => ({ Component: m.ClubHistoryPage })) },
                   {
@@ -60,7 +60,7 @@ export const routes: RouteObject[] = [
                 ],
               },
               { path: "posts/:postId", element: soon("Post", "E12-S01") },
-              { path: "events/:eventId", element: soon("Event", "E11-S01") },
+              { path: "events/:eventId", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.EventPage })) },
               { path: "calendar", element: soon("Campus calendar", "E11-S02") },
               { path: "notifications", element: soon("Notifications", "E12-S01") },
               { path: "settings", element: soon("Settings", "E12-S02") },
