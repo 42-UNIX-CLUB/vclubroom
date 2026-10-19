@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.vclubroom.forum.domain.Post;
 import pt.vclubroom.forum.persistence.PostRepository;
+import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.shared.web.CursorPage;
 import pt.vclubroom.shared.web.TimeCursor;
@@ -31,6 +32,13 @@ public class PostQueryService {
         this.posts = posts;
         this.spaceAccess = spaceAccess;
         this.assembler = assembler;
+    }
+
+    /** One post, for whoever can read its channel (a notification's link lands here, E12-S01). */
+    public PostView get(Actor actor, UUID postId) {
+        Post post = posts.findById(postId).orElseThrow(() -> new NotFoundException("POST_NOT_FOUND", "Post not found"));
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
     }
 
     /** Newest first; era = null for every era, else only that era (the History tab, E14-S03). */
