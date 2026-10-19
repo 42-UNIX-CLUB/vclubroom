@@ -10,8 +10,10 @@ vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn() } }));
 afterEach(cleanup);
 
 describe("AdminLayout", () => {
-  it("shows how many club requests wait for approval", async () => {
-    vi.mocked(api.GET).mockResolvedValue({ data: { items: [], page: 0, size: 100, totalElements: 3 } } as never);
+  it("shows how many club and revival requests wait", async () => {
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: { items: [], page: 0, size: 100, totalElements: path === "/api/admin/clubs" ? 3 : 1 },
+    })) as never);
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter initialEntries={["/admin/approvals"]}>
@@ -20,6 +22,7 @@ describe("AdminLayout", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByLabelText("3 pending")).toBeTruthy();
+    expect(await screen.findByLabelText("1 pending revivals")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Clubs/ }).getAttribute("href")).toBe("/admin/clubs");
   });
 });

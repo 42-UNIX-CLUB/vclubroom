@@ -77,7 +77,7 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, element: <Navigate to="approvals" replace /> },
                   { path: "approvals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.ApprovalQueuePage })) },
-                  { path: "revivals", element: soon("Revival requests", "E14-S02") },
+                  { path: "revivals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.RevivalQueuePage })) },
                   { path: "clubs", lazy: () => import("@/features/admin").then((m) => ({ Component: m.AdminClubsPage })) },
                   { path: "users", element: soon("Users", "E15-S02") },
                   { path: "campus-groups", element: soon("Campus groups", "E15-S03") },

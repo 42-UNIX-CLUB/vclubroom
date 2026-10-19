@@ -3,12 +3,14 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 
 export type AdminClub = components["schemas"]["ClubResponse"];
+export type RevivalRequest = components["schemas"]["RevivalRequestResponse"];
 export type ClubStatusFilter = "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
 
 /** Query keys of the admin console (everything under ["admin"] is refreshed after an admin action). */
 export const adminKeys = {
   all: () => ["admin"] as const,
   clubs: (status: ClubStatusFilter) => ["admin", "clubs", status] as const,
+  revivals: () => ["admin", "revival-requests"] as const,
 };
 
 export function useAdminClubs(status: ClubStatusFilter) {
@@ -43,6 +45,42 @@ export function useArchiveClub() {
       queryClient.invalidateQueries({ queryKey: ["club"] }),
       queryClient.invalidateQueries({ queryKey: ["public"] }),
     ]),
+  });
+}
+
+/** Pending revival requests, oldest first (E14-S02). */
+export function useRevivalRequests() {
+  return useQuery({
+    queryKey: adminKeys.revivals(),
+    queryFn: async () => (await api.GET("/api/admin/revival-requests", { params: { query: { status: "PENDING", size: 100 } } })).data,
+  });
+}
+
+/** Number shown on the "Revivals" badge of the admin navigation. */
+export function usePendingRevivalCount(): number {
+  return useRevivalRequests().data?.totalElements ?? 0;
+}
+
+/** A revived club is active again: its page and the directory change too. */
+export function useApproveRevival() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (requestId: string) =>
+      (await api.POST("/api/admin/revival-requests/{requestId}/approve", { params: { path: { requestId } } })).data as AdminClub,
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: adminKeys.all() }),
+      queryClient.invalidateQueries({ queryKey: ["club"] }),
+      queryClient.invalidateQueries({ queryKey: ["public"] }),
+    ]),
+  });
+}
+
+export function useRejectRevival() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ requestId, reason }: { requestId: string; reason: string }) =>
+      (await api.POST("/api/admin/revival-requests/{requestId}/reject", { params: { path: { requestId } }, body: { reason } })).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.all() }),
   });
 }
 

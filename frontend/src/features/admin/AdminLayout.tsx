@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router";
-import { cn } from "@/shared/lib/utils.ts";
-import { Badge } from "@/shared/ui/badge.tsx";
-import { usePendingClubCount } from "./api";
+import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/ui/badge";
+import { usePendingClubCount, usePendingRevivalCount } from "./api";
 
 const PAGES = [
   { path: "approvals", label: "Approvals" },
@@ -11,9 +11,10 @@ const PAGES = [
   { path: "campus-groups", label: "Campus groups" },
 ];
 
-/** Admin console frame (E15-S01): side navigation with the pending-approvals badge. E14-S02 adds the revivals badge. */
+/** Admin console frame (E15-S01): side navigation with the badges of what waits for a decision. */
 export function AdminLayout() {
   const pendingApprovals = usePendingClubCount();
+  const pendingRevivals = usePendingRevivalCount();
   return (
     <div className="grid gap-6 md:grid-cols-[12rem_1fr]">
       <nav aria-label="Admin" className="flex flex-col gap-1">
@@ -29,6 +30,7 @@ export function AdminLayout() {
           >
             {label}
             {path === "approvals" && pendingApprovals > 0 && <Badge aria-label={`${pendingApprovals} pending`}>{pendingApprovals}</Badge>}
+            {path === "revivals" && pendingRevivals > 0 && <Badge aria-label={`${pendingRevivals} pending revivals`}>{pendingRevivals}</Badge>}
           </NavLink>
         ))}
       </nav>
