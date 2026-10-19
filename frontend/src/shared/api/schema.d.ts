@@ -804,6 +804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{clubId}/member-summary": {
         parameters: {
             query?: never;
@@ -827,7 +843,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -907,7 +923,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -927,6 +943,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove"];
         options?: never;
         head?: never;
         patch?: never;
@@ -974,7 +1006,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove"];
+        delete: operations["remove_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1483,6 +1515,26 @@ export interface components {
             id?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        MemberResponse: {
+            /** Format: uuid */
+            userId?: string;
+            login?: string;
+            displayName?: string;
+            avatarUrl?: string;
+            owner?: boolean;
+            roles?: components["schemas"]["RoleView"][];
+            /** Format: date-time */
+            joinedAt?: string;
+        };
+        PageResponseMemberResponse: {
+            items?: components["schemas"]["MemberResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
         };
         MemberSummaryResponse: {
             /** Format: int64 */
@@ -2916,6 +2968,33 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: {
+                query?: string;
+                roleId?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseMemberResponse"];
+                };
+            };
+        };
+    };
     summary: {
         parameters: {
             query?: never;
@@ -2938,7 +3017,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -3050,7 +3129,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
@@ -3080,6 +3159,27 @@ export interface operations {
             header?: never;
             path: {
                 invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                userId: string;
             };
             cookie?: never;
         };
@@ -3134,7 +3234,7 @@ export interface operations {
             };
         };
     };
-    remove: {
+    remove_1: {
         parameters: {
             query?: never;
             header?: never;
