@@ -8,6 +8,7 @@ import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Markdown } from "@/shared/ui/Markdown";
 import type { Post } from "./api";
 import { Comments } from "./Comments";
+import { Reactions } from "./Reactions";
 
 /** One post: author and time, optional title, Markdown body, players for its media, and its thread on demand. */
 export function PostCard({ post }: { post: Post }) {
@@ -43,11 +44,17 @@ export function PostCard({ post }: { post: Post }) {
             )}
           </>
         )}
-        <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" aria-expanded={showComments}
-          onClick={() => setShowComments((open) => !open)}>
-          <MessageSquareIcon aria-hidden="true" />
-          {count} {count === 1 ? "comment" : "comments"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!post.deleted && (
+            <Reactions target={{ kind: "post", id: post.id ?? "", channelId: post.channelId ?? "" }}
+              counts={post.reactionCounts} mine={post.myReactions} readOnly={post.readOnly} />
+          )}
+          <Button variant="ghost" size="sm" className="text-muted-foreground" aria-expanded={showComments}
+            onClick={() => setShowComments((open) => !open)}>
+            <MessageSquareIcon aria-hidden="true" />
+            {count} {count === 1 ? "comment" : "comments"}
+          </Button>
+        </div>
         {showComments && <Comments post={post} />}
       </CardContent>
     </Card>

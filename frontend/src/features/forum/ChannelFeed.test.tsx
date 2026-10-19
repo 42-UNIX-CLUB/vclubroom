@@ -11,13 +11,15 @@ const post = (n: number) => ({ id: `p${n}`, body: `Post ${n}`, author: { display
 
 /** Two pages: the first (no cursor) has posts 3 and 2 and points to the second, which has post 1. */
 function backend() {
-  vi.mocked(api.GET).mockImplementation(((_path: string, init: { params: { query: { cursor?: string } } }) =>
-    Promise.resolve({ data: init.params.query.cursor
+  vi.mocked(api.GET).mockImplementation(((path: string, init: { params: { query: { cursor?: string } } }) =>
+    Promise.resolve({ data: path === "/api/reactions" ? [] : init.params.query.cursor
       ? { items: [post(1)], nextCursor: null }
       : { items: [post(3), post(2)], nextCursor: "c2" } })) as never);
 }
 
-const queryOf = (call: number) => (vi.mocked(api.GET).mock.calls[call]?.[1] as { params: { query: Record<string, unknown> } }).params.query;
+/** The query of the n-th request for posts (the cards also ask for the reaction set). */
+const queryOf = (n: number) => ((vi.mocked(api.GET).mock.calls as unknown as [string, { params: { query: Record<string, unknown> } }][])
+  .filter(([path]) => path === "/api/channels/{channelId}/posts")[n]?.[1])?.params.query;
 
 function renderFeed(channel: FeedChannel, url = "/c/chess/s/general/posts") {
   const router = createMemoryRouter([{ path: "/c/:slug/s/:space/:channel", element: <ChannelFeed channel={channel} /> }], { initialEntries: [url] });

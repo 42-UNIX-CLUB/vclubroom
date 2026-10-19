@@ -6,6 +6,7 @@ import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 import { type Comment, type Post, useAddComment, useComments } from "./api";
+import { Reactions } from "./Reactions";
 
 /**
  * The thread under a post (08-frontend §9.3): comments oldest first, each with its replies below it, one level
@@ -43,10 +44,10 @@ export function Comments({ post }: { post: Post }) {
             const replies = comments.filter((reply) => reply.parentId === comment.id);
             return (
               <li key={comment.id} className="space-y-2">
-                <CommentItem comment={comment} />
+                <CommentItem comment={comment} readOnly={!canWrite} />
                 {replies.length > 0 && (
                   <ul aria-label={`Replies to ${comment.author?.displayName ?? "this comment"}`} className="ml-4 space-y-2 border-l pl-3">
-                    {replies.map((reply) => <li key={reply.id}><CommentItem comment={reply} /></li>)}
+                    {replies.map((reply) => <li key={reply.id}><CommentItem comment={reply} readOnly={!canWrite} /></li>)}
                   </ul>
                 )}
                 {canWrite && !comment.deleted && (replyTo === comment.id ? (
@@ -72,7 +73,7 @@ export function Comments({ post }: { post: Post }) {
   );
 }
 
-function CommentItem({ comment }: { comment: Comment }) {
+function CommentItem({ comment, readOnly }: { comment: Comment; readOnly: boolean }) {
   const author = comment.author?.displayName ?? "Unknown user";
   return (
     <div className="flex gap-2 text-sm">
@@ -88,7 +89,13 @@ function CommentItem({ comment }: { comment: Comment }) {
         </p>
         {comment.deleted
           ? <p className="text-muted-foreground italic">{comment.deletedByModerator ? "Removed by a moderator." : "Deleted."}</p>
-          : <p className="break-words whitespace-pre-wrap">{comment.body}</p>}
+          : (
+            <>
+              <p className="break-words whitespace-pre-wrap">{comment.body}</p>
+              <Reactions target={{ kind: "comment", id: comment.id ?? "", postId: comment.postId ?? "" }}
+                counts={comment.reactionCounts} mine={comment.myReactions} readOnly={readOnly} />
+            </>
+          )}
       </div>
     </div>
   );
