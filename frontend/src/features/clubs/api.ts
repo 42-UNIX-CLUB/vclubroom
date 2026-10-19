@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 
 export type Club = components["schemas"]["ClubResponse"];
 export type CreateClubInput = components["schemas"]["CreateClubRequest"];
+export type UpdateClubInput = components["schemas"]["UpdateClubRequest"];
 
 /** Query keys of this feature (08-frontend §5.1). */
 export const clubKeys = {
@@ -38,6 +39,22 @@ export function useMyClubRequests() {
   return useQuery({
     queryKey: clubKeys.myRequests(),
     queryFn: async () => (await api.GET("/api/me/club-requests")).data ?? [],
+  });
+}
+
+/**
+ * Club settings › Profile (E04-S04). The club page, its membership data (switching to OPEN admits everyone waiting)
+ * and the directory all change, so their queries are refreshed.
+ */
+export function useUpdateClub(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: UpdateClubInput) =>
+      (await api.PATCH("/api/clubs/{clubId}", { params: { path: { clubId } }, body })).data as Club,
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["club"] }),
+      queryClient.invalidateQueries({ queryKey: ["public"] }),
+    ]),
   });
 }
 

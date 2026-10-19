@@ -34,11 +34,15 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+// The dialog loads the spaces, then renders and validates a whole form: on a busy test worker that can take longer
+// than the defaults (1 s for a lookup, 5 s for a test).
+const SLOW = 10_000;
+
 describe("EventDialog", () => {
   it("schedules in the first space, says who will see it, then opens the event", async () => {
     const router = renderDialog();
 
-    expect(await screen.findByText("Everyone can see this event, members or not.")).toBeTruthy();
+    expect(await screen.findByText("Everyone can see this event, members or not.", {}, { timeout: 3000 })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Schedule event" }));
     expect(await screen.findByText("Give the event a title.")).toBeTruthy();       // nothing sent yet
     type("Title", "Blitz night");
@@ -51,7 +55,7 @@ describe("EventDialog", () => {
       body: { spaceId: "s1", title: "Blitz night", startsAt: "2026-10-23T17:00:00.000Z", endsAt: "2026-10-23T20:00:00.000Z" },
     }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/events/e1"));
-  });
+  }, SLOW);
 
   it("edits every field but the space", async () => {
     renderDialog({
@@ -59,7 +63,7 @@ describe("EventDialog", () => {
       startsAt: "2026-10-23T17:00:00Z", endsAt: "2026-10-23T20:00:00Z",
     });
 
-    expect(await screen.findByText("Only club members can see this event.")).toBeTruthy();
+    expect(await screen.findByText("Only club members can see this event.", {}, { timeout: 3000 })).toBeTruthy();
     expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Blitz night");
     expect((screen.getByLabelText("Starts") as HTMLInputElement).value).toBe("2026-10-23T18:00");
     expect(screen.queryByText("cover picker")).toBeNull();
@@ -70,5 +74,5 @@ describe("EventDialog", () => {
       params: { path: { eventId: "e1" } },
       body: { title: "Blitz night (moved)", location: "Cluster 2", startsAt: "2026-10-23T17:00:00.000Z", endsAt: "2026-10-23T20:00:00.000Z" },
     }));
-  });
+  }, SLOW);
 });

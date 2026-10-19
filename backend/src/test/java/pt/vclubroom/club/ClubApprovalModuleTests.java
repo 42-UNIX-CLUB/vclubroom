@@ -19,7 +19,9 @@ import pt.vclubroom.club.application.CreateClubCommand;
 import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.club.events.ClubRejected;
+import pt.vclubroom.club.spi.ClubManagementGuard;
 import pt.vclubroom.identity.api.UserDirectory;
+import pt.vclubroom.media.api.MediaCatalog;
 import pt.vclubroom.shared.security.Actor;
 
 /** The club module started on its own: what it announces when an admin decides (E04-S02-T3). */
@@ -31,6 +33,12 @@ class ClubApprovalModuleTests {
 
     @MockitoBean
     UserDirectory users;                                                   // RevivalService names requesters (E14-S02)
+
+    @MockitoBean
+    ClubManagementGuard managementGuard;                                   // implemented by membership (E04-S04)
+
+    @MockitoBean
+    MediaCatalog mediaCatalog;                                             // avatars and banners (E04-S04)
 
     @Autowired
     ClubService clubs;

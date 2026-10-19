@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,9 +17,10 @@ import pt.vclubroom.club.application.ClubService;
 import pt.vclubroom.club.web.dto.ClubEraResponse;
 import pt.vclubroom.club.web.dto.ClubResponse;
 import pt.vclubroom.club.web.dto.CreateClubRequest;
+import pt.vclubroom.club.web.dto.UpdateClubRequest;
 import pt.vclubroom.shared.security.AuthenticatedUser;
 
-/** /api/** requires a logged-in user (SecurityConfig). E04-S04 adds PATCH /api/clubs/{clubId}. */
+/** /api/** requires a logged-in user (SecurityConfig). */
 @RestController
 class ClubController {
 
@@ -39,6 +42,12 @@ class ClubController {
     @GetMapping("/api/clubs/{idOrSlug}")
     ClubResponse get(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("idOrSlug") String idOrSlug) {
         return ClubResponse.from(queries.get(me.actor(), idOrSlug));
+    }
+
+    @PatchMapping("/api/clubs/{clubId}")
+    ClubResponse update(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("clubId") UUID clubId,
+                        @Valid @RequestBody UpdateClubRequest request) {
+        return ClubResponse.from(clubs.updateProfile(me.actor(), clubId, request.toCommand()));
     }
 
     /** Who ran the club when: same visibility as the club itself (club.md §7). */

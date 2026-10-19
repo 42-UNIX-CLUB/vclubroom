@@ -24,6 +24,7 @@ import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.discovery.domain.ClubCard;
 import pt.vclubroom.discovery.persistence.ClubCardRepository;
+import pt.vclubroom.media.api.MediaCatalog;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.membership.events.MemberJoined;
 
@@ -34,6 +35,9 @@ class ClubCardProjectorModuleTests {
 
     @MockitoBean
     ClubAuthorization clubAuthorization;       // from module "membership": mocked, that module is not started
+
+    @MockitoBean
+    MediaCatalog mediaCatalog;                 // from module "media" (E04-S04: the card's image URLs)
 
     @Autowired
     ClubCardRepository cards;

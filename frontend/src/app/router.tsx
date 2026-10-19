@@ -49,7 +49,7 @@ export const routes: RouteObject[] = [
                     lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsLayout })),
                     children: [
                       { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsIndex })) },
-                      { path: "profile", element: soon("Club profile settings", "E04-S04") },
+                      { path: "profile", lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsProfile })) },
                       { path: "requests", lazy: () => import("@/features/membership").then((m) => ({ Component: m.JoinRequestsPage })) },
                       { path: "roles", element: soon("Roles", "E13-S02") },
                       { path: "groups", element: soon("Groups", "E13-S03") },
