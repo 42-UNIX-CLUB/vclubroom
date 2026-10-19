@@ -27,8 +27,9 @@ import pt.vclubroom.membership.persistence.MembershipRepository;
 import pt.vclubroom.membership.persistence.OwnershipInvitationRepository;
 import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.security.Actor;
+import pt.vclubroom.shared.web.PageResponse;
 
-/** Read side of memberships. E07-S04 adds the member list (members only). */
+/** Read side of memberships. */
 @Service
 @Transactional(readOnly = true)
 public class MemberQueryService {
@@ -62,6 +63,37 @@ public class MemberQueryService {
             .sorted(Comparator.comparing(UserSummary::displayName, String.CASE_INSENSITIVE_ORDER))
             .toList();
         return new MemberSummary(memberships.countActive(clubId), owners);
+    }
+
+    /**
+     * Who is in the club, for its members (and admins): owners first, then by name. Names live in identity, so the
+     * search and the paging run in memory, which suits clubs of a few hundred people.
+     */
+    public PageResponse<MemberView> members(UUID clubId, Actor actor, String query, UUID roleId, int page, int size) {
+        if (!actor.admin() && !memberships.existsActive(clubId, actor.userId())) {
+            throw new ForbiddenException("MEMBERS_ONLY", "Only members can see who is in the club.");
+        }
+        List<Membership> active = memberships.findAllActiveWithRoles(clubId);
+        Map<UUID, ClubRole> roleById = byId(roles.findByClubIdOrderByPositionAsc(clubId));
+        Map<UUID, UserSummary> people = users.findByIds(active.stream().map(Membership::userId).toList());
+        String needle = query == null ? "" : query.trim().toLowerCase(java.util.Locale.ROOT);
+        List<MemberView> matching = active.stream()
+            .filter(m -> people.containsKey(m.userId()))
+            .filter(m -> roleId == null || m.holds(roleId))
+            .map(m -> {
+                UserSummary user = people.get(m.userId());
+                List<ClubRole> held = m.roleIds().stream().map(roleById::get).filter(java.util.Objects::nonNull)
+                    .sorted(Comparator.comparingInt(ClubRole::position)).toList();
+                return new MemberView(user.id(), user.login(), user.displayName(), user.avatarUrl(),
+                    held.stream().anyMatch(ClubRole::isOwner), held.stream().map(MemberQueryService::view).toList(), m.joinedAt());
+            })
+            .filter(v -> needle.isEmpty() || v.login().toLowerCase(java.util.Locale.ROOT).contains(needle)
+                || v.displayName().toLowerCase(java.util.Locale.ROOT).contains(needle))
+            .sorted(Comparator.comparing(MemberView::owner).reversed()
+                .thenComparing(MemberView::displayName, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+        int from = Math.min(page * size, matching.size());
+        return new PageResponse<>(matching.subList(from, Math.min(from + size, matching.size())), page, size, matching.size());
     }
 
     /** Admins get every permission without being members (R-08), so `member` and `permissions` are separate facts. */

@@ -71,4 +71,11 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
            order by m.joinedAt
            """)
     Page<Membership> findActiveByClub(@Param("clubId") UUID clubId, Pageable pageable);
+
+    /** Every active member with their role IDs in one query (the member list filters and pages in memory). */
+    @Query("""
+           select distinct m from Membership m left join fetch m.roleIds
+           where m.clubId = :clubId and m.status = pt.vclubroom.membership.domain.MembershipStatus.ACTIVE
+           """)
+    List<Membership> findAllActiveWithRoles(@Param("clubId") UUID clubId);
 }
