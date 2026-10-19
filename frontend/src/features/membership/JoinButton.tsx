@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronDownIcon, LogOutIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LogOutIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
-import { useJoinClub, useLeaveClub, useMyMembership } from "./api";
+import { useCancelJoinRequest, useJoinClub, useLeaveClub, useMyMembership } from "./api";
 
 export interface JoinableClub {
   id: string;
@@ -19,7 +19,7 @@ export interface JoinableClub {
 
 /**
  * The club header's main action (08-frontend §11.1): "Join club" (OPEN) or "Request to join" (APPROVAL),
- * "Request sent" while a request waits, and for members a menu with "Leave club".
+ * "Request sent" (with "Cancel request") while a request waits, and for members a menu with "Leave club".
  * A link to /c/<slug>?intent=join joins as soon as the page opens, so a join started before logging in resumes.
  */
 export function JoinButton({ club }: { club: JoinableClub }) {
@@ -29,6 +29,7 @@ export function JoinButton({ club }: { club: JoinableClub }) {
   const [params, setParams] = useSearchParams();
   const { data: membership } = useMyMembership(club.id, !!me);
   const join = useJoinClub(club.id);
+  const cancel = useCancelJoinRequest(club.id);
   const [leaving, setLeaving] = useState(false);
   const intentHandled = useRef(false);
 
@@ -64,7 +65,21 @@ export function JoinButton({ club }: { club: JoinableClub }) {
       </DropdownMenuContent>
     </DropdownMenu>
   ) : membership.pendingRequest ? (
-    <Button variant="secondary" disabled>Request sent</Button>   // E07-S03 adds "Cancel request"
+    <DropdownMenu>
+      <DropdownMenuTrigger className={buttonVariants({ variant: "secondary" })}>
+        Request sent <ChevronDownIcon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => cancel.mutate(undefined, {
+            onSuccess: () => toast.success("Request cancelled."),
+            onError: (error) => toast.error(error.message),
+          })}
+        >
+          <XIcon /> Cancel request
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   ) : (
     <Button disabled={join.isPending} onClick={() => join.mutate(undefined, joinFeedback(club.name))}>
       {club.joinPolicy === "OPEN" ? "Join club" : "Request to join"}
