@@ -260,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/channels/{channelId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -340,6 +356,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/messages/{messageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch: operations["edit"];
+        trace?: never;
+    };
     "/api/events/{eventId}": {
         parameters: {
             query?: never;
@@ -353,7 +385,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["edit"];
+        patch: operations["edit_1"];
         trace?: never;
     };
     "/api/users": {
@@ -1003,6 +1035,30 @@ export interface components {
             /** Format: date-time */
             editedAt?: string;
         };
+        SendMessageRequest: {
+            body?: string;
+            mediaIds?: string[];
+            /** Format: uuid */
+            clientNonce: string;
+        };
+        ChatMessageView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: uuid */
+            channelId?: string;
+            /** Format: int32 */
+            era?: number;
+            author?: components["schemas"]["UserSummary"];
+            body?: string;
+            media?: components["schemas"]["MediaView"][];
+            /** Format: uuid */
+            clientNonce?: string;
+            deleted?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            editedAt?: string;
+        };
         LoginRequest: {
             username: string;
             password: string;
@@ -1023,6 +1079,9 @@ export interface components {
         AssignOwnerRequest: {
             /** Format: uuid */
             userId: string;
+        };
+        EditMessageRequest: {
+            body: string;
         };
         EditEventRequest: {
             title: string;
@@ -1250,6 +1309,11 @@ export interface components {
         CursorPagePostResponse: {
             items?: components["schemas"]["PostResponse"][];
             nextCursor?: string;
+        };
+        ChatPage: {
+            items?: components["schemas"]["ChatMessageView"][];
+            /** Format: int64 */
+            nextBefore?: number;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
@@ -1787,6 +1851,58 @@ export interface operations {
             };
         };
     };
+    history: {
+        parameters: {
+            query?: {
+                before?: number;
+                era?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatPage"];
+                };
+            };
+        };
+    };
+    send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageView"];
+                };
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -1909,6 +2025,54 @@ export interface operations {
             };
         };
     };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                messageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageView"];
+                };
+            };
+        };
+    };
+    edit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                messageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageView"];
+                };
+            };
+        };
+    };
     get: {
         parameters: {
             query?: never;
@@ -1931,7 +2095,7 @@ export interface operations {
             };
         };
     };
-    edit: {
+    edit_1: {
         parameters: {
             query?: never;
             header?: never;

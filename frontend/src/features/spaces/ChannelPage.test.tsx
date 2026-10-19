@@ -15,6 +15,7 @@ function backend() {
     if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: [{ id: "s1", name: "General", slug: "general", channels: [posts, lounge] }] });
     if (path === "/api/channels/{channelId}") return Promise.resolve({ data: init.params.path.channelId === "c1" ? posts : lounge });
     if (path === "/api/channels/{channelId}/posts") return Promise.resolve({ data: { items: [], nextCursor: null } });
+    if (path === "/api/channels/{channelId}/messages") return Promise.resolve({ data: { items: [], nextBefore: null } });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
@@ -47,12 +48,13 @@ describe("ChannelPage", () => {
     expect(screen.queryByText("Read-only")).toBeNull();
   });
 
-  it("opens a chat channel, read-only for this viewer", async () => {
+  it("opens a chat channel, read-only for this viewer: the room of E10-S02, without a composer", async () => {
     backend();
     renderChannel("/c/chess/s/general/lounge");
 
-    expect(await screen.findByText("Chat is coming")).toBeTruthy();
+    expect(await screen.findByText("No messages yet. Say hi!")).toBeTruthy();
     expect(await screen.findByText("Read-only")).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: "Write a message" })).toBeNull();
   });
 
   it("says when a channel does not exist or cannot be read", async () => {
