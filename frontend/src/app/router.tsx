@@ -25,7 +25,7 @@ export const routes: RouteObject[] = [
         errorElement: <ErrorPage />,      // a page failed: the top bar stays
         children: [
           // Public
-          { index: true, element: soon("Welcome to Virtual Clubroom", "E06-S02") },
+          { index: true, lazy: () => import("@/features/discovery").then((m) => ({ Component: m.LandingPage })) },
           { path: "clubs", element: soon("Clubs", "E06-S03") },
           { path: "clubs/:slug/about", element: soon("Club profile", "E06-S03") },
           { path: "login", element: <LoginPage /> },
@@ -44,25 +44,24 @@ export const routes: RouteObject[] = [
                   { path: "events", element: soon("Club events", "E11-S02") },
                   { path: "members", element: soon("Members", "E07-S04") },
                   { path: "history", element: soon("Club history", "E14-S03") },
-                  { path: "settings", element: <Navigate to="profile" replace /> },
-                  { path: "settings/profile", element: soon("Club profile settings", "E04-S04") },
-                  { path: "settings/roles", element: soon("Roles", "E13-S02") },
-                  { path: "settings/groups", element: soon("Groups", "E13-S03") },
-                  { path: "settings/spaces", element: soon("Spaces", "E05-S03") },
-                  { path: "settings/requests", element: soon("Join requests", "E07-S03") },
-                  { path: "settings/ownership", element: soon("Ownership", "E13-S01") },
+                  {
+                    path: "settings",
+                    lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsLayout })),
+                    children: [
+                      { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsIndex })) },
+                      { path: "profile", element: soon("Club profile settings", "E04-S04") },
+                      { path: "requests", lazy: () => import("@/features/membership").then((m) => ({ Component: m.JoinRequestsPage })) },
+                      { path: "roles", element: soon("Roles", "E13-S02") },
+                      { path: "groups", element: soon("Groups", "E13-S03") },
+                      { path: "spaces", element: soon("Spaces", "E05-S03") },
+                      { path: "ownership", element: soon("Ownership", "E13-S01") },
+                    ],
+                  },
                 ],
               },
               { path: "posts/:postId", element: soon("Post", "E12-S01") },
               { path: "events/:eventId", element: soon("Event", "E11-S01") },
-//               { path: "calendar", element: soon("Campus calendar", "E11-S02") },
-              {
-                path: "calendar",
-                lazy: () =>
-                  import("@/features/calendar/CampusCalendarPage").then((m) => ({
-                    Component: m.CampusCalendarPage,
-                  })),
-              },
+              { path: "calendar", element: soon("Campus calendar", "E11-S02") },
               { path: "notifications", element: soon("Notifications", "E12-S01") },
               { path: "settings", element: soon("Settings", "E12-S02") },
             ],

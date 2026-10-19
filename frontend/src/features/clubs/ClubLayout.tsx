@@ -1,7 +1,7 @@
 import { SearchXIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useParams } from "react-router";
 import { useMe } from "@/features/auth";
-import { can, type ClubPermission, JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
+import { JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
 import { ApiError } from "@/shared/api/errors";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
@@ -11,9 +11,7 @@ import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { type ClubStatus, StatusBadge } from "@/shared/ui/StatusBadge";
 import { type Club, useClub } from "./api";
 import { ClubAboutPanel } from "./ClubAboutPanel";
-
-/** Any of these opens at least one settings tab (08-frontend §4: each tab needs its permission). */
-const MANAGE: ClubPermission[] = ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE", "ROLE_MANAGE", "GROUP_MANAGE", "SPACE_MANAGE"];
+import { visibleSettingsTabs } from "./settingsTabs";
 
 type Viewer = { membership: MembershipView | undefined; admin: boolean };
 
@@ -22,7 +20,7 @@ const SECTIONS: { path: string; label: string; visible?: (viewer: Viewer) => boo
   { path: "events", label: "Events" },
   { path: "members", label: "Members", visible: ({ membership, admin }) => !!membership?.member || admin },
   { path: "history", label: "History" },
-  { path: "settings", label: "Settings", visible: ({ membership }) => MANAGE.some((p) => can(membership, p)) },
+  { path: "settings", label: "Settings", visible: ({ membership }) => visibleSettingsTabs(membership).length > 0 },
 ];
 
 const sectionClass = ({ isActive }: { isActive: boolean }) => cn(
