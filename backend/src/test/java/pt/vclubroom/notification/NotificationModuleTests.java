@@ -18,6 +18,7 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.modulith.test.Scenario;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.vclubroom.TestcontainersConfiguration;
+import pt.vclubroom.calendar.api.RsvpQuery;
 import pt.vclubroom.club.api.ClubCatalog;
 import pt.vclubroom.forum.events.PostPublished;
 import pt.vclubroom.identity.api.UserDirectory;
@@ -44,6 +45,9 @@ class NotificationModuleTests {
 
     @MockitoBean
     RealtimePublisher realtime;
+
+    @MockitoBean
+    RsvpQuery rsvps;
 
     @Autowired
     JdbcTemplate jdbc;
