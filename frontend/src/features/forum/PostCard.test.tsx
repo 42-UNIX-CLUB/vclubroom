@@ -1,8 +1,15 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api } from "@/shared/api/client";
 import { PostCard } from "./PostCard";
 
-afterEach(cleanup);
+vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn() } }));
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 describe("PostCard", () => {
   it("shows the author, the title, the Markdown body and the players", () => {
@@ -23,5 +30,19 @@ describe("PostCard", () => {
   it("keeps a deleted post's place without its content", () => {
     render(<PostCard post={{ id: "p1", deleted: true, deletedByModerator: true, author: { displayName: "Ada" } }} />);
     expect(screen.getByText("This post was removed by a moderator.")).toBeTruthy();
+  });
+
+  it("opens its thread only when asked", async () => {
+    vi.mocked(api.GET).mockResolvedValue({ data: { items: [{ id: "c1", body: "Lovely light", author: { displayName: "Bob" } }] } } as never);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <PostCard post={{ id: "p1", channelId: "ch1", body: "Sunset", author: { displayName: "Ada" }, commentCount: 1 }} />
+      </QueryClientProvider>,
+    );
+
+    expect(api.GET).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "1 comment" }));
+    expect(await screen.findByText("Lovely light")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "1 comment" }).getAttribute("aria-expanded")).toBe("true");
   });
 });
