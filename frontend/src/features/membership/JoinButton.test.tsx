@@ -63,8 +63,20 @@ describe("JoinButton", () => {
     renderButton({ ...open, joinPolicy: "APPROVAL" });
 
     fireEvent.click(await screen.findByRole("button", { name: "Request to join" }));
-    const sent = await screen.findByRole("button", { name: "Request sent" });
-    expect((sent as HTMLButtonElement).disabled).toBe(true);
+    expect(await screen.findByRole("button", { name: /Request sent/ })).toBeTruthy();
+  });
+
+  it("cancels a pending request", async () => {
+    backend({ ...visitor, pendingRequest: { id: "r1" } }, visitor);
+    vi.mocked(api.DELETE).mockResolvedValue({} as never);
+    renderButton({ ...open, joinPolicy: "APPROVAL" });
+
+    fireEvent.click(await screen.findByRole("button", { name: /Request sent/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Cancel request/ }));
+
+    await waitFor(() => expect(vi.mocked(api.DELETE).mock.calls[0]?.[0]).toBe("/api/clubs/{clubId}/join-requests/mine"));
+    expect(await screen.findByRole("button", { name: "Request to join" })).toBeTruthy();
+    expect(toast.success).toHaveBeenCalledWith("Request cancelled.");
   });
 
   it("lets a member leave after confirming", async () => {
