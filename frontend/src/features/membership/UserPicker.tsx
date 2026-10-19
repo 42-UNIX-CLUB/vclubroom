@@ -3,17 +3,23 @@ import { useDebounce } from "@/shared/lib/useDebounce";
 import { Button } from "@/shared/ui/button";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Input } from "@/shared/ui/input";
-import { type UserSummary, useUserSearch } from "./api";
+import { type UserSummary, useMemberSearch, useUserSearch } from "./api";
 
-/** Search people by login or name and pick one (ownership invitations now, groups later). */
-export function UserPicker({ value, onChange, label = "Search people" }: {
+/**
+ * Search people by login or name and pick one. With a clubId it searches that club's members who are not owners
+ * (ownership invitations); without, everyone (groups, later).
+ */
+export function UserPicker({ value, onChange, label = "Search people", clubId }: {
   value: UserSummary | null;
   onChange: (user: UserSummary | null) => void;
   label?: string;
+  clubId?: string;
 }) {
   const [text, setText] = useState("");
   const query = useDebounce(text, 300);
-  const { data: users = [], isFetching } = useUserSearch(query);
+  const everyone = useUserSearch(clubId ? "" : query);
+  const members = useMemberSearch(clubId ?? "", clubId ? query : "");
+  const { data: users = [], isFetching } = clubId ? members : everyone;
 
   if (value) {
     return (
