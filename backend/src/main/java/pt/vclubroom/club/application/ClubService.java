@@ -20,10 +20,7 @@ import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 
-/**
- * Club use cases that change state. E04-S04 adds updateProfile (through ClubManagementGuard and media),
- * E14-S02 the revival.
- */
+/** Club use cases that change state. E04-S04 adds updateProfile (through ClubManagementGuard and media). */
 @Service
 public class ClubService {
 

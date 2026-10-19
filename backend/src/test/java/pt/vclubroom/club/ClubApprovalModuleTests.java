@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.modulith.test.Scenario;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.vclubroom.TestRequests;
 import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.club.api.ClubStatus;
@@ -18,6 +19,7 @@ import pt.vclubroom.club.application.CreateClubCommand;
 import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.club.events.ClubRejected;
+import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.shared.security.Actor;
 
 /** The club module started on its own: what it announces when an admin decides (E04-S02-T3). */
@@ -26,6 +28,9 @@ import pt.vclubroom.shared.security.Actor;
 class ClubApprovalModuleTests {
 
     private final Actor admin = new Actor(UUID.randomUUID(), true);
+
+    @MockitoBean
+    UserDirectory users;                                                   // RevivalService names requesters (E14-S02)
 
     @Autowired
     ClubService clubs;
