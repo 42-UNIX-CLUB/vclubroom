@@ -2,6 +2,12 @@
 #   docker compose -f compose.yaml -f compose.prod.yaml up -d --build                    (demo behind the Cloudflare tunnel)
 #   docker compose -f compose.yaml -f compose.prod.yaml --profile demo up -d --build     (local prod-like run with Mailpit)
 services:
+  seaweedfs:
+    volumes:
+      # Rendered from .env by deploy/seaweedfs/render-s3-config.sh (deploy.sh runs it); never committed.
+      # Replaces the committed dev s3.json, whose default secret is public.
+      - ./deploy/seaweedfs/s3.prod.json:/etc/seaweedfs/s3.json:ro
+
   backend:
     build: ./backend
     environment:
