@@ -2,6 +2,7 @@
 export type { Club } from "./api";
 export { ClubHome } from "./ClubHome";
 export { ClubLayout } from "./ClubLayout";
+export { ClubSettingsProfile } from "./ClubSettingsProfile";
 export { ClubSettingsIndex, ClubSettingsLayout } from "./ClubSettingsLayout";
 export { CreateClubPage } from "./CreateClubPage";
 export { useCurrentClub } from "./currentClub";

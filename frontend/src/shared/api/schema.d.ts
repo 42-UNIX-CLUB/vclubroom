@@ -468,6 +468,22 @@ export interface paths {
         patch: operations["edit_1"];
         trace?: never;
     };
+    "/api/clubs/{clubId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update"];
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -1255,6 +1271,19 @@ export interface components {
             startsAt: string;
             /** Format: date-time */
             endsAt: string;
+        };
+        UpdateClubRequest: {
+            name?: string;
+            tagline?: string;
+            description?: string;
+            category?: string;
+            tags?: string[];
+            /** Format: uuid */
+            avatarMediaId?: string;
+            /** Format: uuid */
+            bannerMediaId?: string;
+            /** @enum {string} */
+            joinPolicy?: "OPEN" | "APPROVAL";
         };
         ChannelView: {
             /** Format: uuid */
@@ -2417,6 +2446,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClubRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubResponse"];
                 };
             };
         };
