@@ -1,0 +1,91 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/errors";
+import { ClubHome } from "./ClubHome";
+import { ClubLayout } from "./ClubLayout";
+
+vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn() } }));
+
+const chess = {
+  id: "c1", slug: "chess-club", name: "Chess Club", tagline: "Blitz on Fridays", category: "Games", tags: ["chess"],
+  description: "**Welcome** to the club", status: "ACTIVE", joinPolicy: "OPEN", currentEra: 1,
+  eras: [{ number: 1, startedAt: "2026-10-18T10:00:00Z", startReason: "APPROVED" }],
+};
+const summary = {
+  memberCount: 3,
+  owners: [{ id: "u1", login: "ada", displayName: "Ada Founder" }, { id: "u2", login: "bob", displayName: "Bob Co-owner" }],
+};
+
+/** The API answers per path, like the backend: the club, then its member summary. */
+function backend(club: object | ApiError) {
+  vi.mocked(api.GET).mockImplementation(((path: string) => {
+    if (path === "/api/clubs/{idOrSlug}") return club instanceof ApiError ? Promise.reject(club) : Promise.resolve({ data: club });
+    if (path === "/api/clubs/{clubId}/member-summary") return Promise.resolve({ data: summary });
+    return Promise.reject(new Error(`unexpected GET ${path}`));
+  }) as never);
+}
+
+function renderClubPage() {
+  const router = createMemoryRouter(
+    [{ path: "/c/:slug", element: <ClubLayout />, children: [{ index: true, element: <ClubHome /> }] }],
+    { initialEntries: ["/c/chess-club"] },
+  );
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+}
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+describe("club page", () => {
+  it("shows the header, the description, the member count and the owners", async () => {
+    backend(chess);
+    renderClubPage();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Chess Club" })).toBeTruthy();
+    expect(screen.getByText("Active")).toBeTruthy();
+    expect(screen.getByText("Blitz on Fridays")).toBeTruthy();
+    expect(screen.getByText("Welcome").tagName).toBe("STRONG");
+    expect(screen.getByText("#chess")).toBeTruthy();
+
+    const about = screen.getByRole("complementary", { name: "About the club" });
+    expect(await within(about).findByText("3 members")).toBeTruthy();
+    expect(within(about).getByText("Ada Founder")).toBeTruthy();
+    expect(within(about).getByText("@bob")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Members" }).getAttribute("href")).toBe("/c/chess-club/members");
+  });
+
+  it("tells the founder that a new club is waiting for approval", async () => {
+    backend({ ...chess, status: "PENDING_APPROVAL", eras: [] });
+    renderClubPage();
+
+    expect(await screen.findByText("Waiting for approval")).toBeTruthy();
+    expect(screen.getByText("Pending approval")).toBeTruthy();
+    expect(screen.queryByRole("complementary", { name: "About the club" })).toBeNull();   // no members yet
+    expect(screen.queryByText("No posts yet")).toBeNull();
+  });
+
+  it("shows why a request was rejected", async () => {
+    backend({ ...chess, status: "REJECTED", reviewNote: "Same as the Chess Society", eras: [] });
+    renderClubPage();
+
+    expect(await screen.findByText("This request was rejected")).toBeTruthy();
+    expect(screen.getByText("Same as the Chess Society")).toBeTruthy();
+  });
+
+  it("says when a club does not exist", async () => {
+    backend(new ApiError(404, { status: 404, code: "CLUB_NOT_FOUND" }));
+    renderClubPage();
+
+    expect(await screen.findByText("Club not found")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Browse clubs" }).getAttribute("href")).toBe("/clubs");
+  });
+});
