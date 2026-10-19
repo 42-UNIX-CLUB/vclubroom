@@ -14,17 +14,15 @@ const club = {
     { number: 2, startedAt: "2026-10-01T10:00:00Z" },
   ],
 };
-const spaces = [{ id: "s1", name: "General", channels: [{ id: "ch1", name: "Posts", type: "FORUM" }, { id: "ch2", name: "Lounge", type: "CHAT" }] }];
-
-/** Posts answer with their era, so the test sees which era the feed asked for. */
+/** The feed answers with posts of the era it was asked for, so the test sees which era that was. */
 function backend() {
   vi.mocked(api.GET).mockImplementation(((path: string, init?: { params: { query?: { era?: number } } }) => {
-    if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: spaces });
     if (path === "/api/clubs/{clubId}/timeline") return Promise.resolve({ data: { items: [] } });
     if (path === "/api/reactions") return Promise.resolve({ data: [] });
-    if (path === "/api/channels/{channelId}/posts") {
+    if (path === "/api/clubs/{clubId}/feed") {
       const era = init?.params.query?.era;
-      return Promise.resolve({ data: { items: [{ id: `p${era}`, era, body: `A post of era ${era}`, author: { displayName: "Ada" } }] } });
+      return Promise.resolve({ data: { items: [{ id: `p${era}`, channelId: "ch1", era, body: `A post of era ${era}`,
+        readOnly: era !== 2, author: { displayName: "Ada" } }] } });
     }
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
@@ -69,7 +67,6 @@ describe("ClubHistoryPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Era 1/ }));
     expect(await screen.findByText("A post of era 1")).toBeTruthy();
     expect(router.state.location.search).toBe("?era=1");
-    expect(screen.getByText("Era 1: read-only history.")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Posts of era 1" })).toBeTruthy();
   });
 });

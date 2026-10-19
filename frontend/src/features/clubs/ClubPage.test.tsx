@@ -22,6 +22,7 @@ const summary = {
 const spaces = [{ id: "s1", name: "General", slug: "general", readLevel: "PUBLIC", channels: [
   { id: "ch1", name: "Posts", slug: "posts", type: "FORUM" }, { id: "ch2", name: "Lounge", slug: "lounge", type: "CHAT" }] }];
 const visitor = { member: false, owner: false, roles: [], permissions: [] };
+const feed = [{ id: "p1", channelId: "ch1", era: 1, title: "Friday blitz", body: "Bring a clock", author: { displayName: "Ada Founder" } }];
 const owner = { member: true, owner: true, roles: [{ name: "Owner" }, { name: "Member" }], permissions: ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE"] };
 
 /** The API answers per path, like the backend: who I am, the club, its member summary, my membership. */
@@ -33,6 +34,8 @@ function backend(club: object | ApiError, membership: object = visitor) {
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: membership });
     if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: spaces });
     if (path === "/api/clubs/{clubId}/events") return Promise.resolve({ data: [] });          // upcoming events (E11-S02)
+    if (path === "/api/clubs/{clubId}/feed") return Promise.resolve({ data: { items: feed } });   // the club feed (E09-S05)
+    if (path === "/api/reactions") return Promise.resolve({ data: [] });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
@@ -69,6 +72,9 @@ describe("club page", () => {
     expect(await within(about).findByText("3 members")).toBeTruthy();
     expect(within(about).getByText("Ada Founder")).toBeTruthy();
     expect(within(about).getByText("@bob")).toBeTruthy();
+
+    expect(await screen.findByRole("heading", { name: "Friday blitz" })).toBeTruthy();       // the latest posts
+    expect(screen.getByRole("link", { name: "in #Posts · General" }).getAttribute("href")).toBe("/c/chess-club/s/general/posts");
   });
 
   it("shows a visitor the join button and only the public sections", async () => {
