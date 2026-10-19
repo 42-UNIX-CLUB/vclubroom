@@ -14,13 +14,17 @@ import pt.vclubroom.club.api.ClubSnapshot;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.identity.api.UserSummary;
 import pt.vclubroom.membership.api.ClubAuthorization;
+import pt.vclubroom.membership.api.ClubPermission;
 import pt.vclubroom.membership.domain.ClubRole;
+import pt.vclubroom.membership.domain.JoinRequest;
+import pt.vclubroom.membership.domain.JoinRequestStatus;
 import pt.vclubroom.membership.domain.Membership;
 import pt.vclubroom.membership.domain.SystemRole;
 import pt.vclubroom.membership.persistence.ClubRoleRepository;
 import pt.vclubroom.membership.persistence.JoinRequestRepository;
 import pt.vclubroom.membership.persistence.MembershipRepository;
 import pt.vclubroom.membership.persistence.OwnershipInvitationRepository;
+import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.security.Actor;
 
 /** Read side of memberships. E07-S04 adds the member list (members only). */
@@ -89,6 +93,18 @@ public class MemberQueryService {
                     m.joinedAt());
             })
             .sorted(Comparator.comparing(MyClubMembership::name, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+    }
+
+    /** A club's join requests in a status (the queue: PENDING), oldest first, with who sent them. MEMBER_APPROVE only. */
+    public List<JoinRequestView> joinRequests(UUID clubId, JoinRequestStatus status, Actor actor) {
+        if (!authorization.hasPermission(clubId, actor, ClubPermission.MEMBER_APPROVE)) {
+            throw new ForbiddenException("PERMISSION_DENIED", "Missing club permission MEMBER_APPROVE.");
+        }
+        List<JoinRequest> requests = joinRequests.findByClubIdAndStatusOrderByCreatedAtAsc(clubId, status);
+        Map<UUID, UserSummary> requesters = users.findByIds(requests.stream().map(JoinRequest::userId).toList());
+        return requests.stream()
+            .map(r -> new JoinRequestView(r.id(), r.userId(), requesters.get(r.userId()), r.message(), r.createdAt()))
             .toList();
     }
 
