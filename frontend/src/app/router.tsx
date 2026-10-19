@@ -26,8 +26,8 @@ export const routes: RouteObject[] = [
         children: [
           // Public
           { index: true, lazy: () => import("@/features/discovery").then((m) => ({ Component: m.LandingPage })) },
-          { path: "clubs", element: soon("Clubs", "E06-S03") },
-          { path: "clubs/:slug/about", element: soon("Club profile", "E06-S03") },
+          { path: "clubs", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.ClubDirectoryPage })) },
+          { path: "clubs/:slug/about", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.PublicClubProfilePage })) },
           { path: "login", element: <LoginPage /> },
 
           // Logged-in users

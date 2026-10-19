@@ -2,3 +2,4 @@
 export { ClubCard } from "./ClubCard";
 export { ClubDirectoryPage } from "./ClubDirectoryPage";
 export { LandingPage } from "./LandingPage";
+export { PublicClubProfilePage } from "./PublicClubProfilePage";
