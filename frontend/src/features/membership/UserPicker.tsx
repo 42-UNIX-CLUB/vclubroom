@@ -34,7 +34,7 @@ export function UserPicker({ value, onChange, label = "Search people" }: {
               <li key={user.id}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 p-2 text-left hover:bg-muted"
+                  className="flex w-full items-center gap-3 p-2 text-left outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                   onClick={() => {
                     onChange(user);
                     setText("");

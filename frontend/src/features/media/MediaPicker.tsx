@@ -95,6 +95,7 @@ export function MediaPicker({ purpose, onChange, max = 4, accept = "image/*,vide
         accept={accept}
         aria-label="Choose files"
         className="sr-only"
+        tabIndex={-1}                                 // the button below is the control; one Tab stop, not two
         onChange={(event) => {
           addFiles(event.target.files);
           event.target.value = "";                    // choosing the same file again fires onChange again

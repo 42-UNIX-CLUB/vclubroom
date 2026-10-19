@@ -18,7 +18,7 @@ export function EraSwitcher({ eras, selected, onSelect }: { eras: Era[]; selecte
           aria-pressed={era.number === selected}
           onClick={() => onSelect(era.number ?? 0)}
           className={cn(
-            "rounded-lg border px-3 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+            "rounded-lg border px-3 py-1.5 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
             era.number === selected && "border-primary/50 bg-primary/10",
           )}
         >

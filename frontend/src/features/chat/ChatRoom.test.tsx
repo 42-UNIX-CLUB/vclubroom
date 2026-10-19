@@ -93,6 +93,24 @@ describe("ChatRoom", () => {
     expect(nonces[1]).toBe(nonces[0]);
   });
 
+  it("announces other people's new messages to screen readers, not mine", async () => {
+    backend();
+    vi.mocked(api.POST).mockImplementation(((_path: string, init: { body: { body: string; clientNonce: string } }) =>
+      Promise.resolve({ data: message(8, init.body.body, init.body.clientNonce) })) as never);   // the server echoes what was sent
+    renderRoom();
+    await waitFor(() => expect(bodies()).toEqual(["second", "third"]));
+    const live = document.querySelector('[aria-live="polite"]')!;
+
+    push("message.created", { ...message(7, "anyone up?"), author: { displayName: "Bob" } });
+    await waitFor(() => expect(live.textContent).toBe("Bob: anyone up?"));
+    write("me!");
+    await waitFor(() => expect(api.POST).toHaveBeenCalled());
+    const nonce = (vi.mocked(api.POST).mock.calls[0]?.[1] as { body: { clientNonce: string } }).body.clientNonce;
+    push("message.created", message(8, "me!", nonce));
+    await waitFor(() => expect(bodies()).toContain("me!"));
+    expect(live.textContent).toBe("Bob: anyone up?");
+  });
+
   it("only reads when the viewer cannot write", async () => {
     backend();
     renderRoom({ id: "ch2", canWrite: false, currentEra: 1 });

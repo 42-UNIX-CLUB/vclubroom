@@ -31,15 +31,23 @@ export function ChatRoom({ channel }: { channel: ChatChannel }) {
   const era = params.get("era") ? Number(params.get("era")) : null;
   const viewingHistory = era !== null && era !== channel.currentEra;
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useChatMessages(channelId, era);
-  useChatLive(viewingHistory ? "" : channelId);
   const send = useSendMessage(channelId);
   const [pending, setPending] = useState<Pending[]>([]);
+  // Screen readers hear other people's new messages (aria-live); my own are already on screen as I send them.
+  const mine = useRef(new Set<string>());
+  const [announcement, setAnnouncement] = useState("");
+  useChatLive(viewingHistory ? "" : channelId, (message) => {
+    if (!mine.current.has(message.clientNonce ?? "")) {
+      setAnnouncement(`${message.author?.displayName ?? "Someone"}: ${message.body ?? ""}`);
+    }
+  });
 
   const messages = [...(data?.pages ?? [])].reverse().flatMap((page) => page.items ?? []);
   const known = new Set(messages.map((m) => m.clientNonce));
   const waiting = pending.filter((p) => !known.has(p.clientNonce));
 
   function deliver(item: Pending) {
+    mine.current.add(item.clientNonce);
     setPending((list) => [...list.filter((p) => p.clientNonce !== item.clientNonce), { ...item, failed: false }]);
     send.mutate({ body: item.body, clientNonce: item.clientNonce }, {
       onError: (error) => {
@@ -84,6 +92,7 @@ export function ChatRoom({ channel }: { channel: ChatChannel }) {
 
   return (
     <div className="space-y-3">
+      <p aria-live="polite" className="sr-only">{announcement}</p>
       {viewingHistory && (
         <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/50 p-3 text-sm">
           <span className="flex items-center gap-2"><HistoryIcon className="size-4" aria-hidden="true" /> Era {era}: read-only history.</span>
