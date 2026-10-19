@@ -27,9 +27,12 @@ function renderApp(path: string, me: unknown = null) {
 const admin = { id: "u1", login: "admin", displayName: "Administrator", provider: "LOCAL", admin: true };
 
 describe("routes", () => {
-  it("renders public pages inside the top bar", () => {
+  it("renders public pages inside the top bar", async () => {
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: path === "/api/public/categories" ? [] : { items: [], page: 0, size: 12, totalElements: 0 },
+    })) as never);
     renderApp("/clubs");
-    expect(screen.getByRole("heading", { name: "Clubs" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Clubs" }, { timeout: 5000 })).toBeTruthy();   // lazy page
     expect(screen.getByRole("link", { name: "Log in" }).getAttribute("href")).toBe("/login?returnTo=%2Fclubs");
   });
 
