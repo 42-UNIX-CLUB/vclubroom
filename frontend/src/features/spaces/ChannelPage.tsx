@@ -1,5 +1,6 @@
-import { MessageCircleIcon, SearchXIcon } from "lucide-react";
+import { SearchXIcon } from "lucide-react";
 import { useOutletContext, useParams } from "react-router";
+import { ChatRoom } from "@/features/chat";
 import { ChannelFeed } from "@/features/forum";
 import { Badge } from "@/shared/ui/badge";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -33,10 +34,7 @@ export function ChannelPage() {
         <span className="text-sm text-muted-foreground">in {channel.spaceName}</span>
         {!channel.canWrite && <Badge variant="secondary">Read-only</Badge>}
       </header>
-      {channel.type === "CHAT"
-        // E10-S02 replaces this with <ChatRoom channel={channel} /> from the chat feature.
-        ? <EmptyState icon={MessageCircleIcon} title="Chat is coming" description="Live chat arrives with E10-S02." />
-        : <ChannelFeed channel={channel} />}
+      {channel.type === "CHAT" ? <ChatRoom channel={channel} /> : <ChannelFeed channel={channel} />}
     </div>
   );
 }
