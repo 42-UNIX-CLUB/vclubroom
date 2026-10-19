@@ -2,6 +2,7 @@ package pt.vclubroom.club.application;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -15,24 +16,32 @@ import pt.vclubroom.club.events.ClubCreationRequested;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.club.events.ClubRejected;
 import pt.vclubroom.club.persistence.ClubRepository;
+import pt.vclubroom.club.spi.ClubManagementGuard;
+import pt.vclubroom.media.api.MediaCatalog;
+import pt.vclubroom.media.api.MediaPurpose;
 import pt.vclubroom.shared.error.BusinessRuleException;
 import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 
-/** Club use cases that change state. E04-S04 adds updateProfile (through ClubManagementGuard and media). */
+/** Club use cases that change state. */
 @Service
 public class ClubService {
 
     private final ClubRepository clubs;
+    private final ClubManagementGuard managementGuard;
+    private final MediaCatalog mediaCatalog;
     private final ClubDetailsAssembler assembler;
     private final ClubProperties properties;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
-    public ClubService(ClubRepository clubs, ClubDetailsAssembler assembler, ClubProperties properties,
-                       ApplicationEventPublisher events, Clock clock) {
+    public ClubService(ClubRepository clubs, ClubManagementGuard managementGuard, MediaCatalog mediaCatalog,
+                       ClubDetailsAssembler assembler, ClubProperties properties, ApplicationEventPublisher events,
+                       Clock clock) {
         this.clubs = clubs;
+        this.managementGuard = managementGuard;
+        this.mediaCatalog = mediaCatalog;
         this.assembler = assembler;
         this.properties = properties;
         this.events = events;
@@ -92,6 +101,41 @@ public class ClubService {
         club.archive(actor.userId(), reason, now);                         // CLUB_NOT_ACTIVE unless ACTIVE
         events.publishEvent(new ClubArchived(club.id(), club.name(), endedEra, actor.userId(), reason, now));
         events.publishEvent(profileUpdated(club, now));                    // discovery: the "Archived" badge
+        return assembler.toDetails(club);
+    }
+
+    /**
+     * A partial update (club.md §8.5). A pending club is edited by its founder (or an admin); an active one by whoever
+     * holds CLUB_SETTINGS_MANAGE, which membership answers through the SPI. New images must be the actor's own
+     * uploads for the right purpose (BR-19). Switching to OPEN lets everyone waiting in (membership listens).
+     */
+    @Transactional
+    public ClubDetails updateProfile(Actor actor, UUID clubId, UpdateClubCommand cmd) {
+        Club club = load(clubId);
+        boolean allowed = switch (club.status()) {
+            case PENDING_APPROVAL -> actor.admin() || club.founderId().equals(actor.userId());
+            case ACTIVE -> managementGuard.canManageSettings(clubId, actor);
+            default -> false;
+        };
+        if (!allowed) {
+            throw new ForbiddenException("PERMISSION_DENIED", "You cannot edit this club.");
+        }
+        properties.requireValidCategory(cmd.category());
+
+        if (cmd.avatarMediaId() != null && !cmd.avatarMediaId().equals(club.avatarMediaId())) {
+            mediaCatalog.attach(List.of(cmd.avatarMediaId()), actor.userId(), MediaPurpose.CLUB_AVATAR);
+        }
+        if (cmd.bannerMediaId() != null && !cmd.bannerMediaId().equals(club.bannerMediaId())) {
+            mediaCatalog.attach(List.of(cmd.bannerMediaId()), actor.userId(), MediaPurpose.CLUB_BANNER);
+        }
+
+        Instant now = clock.instant();
+        club.updateProfile(cmd.name(), cmd.tagline(), cmd.description(), cmd.category(), cmd.tags(),
+            cmd.avatarMediaId(), cmd.bannerMediaId(), now);
+        if (cmd.joinPolicy() != null && cmd.joinPolicy() != club.joinPolicy()) {
+            club.changeJoinPolicy(cmd.joinPolicy(), now);                  // CLUB_NOT_ACTIVE unless ACTIVE
+        }
+        events.publishEvent(profileUpdated(club, now));                    // discovery; membership on OPEN
         return assembler.toDetails(club);
     }
 
