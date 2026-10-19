@@ -25,7 +25,7 @@ export const routes: RouteObject[] = [
         errorElement: <ErrorPage />,      // a page failed: the top bar stays
         children: [
           // Public
-          { index: true, element: soon("Welcome to Virtual Clubroom", "E06-S02") },
+          { index: true, lazy: () => import("@/features/discovery").then((m) => ({ Component: m.LandingPage })) },
           { path: "clubs", element: soon("Clubs", "E06-S03") },
           { path: "clubs/:slug/about", element: soon("Club profile", "E06-S03") },
           { path: "login", element: <LoginPage /> },
@@ -55,14 +55,7 @@ export const routes: RouteObject[] = [
               },
               { path: "posts/:postId", element: soon("Post", "E12-S01") },
               { path: "events/:eventId", element: soon("Event", "E11-S01") },
-//               { path: "calendar", element: soon("Campus calendar", "E11-S02") },
-              {
-                path: "calendar",
-                lazy: () =>
-                  import("@/features/calendar/CampusCalendarPage").then((m) => ({
-                    Component: m.CampusCalendarPage,
-                  })),
-              },
+              { path: "calendar", element: soon("Campus calendar", "E11-S02") },
               { path: "notifications", element: soon("Notifications", "E12-S01") },
               { path: "settings", element: soon("Settings", "E12-S02") },
             ],

@@ -36,6 +36,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/join-requests/{requestId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/join-requests/{requestId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -61,7 +93,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["reject"];
+        post: operations["reject_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -77,7 +109,55 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["approve"];
+        post: operations["approve_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/landing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["landing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/clubs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["clubs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/clubs/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["club"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -212,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/join-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/csrf": {
         parameters: {
             query?: never;
@@ -235,7 +331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -255,6 +351,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["leave"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/join-requests/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["cancelMine"];
         options?: never;
         head?: never;
         patch?: never;
@@ -331,6 +443,73 @@ export interface components {
         ReasonRequest: {
             reason: string;
         };
+        CategoryCount: {
+            name?: string;
+            /** Format: int64 */
+            count?: number;
+        };
+        ClubCardResponse: {
+            /** Format: uuid */
+            clubId?: string;
+            slug?: string;
+            name?: string;
+            tagline?: string;
+            category?: string;
+            avatarUrl?: string;
+            status?: string;
+            joinPolicy?: string;
+            /** Format: int32 */
+            memberCount?: number;
+            /** Format: date-time */
+            lastActivityAt?: string;
+            /** Format: date-time */
+            foundedAt?: string;
+        };
+        LandingResponse: {
+            stats?: components["schemas"]["Stats"];
+            mostActive?: components["schemas"]["ClubCardResponse"][];
+            newest?: components["schemas"]["ClubCardResponse"][];
+            categories?: components["schemas"]["CategoryCount"][];
+        };
+        Stats: {
+            /** Format: int64 */
+            activeClubs?: number;
+            /** Format: int64 */
+            archivedClubs?: number;
+            /** Format: int64 */
+            memberships?: number;
+        };
+        PageResponseClubCardResponse: {
+            items?: components["schemas"]["ClubCardResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
+        ClubProfileResponse: {
+            /** Format: uuid */
+            clubId?: string;
+            slug?: string;
+            name?: string;
+            tagline?: string;
+            description?: string;
+            category?: string;
+            tags?: string[];
+            avatarUrl?: string;
+            bannerUrl?: string;
+            status?: string;
+            joinPolicy?: string;
+            /** Format: int32 */
+            currentEra?: number;
+            /** Format: int32 */
+            memberCount?: number;
+            /** Format: date-time */
+            foundedAt?: string;
+            /** Format: date-time */
+            lastActivityAt?: string;
+        };
         MyClubMembership: {
             /** Format: uuid */
             clubId?: string;
@@ -382,6 +561,16 @@ export interface components {
             login?: string;
             displayName?: string;
             avatarUrl?: string;
+        };
+        JoinRequestView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            userId?: string;
+            requester?: components["schemas"]["UserSummary"];
+            message?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
@@ -451,6 +640,48 @@ export interface operations {
             };
         };
     };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -475,7 +706,7 @@ export interface operations {
             };
         };
     };
-    reject: {
+    reject_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -501,7 +732,7 @@ export interface operations {
             };
         };
     };
-    approve: {
+    approve_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -519,6 +750,76 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    landing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LandingResponse"];
+                };
+            };
+        };
+    };
+    clubs: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: string;
+                tag?: string;
+                status?: "ACTIVE" | "ARCHIVED" | "ALL";
+                sort?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseClubCardResponse"];
+                };
+            };
+        };
+    };
+    club: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubProfileResponse"];
                 };
             };
         };
@@ -691,6 +992,30 @@ export interface operations {
             };
         };
     };
+    list: {
+        parameters: {
+            query?: {
+                status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["JoinRequestView"][];
+                };
+            };
+        };
+    };
     csrf: {
         parameters: {
             query?: never;
@@ -709,7 +1034,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_1: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
@@ -734,6 +1059,26 @@ export interface operations {
         };
     };
     leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelMine: {
         parameters: {
             query?: never;
             header?: never;
