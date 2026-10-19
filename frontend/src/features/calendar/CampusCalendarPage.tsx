@@ -8,10 +8,10 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { api } from "@/shared/api/client";
+// import { api } from "@/shared/api/client";
 import { mockCalendar } from "./mockCalendar";
 
-const USE_MOCK = true; // flip to false when the backend exists
+// const USE_MOCK = true; // flip to false when the backend exists
 
 export function CampusCalendar({ scope }: { scope: "all" | "mine" }) {
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
@@ -20,14 +20,15 @@ export function CampusCalendar({ scope }: { scope: "all" | "mine" }) {
   const { data = [] } = useQuery({
     queryKey: ["calendar", scope, range],
     enabled: range !== null,
-    queryFn: async () => {
-      if (USE_MOCK) return mockCalendar(range!.from, range!.to, scope);
-
-      const { data } = await api.GET("/api/calendar", {
-        params: { query: { from: range!.from, to: range!.to, scope } },
-      });
-      return data ?? [];
-    },
+    queryFn: async () => mockCalendar(range!.from, range!.to, scope),
+    // queryFn: async () => {
+    //   if (USE_MOCK) return mockCalendar(range!.from, range!.to, scope);
+    //
+    //   const { data } = await api.GET("/api/calendar", {
+    //     params: { query: { from: range!.from, to: range!.to, scope } },
+    //   });
+    //   return data ?? [];
+    // },
   });
 
   const events: EventInput[] = data.map((item) => ({
