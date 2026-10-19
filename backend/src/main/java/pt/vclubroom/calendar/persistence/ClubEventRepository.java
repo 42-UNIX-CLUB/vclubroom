@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pt.vclubroom.calendar.domain.ClubEvent;
 
-/** E11-S06 adds the future events of an archived club. */
 public interface ClubEventRepository extends JpaRepository<ClubEvent, UUID> {
 
     /** Events overlapping [from, to), every club (the campus calendar's "all"). */
@@ -28,4 +27,12 @@ public interface ClubEventRepository extends JpaRepository<ClubEvent, UUID> {
            """)
     List<ClubEvent> findInRangeForClubs(@Param("clubIds") Collection<UUID> clubIds,
                                         @Param("from") Instant from, @Param("to") Instant to);
+
+    /** What an archival cancels (R-10): still scheduled and not started yet. */
+    @Query("""
+           select e from ClubEvent e
+           where e.clubId = :clubId and e.status = pt.vclubroom.calendar.domain.EventStatus.SCHEDULED
+             and e.startsAt > :now
+           """)
+    List<ClubEvent> findFutureScheduled(@Param("clubId") UUID clubId, @Param("now") Instant now);
 }
