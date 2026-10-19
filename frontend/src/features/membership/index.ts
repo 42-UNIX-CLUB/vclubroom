@@ -5,3 +5,5 @@ export {
 export { can } from "./can";
 export { JoinButton } from "./JoinButton";
 export { JoinRequestsPage } from "./JoinRequestsPage";
+export { OwnershipPanel } from "./OwnershipPanel";
+export { UserPicker } from "./UserPicker";
