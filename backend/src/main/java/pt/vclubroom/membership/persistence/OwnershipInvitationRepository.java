@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pt.vclubroom.membership.domain.OwnershipInvitation;
 
-/** E14-S01 adds expiring all pending invitations of an archived club. */
 public interface OwnershipInvitationRepository extends JpaRepository<OwnershipInvitation, UUID> {
 
     @Query("""
@@ -45,4 +44,14 @@ public interface OwnershipInvitationRepository extends JpaRepository<OwnershipIn
            where i.status = pt.vclubroom.membership.domain.InvitationStatus.PENDING and i.expiresAt < :now
            """)
     int expireAllBefore(@Param("now") Instant now);
+
+    /** R-10: an archived club's pending invitations expire at once. */
+    @Modifying
+    @Query("""
+           update OwnershipInvitation i
+           set i.status = pt.vclubroom.membership.domain.InvitationStatus.EXPIRED, i.respondedAt = :now,
+               i.version = i.version + 1
+           where i.clubId = :clubId and i.status = pt.vclubroom.membership.domain.InvitationStatus.PENDING
+           """)
+    int expireAllPending(@Param("clubId") UUID clubId, @Param("now") Instant now);
 }
