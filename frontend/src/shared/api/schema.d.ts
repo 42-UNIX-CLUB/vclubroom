@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/channels/{channelId}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -347,7 +363,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -395,7 +411,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -519,6 +535,51 @@ export interface components {
             membershipId?: string;
             /** Format: uuid */
             requestId?: string;
+        };
+        CreatePostRequest: {
+            title?: string;
+            body?: string;
+            mediaIds?: string[];
+        };
+        MediaView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            kind?: "IMAGE" | "VIDEO" | "AUDIO";
+            contentType?: string;
+            /** Format: int64 */
+            sizeBytes?: number;
+            url?: string;
+        };
+        PostResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            channelId?: string;
+            /** Format: uuid */
+            clubId?: string;
+            /** Format: int32 */
+            era?: number;
+            author?: components["schemas"]["UserSummary"];
+            title?: string;
+            body?: string;
+            media?: components["schemas"]["MediaView"][];
+            /** Format: int32 */
+            commentCount?: number;
+            deleted?: boolean;
+            deletedByModerator?: boolean;
+            readOnly?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            editedAt?: string;
+        };
+        UserSummary: {
+            /** Format: uuid */
+            id?: string;
+            login?: string;
+            displayName?: string;
+            avatarUrl?: string;
         };
         LoginRequest: {
             username: string;
@@ -685,13 +746,6 @@ export interface components {
             memberCount?: number;
             owners?: components["schemas"]["UserSummary"][];
         };
-        UserSummary: {
-            /** Format: uuid */
-            id?: string;
-            login?: string;
-            displayName?: string;
-            avatarUrl?: string;
-        };
         JoinRequestView: {
             /** Format: uuid */
             id?: string;
@@ -701,6 +755,10 @@ export interface components {
             message?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        CursorPagePostResponse: {
+            items?: components["schemas"]["PostResponse"][];
+            nextCursor?: string;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
@@ -855,6 +913,58 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: {
+                era?: number;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPagePostResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"];
+                };
             };
         };
     };
@@ -1192,7 +1302,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_1: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -1256,7 +1366,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";

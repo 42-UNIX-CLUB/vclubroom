@@ -6,13 +6,14 @@ import pt.vclubroom.club.api.ClubStatus;
 import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.discovery.persistence.ClubCardRepository;
+import pt.vclubroom.forum.events.PostPublished;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.membership.events.MemberJoined;
 import pt.vclubroom.membership.events.MemberLeft;
 
 /**
  * Keeps discovery.club_cards up to date (discovery.md §7.1). Every handler is idempotent and safe out of order.
- * Later: E04-S04 resolves avatar and banner URLs (media's MediaCatalog), E09-S01 records the last activity (PostPublished).
+ * Later: E04-S04 resolves avatar and banner URLs (media's MediaCatalog).
  */
 @Component
 class ClubCardProjector {
@@ -54,6 +55,12 @@ class ClubCardProjector {
     @ApplicationModuleListener
     void on(MemberLeft e) {
         cards.setMemberCount(e.clubId(), clubAuthorization.activeMemberIds(e.clubId()).size());
+    }
+
+    /** The "most active" sort of the directory and the landing page. */
+    @ApplicationModuleListener
+    void on(PostPublished e) {
+        cards.bumpLastActivity(e.clubId(), e.occurredAt());
     }
 
     private static String nullToEmpty(String s) {

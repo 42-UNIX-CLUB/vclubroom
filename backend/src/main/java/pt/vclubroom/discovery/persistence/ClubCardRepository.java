@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pt.vclubroom.discovery.domain.ClubCard;
 
-/** Idempotent upserts: the projector may receive an event twice, or events out of order. E09 adds bumpLastActivity. */
+/** Idempotent upserts: the projector may receive an event twice, or events out of order. */
 public interface ClubCardRepository extends JpaRepository<ClubCard, UUID> {
 
     Optional<ClubCard> findBySlug(String slug);
@@ -50,4 +50,12 @@ public interface ClubCardRepository extends JpaRepository<ClubCard, UUID> {
     @Modifying
     @Query(value = "update discovery.club_cards set member_count = :count where club_id = :clubId", nativeQuery = true)
     void setMemberCount(@Param("clubId") UUID clubId, @Param("count") int count);
+
+    /** Only ever moves forward: a late or repeated PostPublished cannot make a club look less active. */
+    @Modifying
+    @Query(value = """
+           update discovery.club_cards set last_activity_at = greatest(coalesce(last_activity_at, :at), :at)
+           where club_id = :clubId
+           """, nativeQuery = true)
+    void bumpLastActivity(@Param("clubId") UUID clubId, @Param("at") Instant at);
 }

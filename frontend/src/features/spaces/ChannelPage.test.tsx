@@ -14,6 +14,7 @@ function backend() {
   vi.mocked(api.GET).mockImplementation(((path: string, init: { params: { path: { channelId?: string } } }) => {
     if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: [{ id: "s1", name: "General", slug: "general", channels: [posts, lounge] }] });
     if (path === "/api/channels/{channelId}") return Promise.resolve({ data: init.params.path.channelId === "c1" ? posts : lounge });
+    if (path === "/api/channels/{channelId}/posts") return Promise.resolve({ data: { items: [], nextCursor: null } });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
@@ -37,12 +38,12 @@ afterEach(() => {
 });
 
 describe("ChannelPage", () => {
-  it("opens a forum channel", async () => {
+  it("opens a forum channel: the feed of E09-S01", async () => {
     backend();
     renderChannel("/c/chess/s/general/posts");
 
     expect(await screen.findByRole("heading", { name: "Posts" })).toBeTruthy();
-    expect(screen.getByText("Posts are coming")).toBeTruthy();
+    expect(await screen.findByText("No posts yet")).toBeTruthy();
     expect(screen.queryByText("Read-only")).toBeNull();
   });
 
