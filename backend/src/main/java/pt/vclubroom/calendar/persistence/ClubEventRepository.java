@@ -11,6 +11,8 @@ import pt.vclubroom.calendar.domain.ClubEvent;
 
 public interface ClubEventRepository extends JpaRepository<ClubEvent, UUID> {
 
+    boolean existsByClubId(UUID clubId);
+
     /** Events overlapping [from, to), every club (the campus calendar's "all"). */
     @Query("""
            select e from ClubEvent e

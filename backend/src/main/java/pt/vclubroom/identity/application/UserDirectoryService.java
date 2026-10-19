@@ -42,6 +42,11 @@ public class UserDirectoryService implements UserDirectory {
     }
 
     @Override
+    public Optional<UserSummary> findByLogin(String login) {
+        return users.findByLoginIgnoreCase(login).map(UserDirectoryService::summary);
+    }
+
+    @Override
     public Map<UUID, UserSummary> findByIds(Collection<UUID> userIds) {
         if (userIds.isEmpty()) {
             return Map.of();
