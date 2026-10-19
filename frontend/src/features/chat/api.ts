@@ -42,12 +42,19 @@ function replaceMessage(queryClient: QueryClient, channelId: string, message: Ch
   });
 }
 
-/** The room listens to its channel: new messages are appended once, edits and deletions replace theirs. */
-export function useChatLive(channelId: string) {
+/**
+ * The room listens to its channel: new messages are appended once, edits and deletions replace theirs.
+ * onCreated hears every new message (the room announces other people's to screen readers).
+ */
+export function useChatLive(channelId: string, onCreated?: (message: ChatMessage) => void) {
   const queryClient = useQueryClient();
   useTopic<ChatMessage>(channelId ? `/topic/channels/${channelId}/messages` : null, ({ type, payload }) => {
-    if (type === "message.created") addMessage(queryClient, channelId, payload);
-    else replaceMessage(queryClient, channelId, payload);
+    if (type === "message.created") {
+      addMessage(queryClient, channelId, payload);
+      onCreated?.(payload);
+    } else {
+      replaceMessage(queryClient, channelId, payload);
+    }
   });
 }
 

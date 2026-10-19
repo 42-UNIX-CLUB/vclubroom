@@ -26,7 +26,7 @@ export function ClubHome() {
           </div>
         </CardContent>
       </Card>
-      {open && <EmptyState icon={NewspaperIcon} title="No posts yet" description="The club feed arrives with E09-S05." />}
+      {open && <EmptyState icon={NewspaperIcon} title="No posts yet" description="Posts live in the club's channels: open one in the sidebar." />}
     </div>
   );
 }

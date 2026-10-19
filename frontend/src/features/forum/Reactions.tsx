@@ -34,7 +34,7 @@ export function Reactions({ target, counts, mine, readOnly }: {
           disabled={readOnly}
           onClick={() => react(code)}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs tabular-nums transition-colors enabled:hover:bg-muted",
+            "inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs tabular-nums transition-colors outline-none enabled:hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
             myCodes.has(code) && "border-primary/50 bg-primary/10",
           )}
         >

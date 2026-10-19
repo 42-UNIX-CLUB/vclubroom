@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
@@ -92,6 +92,19 @@ describe("club page", () => {
     const sections = screen.getByRole("complementary", { name: "Club sections" });
     expect((await within(sections).findByRole("link", { name: "Members" })).getAttribute("href")).toBe("/c/chess-club/members");
     expect(within(sections).getByRole("link", { name: "Settings" })).toBeTruthy();
+  });
+
+  it("folds the channels behind a button on phones", async () => {
+    backend(chess);
+    renderClubPage();
+
+    const toggle = await screen.findByRole("button", { name: "Channels" });
+    const channels = document.getElementById("club-channels")!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(channels.className).toContain("hidden md:block");                   // hidden below md, always shown above
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(channels.className).not.toContain("hidden");
   });
 
   it("tells the founder that a new club is waiting for approval", async () => {

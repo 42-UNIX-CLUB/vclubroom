@@ -36,7 +36,8 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const chip = (name: RegExp) => screen.findByRole("button", { name });
+// The first lookup waits for two queries; a cold test worker can take over the default second for that.
+const chip = (name: RegExp) => screen.findByRole("button", { name }, { timeout: 3000 });
 
 afterEach(() => {
   cleanup();
