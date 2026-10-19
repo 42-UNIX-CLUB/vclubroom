@@ -35,7 +35,8 @@ describe("ClubEventsPage", () => {
   it("shows the club's events of the visible range, cancelled ones struck through", async () => {
     const router = renderPage("ACTIVE", []);
 
-    expect(await screen.findByRole("button", { name: "Blitz night" })).toBeTruthy();       // no club name: it is this club
+    // The calendar view loads lazily (LazyCalendarView): give a cold test worker more than the default second.
+    expect(await screen.findByRole("button", { name: "Blitz night" }, { timeout: 3000 })).toBeTruthy();   // no club name: this club
     expect(screen.getByRole("button", { name: "Simul" }).className).toContain("event-cancelled");
     expect(api.GET).toHaveBeenCalledWith("/api/clubs/{clubId}/events", {
       params: { path: { clubId: "c1" }, query: { from: "2026-10-26T00:00:00+00:00", to: "2026-12-07T00:00:00+00:00" } },
@@ -46,7 +47,7 @@ describe("ClubEventsPage", () => {
 
   it("offers New event to event managers of an active club only", async () => {
     renderPage("ACTIVE", ["EVENT_MANAGE"]);
-    expect(await screen.findByRole("button", { name: "New event" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "New event" }, { timeout: 3000 })).toBeTruthy();
     cleanup();
     renderPage("ACTIVE", []);
     expect(await screen.findByRole("button", { name: "Blitz night" })).toBeTruthy();

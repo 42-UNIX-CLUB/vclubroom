@@ -23,7 +23,8 @@ describe("CampusCalendarPage", () => {
     })) as never);
     render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><CampusCalendarPage /></MemoryRouter></QueryClientProvider>);
 
-    expect(await screen.findByRole("button", { name: "Go Club · Go night" })).toBeTruthy();
+    // The calendar view loads lazily (LazyCalendarView): give a cold test worker more than the default second.
+    expect(await screen.findByRole("button", { name: "Go Club · Go night" }, { timeout: 3000 })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "My clubs" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Go Club · Go night" })).toBeNull());
     expect(screen.getByRole("button", { name: "Chess Club · Blitz night" })).toBeTruthy();

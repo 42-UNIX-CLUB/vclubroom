@@ -49,7 +49,7 @@ describe("club settings", () => {
     backend({ member: true, owner: true, permissions: ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE"] }, 2);
     const router = renderSettings();
 
-    expect(await screen.findByRole("heading", { name: "Profile tab" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Profile tab" }, { timeout: 3000 })).toBeTruthy();   // cold workers are slow
     expect(router.state.location.pathname).toBe("/c/debate/settings/profile");
     const tabs = screen.getByRole("navigation", { name: "Club settings" });
     expect(within(tabs).getAllByRole("link").map((link) => link.textContent)).toEqual(["Profile", "Join requests2", "Ownership"]);
