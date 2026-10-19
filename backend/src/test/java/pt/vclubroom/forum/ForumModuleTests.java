@@ -25,13 +25,14 @@ import pt.vclubroom.forum.events.CommentAdded;
 import pt.vclubroom.forum.events.PostPublished;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.media.api.MediaCatalog;
+import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.space.api.ChannelAccess;
 import pt.vclubroom.space.api.ChannelType;
 import pt.vclubroom.space.api.SpaceAccessPolicy;
 
-/** The forum module on its own (E09-S01, E09-S02): the space, media and identity APIs are mocked. */
+/** The forum module on its own (E09-S01, E09-S02): the space, media, identity and realtime APIs are mocked. */
 @ApplicationModuleTest
 @Import(TestcontainersConfiguration.class)
 class ForumModuleTests {
@@ -44,6 +45,9 @@ class ForumModuleTests {
 
     @MockitoBean
     UserDirectory users;
+
+    @MockitoBean
+    RealtimePublisher realtime;
 
     @Autowired
     PostService posts;

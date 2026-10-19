@@ -2,6 +2,7 @@ package pt.vclubroom.forum.application;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import pt.vclubroom.forum.persistence.CommentRepository;
 import pt.vclubroom.forum.persistence.PostRepository;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.identity.api.UserSummary;
+import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.error.BusinessRuleException;
 import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
@@ -27,7 +29,8 @@ import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
  * Comments and replies (forum.md §4, BR-15, BR-17). Access is the post's channel's: read to see the thread, write
- * to take part, and only in the current era. E10-S01 pushes new comments live; E09-S04 adds edit and delete.
+ * to take part, and only in the current era. New comments are pushed to the feed and the open thread; E09-S04 adds
+ * edit and delete.
  */
 @Service
 public class CommentService {
@@ -41,16 +44,19 @@ public class CommentService {
     private final UserDirectory users;
     private final ReactionSummary reactions;
     private final ApplicationEventPublisher events;
+    private final RealtimePublisher realtime;
     private final Clock clock;
 
     CommentService(PostRepository posts, CommentRepository comments, SpaceAccessPolicy spaceAccess,
-                   UserDirectory users, ReactionSummary reactions, ApplicationEventPublisher events, Clock clock) {
+                   UserDirectory users, ReactionSummary reactions, ApplicationEventPublisher events,
+                   RealtimePublisher realtime, Clock clock) {
         this.posts = posts;
         this.comments = comments;
         this.spaceAccess = spaceAccess;
         this.users = users;
         this.reactions = reactions;
         this.events = events;
+        this.realtime = realtime;
         this.clock = clock;
     }
 
@@ -72,6 +78,13 @@ public class CommentService {
 
         events.publishEvent(new CommentAdded(comment.id(), postId, comment.parentId(), post.clubId(), post.spaceId(),
             actor.userId(), post.authorId(), parent == null ? null : parent.authorId(), comment.excerpt(), now));
+        Map<String, Object> pushed = new HashMap<>();
+        pushed.put("postId", postId);
+        pushed.put("commentId", comment.id());
+        pushed.put("parentId", comment.parentId());                       // null for a top-level comment
+        pushed.put("commentCount", post.commentCount());                   // a value, not "+1": repeats are harmless
+        realtime.toTopic(ForumTopics.channelPosts(post.channelId()), "comment.created", pushed);   // the feed's counter
+        realtime.toTopic(ForumTopics.post(postId), "comment.created", pushed);                     // the open thread
         return toViews(List.of(comment), actor.userId()).getFirst();
     }
 
