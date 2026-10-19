@@ -1,7 +1,7 @@
-import { BellIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { PostLoginRedirect, UserMenu, useMe } from "@/features/auth";
 import { OwnershipInvitations } from "@/features/membership";
+import { NotificationBell } from "@/features/notifications";
 import { RealtimeProvider } from "@/shared/realtime/RealtimeProvider";
 import { buttonVariants } from "@/shared/ui/button";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
@@ -34,10 +34,7 @@ export function AppLayout() {
               <ThemeToggle />
               {me ? (
                 <>
-                  {/* E12-S01 replaces this link with the NotificationBell (live unread count, dropdown). */}
-                  <Link to="/notifications" aria-label="Notifications" className={buttonVariants({ variant: "ghost", size: "icon" })}>
-                    <BellIcon />
-                  </Link>
+                  <NotificationBell />
                   <UserMenu me={me} />
                 </>
               ) : (
