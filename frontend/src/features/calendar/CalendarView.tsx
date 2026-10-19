@@ -9,7 +9,7 @@ import "./calendar.css";
 
 /**
  * Month, week and list views (08-frontend §11.3). FullCalendar reports the visible range; the page fetches it.
- * Phones start on the list, which reads better than a month grid at 390 px.
+ * Phones start on the list, which reads better than a month grid at 390 px. Events you are going to carry a check.
  */
 export function CalendarView({ items, showClub, onRangeChange }: {
   items: CalendarItem[];
@@ -23,7 +23,7 @@ export function CalendarView({ items, showClub, onRangeChange }: {
     title: showClub ? `${item.clubName} · ${item.title}` : item.title,
     start: item.start,
     end: item.end,
-    classNames: item.status === "CANCELLED" ? ["event-cancelled"] : [],
+    classNames: [...(item.status === "CANCELLED" ? ["event-cancelled"] : []), ...(item.myRsvp === "GOING" ? ["event-going"] : [])],
   }));
 
   return (

@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/{eventId}/rsvp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["answer"];
+        post?: never;
+        delete: operations["withdraw"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/comments/{commentId}/reactions/{code}": {
         parameters: {
             query?: never;
@@ -724,6 +740,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/{eventId}/attendees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{idOrSlug}": {
         parameters: {
             query?: never;
@@ -1022,6 +1054,52 @@ export interface components {
             };
             mine?: string[];
         };
+        RsvpRequest: {
+            /** @enum {string} */
+            status: "GOING" | "INTERESTED" | "NOT_GOING";
+        };
+        EventView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            clubId?: string;
+            clubSlug?: string;
+            clubName?: string;
+            /** Format: uuid */
+            spaceId?: string;
+            /** Format: int32 */
+            era?: number;
+            title?: string;
+            description?: string;
+            location?: string;
+            onlineUrl?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** @enum {string} */
+            status?: "SCHEDULED" | "CANCELLED";
+            cancelReason?: string;
+            cover?: components["schemas"]["MediaView"];
+            canManage?: boolean;
+            /** Format: int64 */
+            going?: number;
+            /** Format: int64 */
+            interested?: number;
+            /** @enum {string} */
+            myRsvp?: "GOING" | "INTERESTED" | "NOT_GOING";
+            canRsvp?: boolean;
+        };
+        MediaView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            kind?: "IMAGE" | "VIDEO" | "AUDIO";
+            contentType?: string;
+            /** Format: int64 */
+            sizeBytes?: number;
+            url?: string;
+        };
         CreateCommentRequest: {
             body: string;
             /** Format: uuid */
@@ -1086,41 +1164,6 @@ export interface components {
         };
         CancelEventRequest: {
             reason?: string;
-        };
-        EventView: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            clubId?: string;
-            clubSlug?: string;
-            clubName?: string;
-            /** Format: uuid */
-            spaceId?: string;
-            /** Format: int32 */
-            era?: number;
-            title?: string;
-            description?: string;
-            location?: string;
-            onlineUrl?: string;
-            /** Format: date-time */
-            startsAt?: string;
-            /** Format: date-time */
-            endsAt?: string;
-            /** @enum {string} */
-            status?: "SCHEDULED" | "CANCELLED";
-            cancelReason?: string;
-            cover?: components["schemas"]["MediaView"];
-            canManage?: boolean;
-        };
-        MediaView: {
-            /** Format: uuid */
-            id?: string;
-            /** @enum {string} */
-            kind?: "IMAGE" | "VIDEO" | "AUDIO";
-            contentType?: string;
-            /** Format: int64 */
-            sizeBytes?: number;
-            url?: string;
         };
         CreateClubRequest: {
             name: string;
@@ -1476,6 +1519,13 @@ export interface components {
             color?: string;
             system?: boolean;
         };
+        AttendeeView: {
+            user?: components["schemas"]["UserSummary"];
+            /** @enum {string} */
+            status?: "GOING" | "INTERESTED" | "NOT_GOING";
+            /** Format: date-time */
+            answeredAt?: string;
+        };
         CursorPageTimelineEntryView: {
             items?: components["schemas"]["TimelineEntryView"][];
             nextCursor?: string;
@@ -1565,6 +1615,12 @@ export interface components {
             clubName?: string;
             /** @enum {string} */
             status?: "SCHEDULED" | "CANCELLED";
+            /** Format: int64 */
+            going?: number;
+            /** Format: int64 */
+            interested?: number;
+            /** @enum {string} */
+            myRsvp?: "GOING" | "INTERESTED" | "NOT_GOING";
         };
         CursorPagePostResponse: {
             items?: components["schemas"]["PostResponse"][];
@@ -1644,6 +1700,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
+    answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RsvpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventView"];
                 };
             };
         };
@@ -2849,6 +2953,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"][];
+                };
+            };
+        };
+    };
+    attendees: {
+        parameters: {
+            query?: {
+                status?: ("GOING" | "INTERESTED" | "NOT_GOING")[];
+            };
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AttendeeView"][];
                 };
             };
         };

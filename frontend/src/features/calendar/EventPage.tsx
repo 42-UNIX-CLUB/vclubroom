@@ -17,7 +17,9 @@ import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { Markdown } from "@/shared/ui/Markdown";
 import { Textarea } from "@/shared/ui/textarea";
 import { type ClubEvent, useCancelEvent, useEvent } from "./api";
+import { Attendees } from "./Attendees";
 import { EventDialog } from "./EventDialog";
+import { RsvpButtons } from "./RsvpButtons";
 
 /** "23 Oct 2026, 18:00 – 21:00", or both dates when it spans days (Lisbon time). */
 function when(event: ClubEvent): string {
@@ -26,7 +28,7 @@ function when(event: ClubEvent): string {
   return `${formatDateTime(event.startsAt)} – ${sameDay ? formatTime(event.endsAt) : formatDateTime(event.endsAt)}`;
 }
 
-/** /events/:eventId (08-frontend §4): an event for whoever can read its space. E11-S03 adds the RSVP buttons. */
+/** /events/:eventId (08-frontend §4): an event for whoever can read its space, with the answers and who is coming. */
 export function EventPage() {
   const { eventId = "" } = useParams();
   const { data: event, error, isPending } = useEvent(eventId);
@@ -71,7 +73,9 @@ export function EventPage() {
           </div>
         )}
       </dl>
+      <RsvpButtons event={event} />
       {event.description && <Markdown>{event.description}</Markdown>}
+      <Attendees eventId={event.id ?? ""} />
       {event.canManage && (
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setEditing(true)}>Edit</Button>

@@ -27,7 +27,8 @@ import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
  * Scheduling, editing and cancelling club events (calendar.md §8.1). EVENT_MANAGE in an ACTIVE club for every
- * change; the space's read rule for reading (R-06). E11-S04 adds the reminders (created, regenerated, deleted here).
+ * change; the space's read rule for reading (R-06). The view carries the RSVP counts (RsvpSummary).
+ * E11-S04 adds the reminders (created, regenerated, deleted here).
  */
 @Service
 public class EventService {
@@ -37,16 +38,19 @@ public class EventService {
     private final SpaceAccessPolicy spaceAccess;
     private final ClubCatalog clubs;
     private final MediaCatalog mediaCatalog;
+    private final RsvpSummary rsvps;
     private final ApplicationEventPublisher publisher;
     private final Clock clock;
 
     EventService(ClubEventRepository events, ClubAuthorization clubAuthorization, SpaceAccessPolicy spaceAccess,
-                 ClubCatalog clubs, MediaCatalog mediaCatalog, ApplicationEventPublisher publisher, Clock clock) {
+                 ClubCatalog clubs, MediaCatalog mediaCatalog, RsvpSummary rsvps, ApplicationEventPublisher publisher,
+                 Clock clock) {
         this.events = events;
         this.clubAuthorization = clubAuthorization;
         this.spaceAccess = spaceAccess;
         this.clubs = clubs;
         this.mediaCatalog = mediaCatalog;
+        this.rsvps = rsvps;
         this.publisher = publisher;
         this.clock = clock;
     }
@@ -111,8 +115,9 @@ public class EventService {
         boolean canManage = e.isScheduled() && club.isActive()
             && clubAuthorization.hasPermission(e.clubId(), actor, ClubPermission.EVENT_MANAGE);
         MediaView cover = e.coverMediaId() == null ? null : mediaCatalog.resolve(List.of(e.coverMediaId())).get(e.coverMediaId());
+        RsvpSummary.Of answers = rsvps.forEvent(e.id(), actor.userId());
         return new EventView(e.id(), e.clubId(), club.slug(), club.name(), e.spaceId(), e.era(), e.title(),
             e.description(), e.location(), e.onlineUrl(), e.startsAt(), e.endsAt(), e.status(), e.cancelReason(),
-            cover, canManage);
+            cover, canManage, answers.going(), answers.interested(), answers.mine(), e.acceptsRsvp(clock.instant()));
     }
 }
