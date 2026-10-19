@@ -2,3 +2,4 @@
 export { CampusCalendarPage } from "./CampusCalendarPage";
 export { ClubEventsPage } from "./ClubEventsPage";
 export { EventPage } from "./EventPage";
+export { UpcomingEvents } from "./UpcomingEvents";

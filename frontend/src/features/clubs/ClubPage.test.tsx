@@ -32,6 +32,7 @@ function backend(club: object | ApiError, membership: object = visitor) {
     if (path === "/api/clubs/{clubId}/member-summary") return Promise.resolve({ data: summary });
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: membership });
     if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: spaces });
+    if (path === "/api/clubs/{clubId}/events") return Promise.resolve({ data: [] });          // upcoming events (E11-S02)
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
