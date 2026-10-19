@@ -1,0 +1,67 @@
+# Production / demo on top of compose.yaml (09-deployment §4.3):
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build                    (demo behind the Cloudflare tunnel)
+#   docker compose -f compose.yaml -f compose.prod.yaml --profile demo up -d --build     (local prod-like run with Mailpit)
+services:
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-vclubroom}
+      DB_USER: ${DB_USER:-vclubroom}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_PUBLIC_ENDPOINT: ${APP_PUBLIC_URL}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # An empty value would override application.yml's placeholder and stop the backend at startup ("client id
+      # must not be empty"); with the placeholder it boots, and only Login with 42 fails until the real values are set.
+      FT_CLIENT_ID: ${FT_CLIENT_ID:-not-configured}
+      FT_CLIENT_SECRET: ${FT_CLIENT_SECRET:-not-configured}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      MAIL_FROM: ${MAIL_FROM:-Virtual Clubroom <no-reply@localhost>}
+      APP_ADMIN_BOOTSTRAP_LOGINS: ${APP_ADMIN_BOOTSTRAP_LOGINS:-}
+      APP_BOOTSTRAP_ADMIN_USERNAME: ${APP_BOOTSTRAP_ADMIN_USERNAME:-}
+      APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      seaweedfs: { condition: service_healthy }
+    deploy:
+      replicas: ${BACKEND_REPLICAS:-2}       # stateless: sessions in Redis, WS fan-out via Redis
+    restart: unless-stopped
+
+  proxy:
+    build: ./frontend
+    ports:
+      # Private interface only (R-26): 127.0.0.1 if cloudflared runs on this host, the LAN IP if it runs on another machine.
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+
+  cloudflared:                               # option B (§8.2): dedicated connector next to the app
+    image: cloudflare/cloudflared:2026.10.0
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      proxy: { condition: service_started }
+    profiles: ["tunnel"]
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.31
+    profiles: ["demo"]                       # local demo without real email
+    ports: ["127.0.0.1:8025:8025"]
+    restart: unless-stopped
