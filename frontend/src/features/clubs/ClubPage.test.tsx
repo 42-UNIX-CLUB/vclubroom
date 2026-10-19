@@ -19,6 +19,8 @@ const summary = {
   owners: [{ id: "u1", login: "ada", displayName: "Ada Founder" }, { id: "u2", login: "bob", displayName: "Bob Co-owner" }],
 };
 
+const spaces = [{ id: "s1", name: "General", slug: "general", readLevel: "PUBLIC", channels: [
+    { id: "ch1", name: "Posts", slug: "posts", type: "FORUM" }, { id: "ch2", name: "Lounge", slug: "lounge", type: "CHAT" }] }];
 const visitor = { member: false, owner: false, roles: [], permissions: [] };
 const owner = { member: true, owner: true, roles: [{ name: "Owner" }, { name: "Member" }], permissions: ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE"] };
 
@@ -29,6 +31,7 @@ function backend(club: object | ApiError, membership: object = visitor) {
     if (path === "/api/clubs/{idOrSlug}") return club instanceof ApiError ? Promise.reject(club) : Promise.resolve({ data: club });
     if (path === "/api/clubs/{clubId}/member-summary") return Promise.resolve({ data: summary });
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: membership });
+    if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: spaces });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
 }
@@ -76,6 +79,8 @@ describe("club page", () => {
     expect(within(sections).getByRole("link", { name: "History" })).toBeTruthy();
     expect(within(sections).queryByRole("link", { name: "Members" })).toBeNull();
     expect(within(sections).queryByRole("link", { name: "Settings" })).toBeNull();
+    const channels = await screen.findByRole("navigation", { name: "Spaces" });           // the General space (E05-S01)
+    expect(within(channels).getByRole("link", { name: "Posts" }).getAttribute("href")).toBe("/c/chess-club/s/general/posts");
   });
 
   it("shows an owner the member menu, the members and the settings", async () => {
