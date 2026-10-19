@@ -1,3 +1,4 @@
+import { UpcomingEvents } from "@/features/calendar";
 import { useMemberSummary } from "@/features/membership";
 import { formatDate } from "@/shared/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -5,7 +6,7 @@ import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { Club } from "./api";
 
-/** Right panel of every club page: members, owners, founding date. Upcoming events arrive with E11-S02. */
+/** Right panel of every club page: members, owners, founding date, and the next events. */
 export function ClubAboutPanel({ club }: { club: Club }) {
   const { data: summary } = useMemberSummary(club.id ?? "");
   const founded = club.eras?.[0]?.startedAt;
@@ -39,7 +40,7 @@ export function ClubAboutPanel({ club }: { club: Club }) {
           <CardTitle>Upcoming events</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Club events arrive with E11-S02.</p>
+          <UpcomingEvents clubId={club.id ?? ""} />
         </CardContent>
       </Card>
     </aside>
