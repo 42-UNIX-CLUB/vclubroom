@@ -1,21 +1,22 @@
 package pt.vclubroom.club.application;
 
-import java.time.Clock;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 import pt.vclubroom.club.api.ClubStatus;
+import pt.vclubroom.club.domain.Club;
+import pt.vclubroom.club.domain.RevivalStatus;
 import pt.vclubroom.club.persistence.ClubRepository;
+import pt.vclubroom.club.persistence.RevivalRequestRepository;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.shared.demo.DemoData;
 import pt.vclubroom.shared.security.Actor;
 
 /**
- * Film Society's first life ends: archived, then revived into era 2. The revival is done on the club itself until
- * E14-S02 brings revival requests (and their ClubRevived event).
+ * Film Society's first life ends: archived, then revived into era 2 the way students do it. Carol asks, alice
+ * approves, and carol becomes the owner while dave, the founder, stays a member (R-05).
  */
 @Component
 @Profile(DemoData.PROFILE)
@@ -23,27 +24,35 @@ import pt.vclubroom.shared.security.Actor;
 class ClubDemoSecondEra implements ApplicationRunner {
 
     private final ClubService clubService;
+    private final RevivalService revivals;
     private final ClubRepository clubs;
+    private final RevivalRequestRepository requests;
     private final UserDirectory users;
-    private final TransactionTemplate tx;
-    private final Clock clock;
 
-    ClubDemoSecondEra(ClubService clubService, ClubRepository clubs, UserDirectory users, TransactionTemplate tx, Clock clock) {
+    ClubDemoSecondEra(ClubService clubService, RevivalService revivals, ClubRepository clubs,
+                      RevivalRequestRepository requests, UserDirectory users) {
         this.clubService = clubService;
+        this.revivals = revivals;
         this.clubs = clubs;
+        this.requests = requests;
         this.users = users;
-        this.tx = tx;
-        this.clock = clock;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        clubs.findBySlug(DemoData.FILM_SOCIETY)
-            .filter(club -> club.status() == ClubStatus.ACTIVE && club.currentEra() == 1)
-            .ifPresent(club -> {
-                clubService.archive(new Actor(users.findByLogin("alice").orElseThrow().id(), true), club.id(),
-                    "The founders graduated");
-                tx.executeWithoutResult(status -> clubs.findWithErasById(club.id()).orElseThrow().revive(clock.instant()));
-            });
+        Actor alice = new Actor(users.findByLogin("alice").orElseThrow().id(), true);
+        Actor carol = new Actor(users.findByLogin("carol").orElseThrow().id(), false);
+        Club film = clubs.findBySlug(DemoData.FILM_SOCIETY).orElseThrow();
+        if (film.currentEra() != 1) {
+            return;                                                        // seeded before
+        }
+        if (film.status() == ClubStatus.ACTIVE) {
+            clubService.archive(alice, film.id(), "The founders graduated");
+        }
+        var pending = requests.findByClubIdAndStatus(film.id(), RevivalStatus.PENDING);
+        var request = pending.isEmpty()
+            ? revivals.request(carol, film.id(), "A new promo wants the projector back. I'll run the Thursday screenings.").id()
+            : pending.getFirst().id();
+        revivals.approve(alice, request);
     }
 }

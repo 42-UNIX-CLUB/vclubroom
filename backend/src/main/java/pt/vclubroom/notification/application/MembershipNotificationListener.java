@@ -67,10 +67,13 @@ class MembershipNotificationListener {
             Set.of(e.inviteeId()));
     }
 
-    /** The founder's ownership is the approval itself; an accepted invitation tells the inviter; others the new owner. */
+    /**
+     * The founder's ownership is the approval itself, and the reviver's is the revival (CLUB_REVIVED). An accepted
+     * invitation tells the inviter; others the new owner.
+     */
     @ApplicationModuleListener
     void on(OwnerAdded e) {
-        if ("FOUNDER".equals(e.reason())) {
+        if ("FOUNDER".equals(e.reason()) || "REVIVAL".equals(e.reason())) {
             return;
         }
         ClubSnapshot club = clubs.require(e.clubId());

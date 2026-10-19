@@ -11,6 +11,7 @@ import pt.vclubroom.club.api.ClubCatalog;
 import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubArchived;
 import pt.vclubroom.club.events.ClubCreationRequested;
+import pt.vclubroom.club.events.ClubRevived;
 import pt.vclubroom.history.domain.TimelineEntryType;
 import pt.vclubroom.history.persistence.TimelineEntryRepository;
 import pt.vclubroom.membership.events.OwnerAdded;
@@ -21,7 +22,6 @@ import pt.vclubroom.membership.events.OwnerSteppedDown;
  * Builds the timeline from club and membership events (history.md §6). Every handler is idempotent (dedup key).
  * Owner events carry no era: the club's current era is read when the event is projected. That is the era the fact
  * happened in, because eras only change at an archival or a revival, which owners cannot overlap with.
- * E14-S02 adds REVIVED (ClubRevived).
  */
 @Component
 class TimelineProjector {
@@ -53,6 +53,13 @@ class TimelineProjector {
         record(e.clubId(), e.endedEra(), TimelineEntryType.ARCHIVED, e.archivedBy(), null,
             Map.of("reason", e.reason() == null ? "" : e.reason()), e.occurredAt(),
             "ARCHIVED:" + e.clubId() + ":" + e.endedEra());
+    }
+
+    /** The first line of the new era: approved by the admin, about the new owner. */
+    @ApplicationModuleListener
+    void on(ClubRevived e) {
+        record(e.clubId(), e.newEra(), TimelineEntryType.REVIVED, e.approvedBy(), e.newOwnerId(), Map.of(),
+            e.occurredAt(), "REVIVED:" + e.clubId() + ":" + e.newEra());
     }
 
     @ApplicationModuleListener

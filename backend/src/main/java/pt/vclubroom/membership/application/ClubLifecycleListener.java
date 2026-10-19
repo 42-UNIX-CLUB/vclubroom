@@ -10,11 +10,13 @@ import pt.vclubroom.club.api.JoinPolicy;
 import pt.vclubroom.club.events.ClubApproved;
 import pt.vclubroom.club.events.ClubArchived;
 import pt.vclubroom.club.events.ClubProfileUpdated;
+import pt.vclubroom.club.events.ClubRevived;
 import pt.vclubroom.membership.domain.ClubRole;
 import pt.vclubroom.membership.domain.Membership;
 import pt.vclubroom.membership.domain.SystemRole;
 import pt.vclubroom.membership.events.JoinRequestDecided;
 import pt.vclubroom.membership.events.OwnerAdded;
+import pt.vclubroom.membership.events.OwnerRemoved;
 import pt.vclubroom.membership.persistence.ClubRoleRepository;
 import pt.vclubroom.membership.persistence.JoinRequestRepository;
 import pt.vclubroom.membership.persistence.MembershipRepository;
@@ -23,7 +25,6 @@ import pt.vclubroom.membership.persistence.OwnershipInvitationRepository;
 /**
  * Reacts to the club lifecycle. Each handler runs asynchronously after the club transaction committed,
  * in its own transaction, and is IDEMPOTENT (events are delivered at least once).
- * E14-S02 adds the handler for ClubRevived.
  */
 @Component
 class ClubLifecycleListener {
@@ -70,6 +71,31 @@ class ClubLifecycleListener {
         Instant now = clock.instant();
         joinRequests.cancelAllPending(event.clubId(), now);
         invitations.expireAllPending(event.clubId(), now);
+    }
+
+    /**
+     * R-05: the requester becomes the owner (joining first if needed), and the previous owners stay as members, with
+     * their history. A second delivery finds the requester already the only owner and changes nothing.
+     */
+    @ApplicationModuleListener
+    void on(ClubRevived event) {
+        Instant now = clock.instant();
+        ClubRole owner = roles.findSystemRoleForUpdate(event.clubId(), SystemRole.OWNER)
+            .orElseThrow(() -> new IllegalStateException("Owner role missing for " + event.clubId()));
+
+        memberships.findActiveWithRole(event.clubId(), owner.id()).stream()
+            .filter(m -> !m.userId().equals(event.newOwnerId()))
+            .forEach(m -> {
+                m.revokeRole(owner.id());
+                events.publishEvent(new OwnerRemoved(event.clubId(), m.userId(), "REVIVAL", event.approvedBy(), now));
+            });
+
+        Membership requester = memberships.findActive(event.clubId(), event.newOwnerId())
+            .orElseGet(() -> admission.admit(event.clubId(), event.newOwnerId(), "REVIVAL", now));
+        if (!requester.holds(owner.id())) {
+            requester.grantRole(owner.id());
+            events.publishEvent(new OwnerAdded(event.clubId(), event.newOwnerId(), "REVIVAL", event.approvedBy(), now));
+        }
     }
 
     /** A club switched to OPEN: everyone waiting is in (a second delivery finds no pending request left). */
