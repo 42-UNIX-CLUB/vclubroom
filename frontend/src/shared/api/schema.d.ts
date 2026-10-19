@@ -516,6 +516,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{idOrSlug}/eras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["eras"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{clubId}/spaces": {
         parameters: {
             query?: never;
@@ -1028,6 +1060,25 @@ export interface components {
             name?: string;
             color?: string;
             system?: boolean;
+        };
+        CursorPageTimelineEntryView: {
+            items?: components["schemas"]["TimelineEntryView"][];
+            nextCursor?: string;
+        };
+        TimelineEntryView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int32 */
+            era?: number;
+            /** @enum {string} */
+            type?: "CREATION_REQUESTED" | "FOUNDED" | "OWNER_ADDED" | "OWNER_STEPPED_DOWN" | "OWNER_REMOVED" | "ARCHIVED" | "REVIVED";
+            actor?: components["schemas"]["UserSummary"];
+            subject?: components["schemas"]["UserSummary"];
+            data?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            occurredAt?: string;
         };
         MembershipView: {
             member?: boolean;
@@ -1925,6 +1976,53 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    eras: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                idOrSlug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubEraResponse"][];
+                };
+            };
+        };
+    };
+    timeline: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPageTimelineEntryView"];
                 };
             };
         };
