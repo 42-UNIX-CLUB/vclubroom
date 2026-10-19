@@ -7,7 +7,7 @@ import { ErrorPage } from "./ErrorPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { routes } from "./router";
 
-// The lazily loaded admin pages fetch data: answer every GET with an empty page.
+// The lazily loaded admin pages fetch data: answer every GET with an empty page (and an empty invitation inbox).
 vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn() } }));
 
 afterEach(cleanup);
@@ -48,7 +48,9 @@ describe("routes", () => {
   });
 
   it("opens the admin console on its first page for admins", async () => {
-    vi.mocked(api.GET).mockResolvedValue({ data: { items: [], page: 0, size: 100, totalElements: 0 } } as never);
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: path === "/api/me/ownership-invitations" ? [] : { items: [], page: 0, size: 100, totalElements: 0 },
+    })) as never);
     const router = renderApp("/admin", admin);
     // The admin chunk loads lazily; on a cold first run Vite transforms it on demand, which can take over a second.
     expect(await screen.findByRole("heading", { name: "Club approvals" }, { timeout: 5000 })).toBeTruthy();
@@ -63,8 +65,8 @@ describe("routes", () => {
     // Same nesting as router.tsx: the page-level errorElement sits inside AppLayout.
     const crashing: RouteObject[] = [
       { element: <AppLayout />, errorElement: <ErrorPage />, children: [
-          { errorElement: <ErrorPage />, children: [{ path: "*", element: <Boom /> }] },
-        ] },
+        { errorElement: <ErrorPage />, children: [{ path: "*", element: <Boom /> }] },
+      ] },
     ];
     const queryClient = new QueryClient();
     queryClient.setQueryData(["me"], null);

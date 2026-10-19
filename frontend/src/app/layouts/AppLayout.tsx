@@ -1,6 +1,7 @@
 import { BellIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { PostLoginRedirect, UserMenu, useMe } from "@/features/auth";
+import { OwnershipInvitations } from "@/features/membership";
 import { buttonVariants } from "@/shared/ui/button";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import { navLinkClass } from "./navLinkClass";
@@ -44,6 +45,7 @@ export function AppLayout() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">
+        {me && <OwnershipInvitations />}
         <Outlet />
       </main>
     </div>
