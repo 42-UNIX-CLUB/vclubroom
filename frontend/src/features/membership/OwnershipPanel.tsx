@@ -92,7 +92,7 @@ function InviteOwner({ clubId }: { clubId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <UserPicker value={invitee} onChange={setInvitee} label="Search members" />
+        <UserPicker value={invitee} onChange={setInvitee} label="Search members" clubId={clubId} />
         <div className="flex flex-wrap gap-2">
           <Button disabled={!invitee || invite.isPending} onClick={() => send(false)}>Invite as co-owner</Button>
           <Button variant="outline" disabled={!invitee || invite.isPending} onClick={() => send(true)}>Transfer ownership</Button>

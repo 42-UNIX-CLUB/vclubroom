@@ -19,7 +19,10 @@ function backend({ owners = [ada], invitations = [] as object[] } = {}) {
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: owner });
     if (path === "/api/clubs/{clubId}/member-summary") return Promise.resolve({ data: { memberCount: 3, owners } });
     if (path === "/api/clubs/{clubId}/ownership-invitations") return Promise.resolve({ data: invitations });
-    if (path === "/api/users") return Promise.resolve({ data: [sam] });
+    if (path === "/api/clubs/{clubId}/members") {                              // the picker searches members (E07-S04)
+      return Promise.resolve({ data: { items: [{ userId: ada.id, login: "ada", displayName: "Ada Founder", owner: true },
+        { userId: sam.id, login: "sam", displayName: "Sam Student", owner: false }], totalElements: 2 } });
+    }
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
   vi.mocked(api.POST).mockResolvedValue({} as never);

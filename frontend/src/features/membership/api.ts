@@ -1,4 +1,4 @@
-import { keepPreviousData, type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, type QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 
@@ -9,12 +9,14 @@ export type JoinRequest = components["schemas"]["JoinRequestView"];
 type JoinResponse = components["schemas"]["JoinResponse"];
 export type OwnershipInvitation = components["schemas"]["InvitationView"];
 export type UserSummary = components["schemas"]["UserSummary"];
+export type Member = components["schemas"]["MemberResponse"];
 
 /** Query keys of this feature (08-frontend §5.1): everything about one club lives under ["club", clubId]. */
 export const membershipKeys = {
   summary: (clubId: string) => ["club", clubId, "member-summary"] as const,
   me: (clubId: string) => ["club", clubId, "membership", "me"] as const,
   joinRequests: (clubId: string) => ["club", clubId, "join-requests"] as const,
+  members: (clubId: string, query: string) => ["club", clubId, "members", { query }] as const,
   clubInvitations: (clubId: string) => ["club", clubId, "ownership-invitations"] as const,
   myInvitations: ["me", "ownership-invitations"] as const,
   userSearch: (query: string) => ["users", { query }] as const,
@@ -50,9 +52,48 @@ export function useJoinRequests(clubId: string, enabled = true) {
   });
 }
 
+/** Who is in the club (members only), owners first, 50 per page; query searches names and logins. */
+export function useMembers(clubId: string, query: string) {
+  const q = query.trim();
+  return useInfiniteQuery({
+    queryKey: membershipKeys.members(clubId, q),
+    queryFn: async ({ pageParam }) => (await api.GET("/api/clubs/{clubId}/members", {
+      params: { path: { clubId }, query: { query: q || undefined, page: pageParam, size: 50 } },
+    })).data!,
+    initialPageParam: 0,
+    getNextPageParam: (last) => ((last.page ?? 0) + 1) * (last.size ?? 50) < (last.totalElements ?? 0) ? (last.page ?? 0) + 1 : undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useRemoveMember(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      await api.DELETE("/api/clubs/{clubId}/members/{userId}", { params: { path: { clubId, userId } } });
+    },
+    onSuccess: () => refreshClub(queryClient, clubId),
+  });
+}
+
+/** The club's members who are not owners yet, for the ownership invitation (only members can become owners). */
+export function useMemberSearch(clubId: string, query: string) {
+  const q = query.trim();
+  return useQuery({
+    queryKey: [...membershipKeys.members(clubId, q), "picker"] as const,
+    queryFn: async () => ((await api.GET("/api/clubs/{clubId}/members", {
+      params: { path: { clubId }, query: { query: q, size: 8 } },
+    })).data?.items ?? [])
+      .filter((member) => !member.owner)
+      .map((member): UserSummary => ({ id: member.userId, login: member.login, displayName: member.displayName, avatarUrl: member.avatarUrl })),
+    enabled: q.length >= 2,
+    placeholderData: keepPreviousData,
+  });
+}
+
 /**
  * After joining, leaving or a decision, everything under ["club", clubId] is stale: my membership, the member count,
- * the join requests, later the spaces.
+ * the join requests, the member list, later the spaces.
  */
 function refreshClub(queryClient: QueryClient, clubId: string) {
   return queryClient.invalidateQueries({ queryKey: ["club", clubId] });

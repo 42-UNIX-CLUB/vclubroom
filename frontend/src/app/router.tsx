@@ -42,7 +42,7 @@ export const routes: RouteObject[] = [
                   { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubHome })) },
                   { path: "s/:spaceSlug/:channelSlug", lazy: () => import("@/features/spaces").then((m) => ({ Component: m.ChannelPage })) },
                   { path: "events", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.ClubEventsPage })) },
-                  { path: "members", element: soon("Members", "E07-S04") },
+                  { path: "members", lazy: () => import("@/features/membership").then((m) => ({ Component: m.MembersPage })) },
                   { path: "history", lazy: () => import("@/features/history").then((m) => ({ Component: m.ClubHistoryPage })) },
                   {
                     path: "settings",
