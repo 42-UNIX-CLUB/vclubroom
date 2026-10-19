@@ -20,7 +20,7 @@ const summary = {
 };
 
 const spaces = [{ id: "s1", name: "General", slug: "general", readLevel: "PUBLIC", channels: [
-    { id: "ch1", name: "Posts", slug: "posts", type: "FORUM" }, { id: "ch2", name: "Lounge", slug: "lounge", type: "CHAT" }] }];
+  { id: "ch1", name: "Posts", slug: "posts", type: "FORUM" }, { id: "ch2", name: "Lounge", slug: "lounge", type: "CHAT" }] }];
 const visitor = { member: false, owner: false, roles: [], permissions: [] };
 const owner = { member: true, owner: true, roles: [{ name: "Owner" }, { name: "Member" }], permissions: ["CLUB_SETTINGS_MANAGE", "MEMBER_APPROVE"] };
 
@@ -109,6 +109,22 @@ describe("club page", () => {
 
     expect(await screen.findByText("This request was rejected")).toBeTruthy();
     expect(screen.getByText("Same as the Chess Society")).toBeTruthy();
+  });
+
+  it("shows an archived club read-only: banner, no join button, no settings", async () => {
+    backend({
+      ...chess, status: "ARCHIVED", reviewNote: "Inactive for a year.",
+      eras: [{ number: 1, startedAt: "2026-10-18T10:00:00Z", startReason: "APPROVED", endedAt: "2026-10-19T10:00:00Z", endReason: "Inactive for a year." }],
+    }, owner);
+    renderClubPage();
+
+    expect(await screen.findByText("This club is archived since 19 Oct 2026")).toBeTruthy();
+    expect(screen.getByText("Inactive for a year.")).toBeTruthy();
+    expect(screen.getByText("Archived")).toBeTruthy();
+    const sections = screen.getByRole("complementary", { name: "Club sections" });
+    expect(await within(sections).findByRole("link", { name: "Members" })).toBeTruthy();
+    expect(within(sections).queryByRole("link", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Member|Join/ })).toBeNull();
   });
 
   it("says when a club does not exist", async () => {

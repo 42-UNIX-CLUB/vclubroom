@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import pt.vclubroom.club.api.ClubStatus;
 import pt.vclubroom.club.api.JoinPolicy;
 import pt.vclubroom.club.events.ClubApproved;
+import pt.vclubroom.club.events.ClubArchived;
 import pt.vclubroom.club.events.ClubProfileUpdated;
 import pt.vclubroom.membership.domain.ClubRole;
 import pt.vclubroom.membership.domain.Membership;
@@ -17,11 +18,12 @@ import pt.vclubroom.membership.events.OwnerAdded;
 import pt.vclubroom.membership.persistence.ClubRoleRepository;
 import pt.vclubroom.membership.persistence.JoinRequestRepository;
 import pt.vclubroom.membership.persistence.MembershipRepository;
+import pt.vclubroom.membership.persistence.OwnershipInvitationRepository;
 
 /**
  * Reacts to the club lifecycle. Each handler runs asynchronously after the club transaction committed,
  * in its own transaction, and is IDEMPOTENT (events are delivered at least once).
- * E14 adds handlers for ClubArchived and ClubRevived.
+ * E14-S02 adds the handler for ClubRevived.
  */
 @Component
 class ClubLifecycleListener {
@@ -29,15 +31,18 @@ class ClubLifecycleListener {
     private final ClubRoleRepository roles;
     private final MembershipRepository memberships;
     private final JoinRequestRepository joinRequests;
+    private final OwnershipInvitationRepository invitations;
     private final MembershipAdmission admission;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     ClubLifecycleListener(ClubRoleRepository roles, MembershipRepository memberships, JoinRequestRepository joinRequests,
-                          MembershipAdmission admission, ApplicationEventPublisher events, Clock clock) {
+                          OwnershipInvitationRepository invitations, MembershipAdmission admission,
+                          ApplicationEventPublisher events, Clock clock) {
         this.roles = roles;
         this.memberships = memberships;
         this.joinRequests = joinRequests;
+        this.invitations = invitations;
         this.admission = admission;
         this.events = events;
         this.clock = clock;
@@ -57,6 +62,14 @@ class ClubLifecycleListener {
         Membership founder = admission.admit(event.clubId(), event.founderId(), "FOUNDED", now);
         founder.grantRole(owner.id());
         events.publishEvent(new OwnerAdded(event.clubId(), event.founderId(), "FOUNDER", event.approvedBy(), now));
+    }
+
+    /** R-10: nobody can join or take over an archived club, so what was waiting is closed (bulk, idempotent). */
+    @ApplicationModuleListener
+    void on(ClubArchived event) {
+        Instant now = clock.instant();
+        joinRequests.cancelAllPending(event.clubId(), now);
+        invitations.expireAllPending(event.clubId(), now);
     }
 
     /** A club switched to OPEN: everyone waiting is in (a second delivery finds no pending request left). */
