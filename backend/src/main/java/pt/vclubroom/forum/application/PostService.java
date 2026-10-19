@@ -55,6 +55,6 @@ public class PostService {
 
         events.publishEvent(new PostPublished(post.id(), channelId, access.spaceId(), access.clubId(),
             actor.userId(), post.era(), post.title(), post.excerpt(), now));
-        return assembler.toViews(List.of(post), access).getFirst();
+        return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
     }
 }

@@ -43,6 +43,6 @@ public class PostQueryService {
             : posts.findPageInEra(channelId, era, after.createdAt(), after.id(), oneMore);
         List<Post> page = rows.size() > limit ? rows.subList(0, limit) : rows;
         String next = rows.size() > limit ? new TimeCursor(page.getLast().createdAt(), page.getLast().id()).encode() : null;
-        return new CursorPage<>(assembler.toViews(page, access), next);
+        return new CursorPage<>(assembler.toViews(page, access, actor.userId()), next);
     }
 }
