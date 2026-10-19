@@ -20,7 +20,7 @@ import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
  * The calendars (calendar.md §8.2): one range query, then only the events of spaces the viewer can read (R-06),
- * decorated with their club in one batch.
+ * decorated with their club and their RSVPs in batches.
  */
 @Service
 @Transactional(readOnly = true)
@@ -34,13 +34,15 @@ public class CalendarQueryService {
     private final ClubAuthorization clubAuthorization;
     private final SpaceAccessPolicy spaceAccess;
     private final ClubCatalog clubs;
+    private final RsvpSummary rsvps;
 
     CalendarQueryService(ClubEventRepository events, ClubAuthorization clubAuthorization, SpaceAccessPolicy spaceAccess,
-                         ClubCatalog clubs) {
+                         ClubCatalog clubs, RsvpSummary rsvps) {
         this.events = events;
         this.clubAuthorization = clubAuthorization;
         this.spaceAccess = spaceAccess;
         this.clubs = clubs;
+        this.rsvps = rsvps;
     }
 
     /** Every event the viewer can read (ALL), or only those of their clubs (MINE). */
@@ -64,12 +66,14 @@ public class CalendarQueryService {
             candidates.stream().map(ClubEvent::spaceId).collect(Collectors.toSet()));
         List<ClubEvent> visible = candidates.stream().filter(e -> readableSpaces.contains(e.spaceId())).toList();
         Map<UUID, ClubSnapshot> clubById = clubs.findByIds(visible.stream().map(ClubEvent::clubId).distinct().toList());
+        Map<UUID, RsvpSummary.Of> answers = rsvps.forEvents(visible.stream().map(ClubEvent::id).toList(), actor.userId());
         return visible.stream()
             .filter(e -> clubById.containsKey(e.clubId()))
             .map(e -> {
                 ClubSnapshot club = clubById.get(e.clubId());
+                RsvpSummary.Of a = answers.getOrDefault(e.id(), RsvpSummary.Of.NONE);
                 return new CalendarItem(e.id(), e.title(), e.startsAt(), e.endsAt(), club.id(), club.slug(), club.name(),
-                    e.status());
+                    e.status(), a.going(), a.interested(), a.mine());
             })
             .toList();
     }
