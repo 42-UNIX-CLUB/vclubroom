@@ -41,6 +41,15 @@ export function useMyClubRequests() {
   });
 }
 
+/** Ask to bring an archived club back (E14-S02); an admin decides. */
+export function useRequestRevival(clubId: string) {
+  return useMutation({
+    mutationFn: async (motivation: string) => (await api.POST("/api/clubs/{clubId}/revival-requests", {
+      params: { path: { clubId } }, body: { motivation },
+    })).data,
+  });
+}
+
 export function useRequestClub() {
   const queryClient = useQueryClient();
   return useMutation({
