@@ -61,6 +61,12 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
 
     @Query("""
            select m from Membership m
+           where m.userId = :userId and m.status = pt.vclubroom.membership.domain.MembershipStatus.ACTIVE
+           """)
+    List<Membership> findActiveOfUser(@Param("userId") UUID userId);
+
+    @Query("""
+           select m from Membership m
            where m.clubId = :clubId and m.status = pt.vclubroom.membership.domain.MembershipStatus.ACTIVE
            order by m.joinedAt
            """)
