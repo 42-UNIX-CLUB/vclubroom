@@ -180,6 +180,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/revival-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{clubId}/ownership-invitations": {
         parameters: {
             query?: never;
@@ -318,6 +334,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/revival-requests/{requestId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rejectRevival"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/revival-requests/{requestId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approveRevival"];
         delete?: never;
         options?: never;
         head?: never;
@@ -820,6 +868,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/revival-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["revivals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/clubs": {
         parameters: {
             query?: never;
@@ -1048,6 +1112,25 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             eras?: components["schemas"]["ClubEraResponse"][];
+        };
+        RevivalRequestBody: {
+            motivation: string;
+        };
+        RevivalRequestResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            clubId?: string;
+            clubName?: string;
+            clubSlug?: string;
+            /** Format: uuid */
+            requesterId?: string;
+            requesterName?: string;
+            motivation?: string;
+            status?: string;
+            reviewNote?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         InviteOwnerRequest: {
             /** Format: uuid */
@@ -1411,6 +1494,15 @@ export interface components {
             /** Format: int64 */
             nextBefore?: number;
         };
+        PageResponseRevivalRequestResponse: {
+            items?: components["schemas"]["RevivalRequestResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
             /** Format: int32 */
@@ -1746,6 +1838,32 @@ export interface operations {
             };
         };
     };
+    request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevivalRequestBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevivalRequestResponse"];
+                };
+            };
+        };
+    };
     clubInvitations: {
         parameters: {
             query?: never;
@@ -2057,6 +2175,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    rejectRevival: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevivalRequestResponse"];
+                };
+            };
+        };
+    };
+    approveRevival: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubResponse"];
                 };
             };
         };
@@ -2802,6 +2968,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    revivals: {
+        parameters: {
+            query?: {
+                status?: "PENDING" | "APPROVED" | "REJECTED";
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseRevivalRequestResponse"];
+                };
             };
         };
     };

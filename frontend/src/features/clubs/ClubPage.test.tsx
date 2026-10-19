@@ -134,6 +134,7 @@ describe("club page", () => {
 
     expect(await screen.findByText("This club is archived since 19 Oct 2026")).toBeTruthy();
     expect(screen.getByText("Inactive for a year.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Request a revival" })).toBeTruthy();
     expect(screen.getByText("Archived")).toBeTruthy();
     const sections = screen.getByRole("complementary", { name: "Club sections" });
     expect(await within(sections).findByRole("link", { name: "Members" })).toBeTruthy();

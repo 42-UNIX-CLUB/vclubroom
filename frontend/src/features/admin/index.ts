@@ -2,3 +2,4 @@
 export { AdminClubsPage } from "./AdminClubsPage";
 export { AdminLayout } from "./AdminLayout";
 export { ApprovalQueuePage } from "./ApprovalQueuePage";
+export { RevivalQueuePage } from "./RevivalQueuePage";

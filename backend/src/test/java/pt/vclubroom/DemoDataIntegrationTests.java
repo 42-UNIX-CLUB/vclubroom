@@ -66,7 +66,8 @@ class DemoDataIntegrationTests {
             "posts", count("select count(*) from forum.posts"),
             "comments", count("select count(*) from forum.comments"),
             "messages", count("select count(*) from chat.messages"),
-            "events", count("select count(*) from calendar.events"));
+            "events", count("select count(*) from calendar.events"),
+            "revivals", count("select count(*) from club.revival_requests"));
     }
 
     @Test
@@ -86,6 +87,12 @@ class DemoDataIntegrationTests {
         UUID dave = users.findByLogin("dave").orElseThrow().id();
         assertThat(count("select count(*) from membership.join_requests where status = 'PENDING' and user_id = '" + dave + "'")).isEqualTo(1);
         assertThat(count("select count(*) from forum.posts where club_id = '" + film.id() + "' and era = 2")).isEqualTo(1);
+        UUID carol = users.findByLogin("carol").orElseThrow().id();
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {                   // revived by carol (E14-S02)
+            assertThat(authorization.isOwner(film.id(), carol)).isTrue();
+            assertThat(authorization.isOwner(film.id(), dave)).isFalse();
+            assertThat(count("select count(*) from history.timeline_entries where club_id = '" + film.id() + "' and type = 'REVIVED'")).isEqualTo(1);
+        });
         assertThat(count("select count(*) from chat.messages")).isEqualTo(5);
         assertThat(count("select count(*) from calendar.events where status = 'SCHEDULED'")).isEqualTo(3);
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(
