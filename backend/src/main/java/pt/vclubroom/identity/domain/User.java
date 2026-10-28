@@ -154,4 +154,6 @@ public class User {
     public AuthProvider provider() { return provider; }
     public PlatformRole platformRole() { return platformRole; }
     public UserStatus status() { return status; }
+    public Instant createdAt() { return createdAt; }
+    public Instant lastLoginAt() { return lastLoginAt; }
 }

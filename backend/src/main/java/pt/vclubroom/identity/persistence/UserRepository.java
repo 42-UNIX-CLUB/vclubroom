@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +36,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
            order by u.login
            """)
     List<User> search(@Param("q") String query, Limit limit);
+
+    /** The admin list: every account, whatever its status; an empty query lists them all. */
+    @Query("""
+           select u from User u
+           where :q = '' or lower(u.login) like lower(concat(:q, '%')) or lower(u.displayName) like lower(concat('%', :q, '%'))
+           """)
+    Page<User> searchAll(@Param("q") String query, Pageable pageable);
 }
