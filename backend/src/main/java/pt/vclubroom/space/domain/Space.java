@@ -101,6 +101,21 @@ public class Space {
         return channel;
     }
 
+    /** The slug stays: links to the space keep working after a rename. */
+    public void describe(String newName, String newDescription) {
+        if (newName != null) this.name = newName;
+        if (newDescription != null) this.description = newDescription.isBlank() ? null : newDescription;
+    }
+
+    public void moveTo(int newPosition) {
+        this.position = newPosition;
+    }
+
+    /** "Board room" → "board-room": what a new space's or channel's slug would be. */
+    public static String slugOf(String name) {
+        return slugify(name);
+    }
+
     public void removeGroupFromRules(UUID groupId) {
         this.readRule = readRule.withoutGroup(groupId);
         this.writeRule = writeRule.withoutGroup(groupId);

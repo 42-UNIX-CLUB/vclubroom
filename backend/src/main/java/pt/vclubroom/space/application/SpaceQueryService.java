@@ -14,7 +14,7 @@ import pt.vclubroom.space.domain.Space;
 import pt.vclubroom.space.persistence.ChannelRepository;
 import pt.vclubroom.space.persistence.SpaceRepository;
 
-/** Read side of spaces: only what the viewer can read, with their flags. E05-S03 adds SpaceService (create, edit). */
+/** Read side of spaces: only what the viewer can read, with their flags. SpaceService changes them. */
 @Service
 @Transactional(readOnly = true)
 public class SpaceQueryService {
@@ -71,7 +71,7 @@ public class SpaceQueryService {
                 a.currentEra()))
             .toList();
         return new SpaceView(space.id(), space.name(), space.slug(), space.description(), space.position(),
-            space.readRule().level(), space.writeRule().level(), space.isArchived(), a.canWrite(), a.canModerate(),
-            channelViews);
+            space.readRule().level(), space.readRule().groupIds(), space.writeRule().level(), space.writeRule().groupIds(),
+            space.isArchived(), a.canWrite(), a.canModerate(), channelViews);
     }
 }
