@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/notification-preferences": {
         parameters: {
             query?: never;
@@ -516,6 +532,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{userId}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/revival-requests/{requestId}/reject": {
         parameters: {
             query?: never;
@@ -754,6 +802,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_4"];
+        trace?: never;
+    };
+    "/api/admin/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update_5"];
         trace?: never;
     };
     "/api/users": {
@@ -1067,7 +1131,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1099,7 +1163,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1211,7 +1275,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1309,6 +1373,10 @@ export interface components {
                 [key: string]: number;
             };
             mine?: string[];
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
         };
         PreferenceRequest: {
             /** @enum {string} */
@@ -1656,6 +1724,34 @@ export interface components {
             provider?: string;
             admin?: boolean;
         };
+        CreateLocalAccountRequest: {
+            username: string;
+            displayName: string;
+            /** Format: email */
+            email?: string;
+            temporaryPassword: string;
+            admin?: boolean;
+        };
+        AdminUserView: {
+            /** Format: uuid */
+            id?: string;
+            login?: string;
+            displayName?: string;
+            email?: string;
+            /** @enum {string} */
+            provider?: "FORTY_TWO" | "LOCAL";
+            /** @enum {string} */
+            role?: "USER" | "ADMIN";
+            /** @enum {string} */
+            status?: "ACTIVE" | "DISABLED";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+        };
+        PasswordRequest: {
+            temporaryPassword: string;
+        };
         ReasonRequest: {
             reason: string;
         };
@@ -1708,6 +1804,12 @@ export interface components {
             name?: string;
             /** Format: int32 */
             position?: number;
+        };
+        UpdateUserRequest: {
+            /** @enum {string} */
+            platformRole?: "USER" | "ADMIN";
+            /** @enum {string} */
+            status?: "ACTIVE" | "DISABLED";
         };
         ChannelView: {
             /** Format: uuid */
@@ -1993,6 +2095,15 @@ export interface components {
             /** Format: int64 */
             nextBefore?: number;
         };
+        PageResponseAdminUserView: {
+            items?: components["schemas"]["AdminUserView"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
         PageResponseRevivalRequestResponse: {
             items?: components["schemas"]["RevivalRequestResponse"][];
             /** Format: int32 */
@@ -2063,6 +2174,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ReactionsResponse"];
                 };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3093,6 +3226,78 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: {
+                query?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseAdminUserView"];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLocalAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminUserView"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     rejectRevival: {
         parameters: {
             query?: never;
@@ -3663,6 +3868,32 @@ export interface operations {
             };
         };
     };
+    update_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminUserView"];
+                };
+            };
+        };
+    };
     search: {
         parameters: {
             query?: {
@@ -4079,7 +4310,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 query?: string;
@@ -4128,7 +4359,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -4289,7 +4520,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";

@@ -79,7 +79,7 @@ export const routes: RouteObject[] = [
                   { path: "approvals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.ApprovalQueuePage })) },
                   { path: "revivals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.RevivalQueuePage })) },
                   { path: "clubs", lazy: () => import("@/features/admin").then((m) => ({ Component: m.AdminClubsPage })) },
-                  { path: "users", element: soon("Users", "E15-S02") },
+                  { path: "users", lazy: () => import("@/features/admin").then((m) => ({ Component: m.UsersPage })) },
                   { path: "campus-groups", element: soon("Campus groups", "E15-S03") },
                 ],
               },
