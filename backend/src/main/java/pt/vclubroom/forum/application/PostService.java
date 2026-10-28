@@ -14,14 +14,17 @@ import pt.vclubroom.forum.persistence.PostRepository;
 import pt.vclubroom.media.api.MediaCatalog;
 import pt.vclubroom.media.api.MediaPurpose;
 import pt.vclubroom.realtime.api.RealtimePublisher;
+import pt.vclubroom.shared.error.BusinessRuleException;
+import pt.vclubroom.shared.error.ForbiddenException;
+import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.space.api.ChannelAccess;
 import pt.vclubroom.space.api.ChannelType;
 import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
- * Writing posts (forum.md §8.1). Access is decided by the space module, never here. Readers of the channel are told
- * at once (after the commit); E09-S04 adds edit, delete and pin.
+ * Writing posts (forum.md §8.1). Access is decided by the space module, never here; who may change a post is
+ * ForumActions. Readers of the channel are told at once (after the commit), with IDs only.
  */
 @Service
 public class PostService {
@@ -61,5 +64,62 @@ public class PostService {
             actor.userId(), post.era(), post.title(), post.excerpt(), now));
         realtime.toTopic(ForumTopics.channelPosts(channelId), "post.created", Map.of("postId", post.id()));
         return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
+    }
+
+    /** The author, who can still write in the channel, in the current era. The attachments stay. */
+    @Transactional
+    public PostView edit(Actor actor, UUID postId, String title, String body) {
+        Post post = load(postId);
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        if (!post.authorId().equals(actor.userId())) {
+            throw new ForbiddenException("NOT_AUTHOR", "Only the author can edit this post.");
+        }
+        requireCurrentEra(access, post);
+        access.requireWrite();                                                     // CHANNEL_WRITE_DENIED
+        post.edit(actor.userId(), title, body, clock.instant());                    // POST_DELETED, EMPTY_POST
+        pushChange(post, "post.updated");
+        return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
+    }
+
+    /** The author as for editing, or a moderator (CONTENT_MODERATE). A tombstone stays in its place (BR-16). */
+    @Transactional
+    public void delete(Actor actor, UUID postId) {
+        Post post = load(postId);
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        boolean author = post.authorId().equals(actor.userId()) && access.canWrite();
+        if (!author && !access.canModerate()) {
+            throw new ForbiddenException("CANNOT_DELETE", "You cannot delete this post.");
+        }
+        requireCurrentEra(access, post);
+        post.softDelete(actor.userId(), clock.instant());                           // POST_DELETED; unpins it
+        pushChange(post, "post.deleted");
+    }
+
+    /** Moderators pin a post above the channel's others, or unpin it. */
+    @Transactional
+    public void pin(Actor actor, UUID postId, boolean pinned) {
+        Post post = load(postId);
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        if (!access.canModerate()) {
+            throw new ForbiddenException("CANNOT_PIN", "Only moderators can pin posts.");
+        }
+        requireCurrentEra(access, post);
+        post.pin(pinned);                                                           // POST_DELETED
+        pushChange(post, "post.updated");
+    }
+
+    private Post load(UUID postId) {
+        return posts.findById(postId).orElseThrow(() -> new NotFoundException("POST_NOT_FOUND", "Post not found"));
+    }
+
+    private static void requireCurrentEra(ChannelAccess access, Post post) {
+        if (!access.isCurrentEra(post.era())) {                                     // BR-15
+            throw new BusinessRuleException("HISTORY_READ_ONLY", "Posts from previous eras are read-only.");
+        }
+    }
+
+    /** IDs only: each feed reloads what its viewer may see. */
+    private void pushChange(Post post, String type) {
+        realtime.toTopic(ForumTopics.channelPosts(post.channelId()), type, Map.of("postId", post.id()));
     }
 }
