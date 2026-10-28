@@ -52,7 +52,7 @@ export const routes: RouteObject[] = [
                       { path: "profile", lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsProfile })) },
                       { path: "requests", lazy: () => import("@/features/membership").then((m) => ({ Component: m.JoinRequestsPage })) },
                       { path: "roles", lazy: () => import("@/features/membership").then((m) => ({ Component: m.RolesEditor })) },
-                      { path: "groups", element: soon("Groups", "E13-S03") },
+                      { path: "groups", lazy: () => import("@/features/groups").then((m) => ({ Component: m.GroupsSettings })) },
                       { path: "spaces", element: soon("Spaces", "E05-S03") },
                       { path: "ownership", lazy: () => import("@/features/membership").then((m) => ({ Component: m.OwnershipPanel })) },
                     ],

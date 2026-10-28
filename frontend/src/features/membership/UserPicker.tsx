@@ -6,19 +6,20 @@ import { Input } from "@/shared/ui/input";
 import { type UserSummary, useMemberSearch, useUserSearch } from "./api";
 
 /**
- * Search people by login or name and pick one. With a clubId it searches that club's members who are not owners
- * (ownership invitations); without, everyone (groups, later).
+ * Search people by login or name and pick one. With a clubId it searches that club's members: without the owners
+ * (ownership invitations) unless includeOwners (groups). Without a clubId, everyone.
  */
-export function UserPicker({ value, onChange, label = "Search people", clubId }: {
+export function UserPicker({ value, onChange, label = "Search people", clubId, includeOwners = false }: {
   value: UserSummary | null;
   onChange: (user: UserSummary | null) => void;
   label?: string;
   clubId?: string;
+  includeOwners?: boolean;
 }) {
   const [text, setText] = useState("");
   const query = useDebounce(text, 300);
   const everyone = useUserSearch(clubId ? "" : query);
-  const members = useMemberSearch(clubId ?? "", clubId ? query : "");
+  const members = useMemberSearch(clubId ?? "", clubId ? query : "", includeOwners);
   const { data: users = [], isFetching } = clubId ? members : everyone;
 
   if (value) {

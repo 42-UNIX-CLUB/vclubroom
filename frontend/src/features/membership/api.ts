@@ -133,15 +133,18 @@ export function useAssignRoles(clubId: string) {
   });
 }
 
-/** The club's members who are not owners yet, for the ownership invitation (only members can become owners). */
-export function useMemberSearch(clubId: string, query: string) {
+/**
+ * The club's members, for pickers: without owners for the ownership invitation (only members can become owners),
+ * with them for groups.
+ */
+export function useMemberSearch(clubId: string, query: string, includeOwners = false) {
   const q = query.trim();
   return useQuery({
-    queryKey: [...membershipKeys.members(clubId, q), "picker"] as const,
+    queryKey: [...membershipKeys.members(clubId, q), "picker", { includeOwners }] as const,
     queryFn: async () => ((await api.GET("/api/clubs/{clubId}/members", {
       params: { path: { clubId }, query: { query: q, size: 8 } },
     })).data?.items ?? [])
-      .filter((member) => !member.owner)
+      .filter((member) => includeOwners || !member.owner)
       .map((member): UserSummary => ({ id: member.userId, login: member.login, displayName: member.displayName, avatarUrl: member.avatarUrl })),
     enabled: q.length >= 2,
     placeholderData: keepPreviousData,

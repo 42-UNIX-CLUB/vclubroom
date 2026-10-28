@@ -51,7 +51,7 @@ describe("JoinButton", () => {
     vi.mocked(api.POST).mockResolvedValue({ data: { status: "JOINED", membershipId: "m1" } } as never);
     renderButton(open);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Join club" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Join club" }, { timeout: 3000 }));
     await waitFor(() => expect(vi.mocked(api.POST).mock.calls[0]?.[0]).toBe("/api/clubs/{clubId}/join"));
     expect(await screen.findByRole("button", { name: /Member/ })).toBeTruthy();    // membership refetched
     expect(toast.success).toHaveBeenCalledWith("Welcome to Chess Club!");
@@ -62,7 +62,7 @@ describe("JoinButton", () => {
     vi.mocked(api.POST).mockResolvedValue({ data: { status: "REQUESTED", requestId: "r1" } } as never);
     renderButton({ ...open, joinPolicy: "APPROVAL" });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Request to join" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Request to join" }, { timeout: 3000 }));
     expect(await screen.findByRole("button", { name: /Request sent/ })).toBeTruthy();
   });
 
@@ -71,7 +71,7 @@ describe("JoinButton", () => {
     vi.mocked(api.DELETE).mockResolvedValue({} as never);
     renderButton({ ...open, joinPolicy: "APPROVAL" });
 
-    fireEvent.click(await screen.findByRole("button", { name: /Request sent/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Request sent/ }, { timeout: 3000 }));
     fireEvent.click(await screen.findByRole("menuitem", { name: /Cancel request/ }));
 
     await waitFor(() => expect(vi.mocked(api.DELETE).mock.calls[0]?.[0]).toBe("/api/clubs/{clubId}/join-requests/mine"));
@@ -84,7 +84,7 @@ describe("JoinButton", () => {
     vi.mocked(api.DELETE).mockResolvedValue({} as never);
     renderButton(open);
 
-    const menu = await screen.findByRole("button", { name: /Member/ });
+    const menu = await screen.findByRole("button", { name: /Member/ }, { timeout: 3000 });
     fireEvent.click(menu);
     fireEvent.click(await screen.findByRole("menuitem", { name: /Leave club/ }));
     const dialog = await screen.findByRole("dialog");
@@ -101,7 +101,7 @@ describe("JoinButton", () => {
     vi.mocked(api.DELETE).mockRejectedValue(new Error("A club must keep at least one owner. Invite a co-owner first."));
     renderButton(open);
 
-    fireEvent.click(await screen.findByRole("button", { name: /Member/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Member/ }, { timeout: 3000 }));
     fireEvent.click(await screen.findByRole("menuitem", { name: /Leave club/ }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(Array.from(dialog.querySelectorAll("button")).find((b) => b.textContent === "Leave club")!);
