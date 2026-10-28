@@ -10,7 +10,7 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.UUID;
 
-/** A person's override of a type's defaults; no row means the defaults. E12-S02 lets people edit them. */
+/** A person's override of a type's defaults; no row means the defaults (R-15). */
 @Entity
 @Table(name = "preferences", schema = "notification")
 @IdClass(NotificationPreference.Key.class)
@@ -34,6 +34,19 @@ public class NotificationPreference {
 
     protected NotificationPreference() {
         // JPA
+    }
+
+    public static NotificationPreference of(UUID userId, NotificationType type, boolean inApp, boolean email) {
+        NotificationPreference p = new NotificationPreference();
+        p.userId = userId;
+        p.type = type;
+        p.change(inApp, email);
+        return p;
+    }
+
+    public void change(boolean newInApp, boolean newEmail) {
+        this.inApp = newInApp;
+        this.email = newEmail;
     }
 
     public UUID userId() { return userId; }
