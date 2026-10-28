@@ -20,6 +20,7 @@ import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.identity.api.UserSummary;
 import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.error.BusinessRuleException;
+import pt.vclubroom.shared.error.ForbiddenException;
 import pt.vclubroom.shared.error.NotFoundException;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.shared.web.CursorPage;
@@ -29,8 +30,8 @@ import pt.vclubroom.space.api.SpaceAccessPolicy;
 
 /**
  * Comments and replies (forum.md §4, BR-15, BR-17). Access is the post's channel's: read to see the thread, write
- * to take part, and only in the current era. New comments are pushed to the feed and the open thread; E09-S04 adds
- * edit and delete.
+ * to take part, and only in the current era. New comments are pushed to the feed and the open thread; edits and
+ * deletions to the open thread (E09-S04).
  */
 @Service
 public class CommentService {
@@ -85,7 +86,54 @@ public class CommentService {
         pushed.put("commentCount", post.commentCount());                   // a value, not "+1": repeats are harmless
         realtime.toTopic(ForumTopics.channelPosts(post.channelId()), "comment.created", pushed);   // the feed's counter
         realtime.toTopic(ForumTopics.post(postId), "comment.created", pushed);                     // the open thread
-        return toViews(List.of(comment), actor.userId()).getFirst();
+        return toViews(List.of(comment), post, access, actor.userId()).getFirst();
+    }
+
+    /** The author, who can still write in the channel, in the current era. */
+    @Transactional
+    public CommentView edit(Actor actor, UUID commentId, String body) {
+        Comment comment = load(commentId);
+        Post post = posts.findById(comment.postId()).orElseThrow();
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        if (!comment.authorId().equals(actor.userId())) {
+            throw new ForbiddenException("NOT_AUTHOR", "Only the author can edit this comment.");
+        }
+        requireCurrentEra(access, post);
+        access.requireWrite();                                                                   // CHANNEL_WRITE_DENIED
+        comment.edit(actor.userId(), body, clock.instant());                                     // COMMENT_DELETED
+        pushChange(post, comment, "comment.updated");
+        return toViews(List.of(comment), post, access, actor.userId()).getFirst();
+    }
+
+    /** The author as for editing, or a moderator; a tombstone stays in its place (BR-16). */
+    @Transactional
+    public void delete(Actor actor, UUID commentId) {
+        Comment comment = load(commentId);
+        Post post = posts.findById(comment.postId()).orElseThrow();
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        boolean author = comment.authorId().equals(actor.userId()) && access.canWrite();
+        if (!author && !access.canModerate()) {
+            throw new ForbiddenException("CANNOT_DELETE", "You cannot delete this comment.");
+        }
+        requireCurrentEra(access, post);
+        comment.softDelete(actor.userId(), clock.instant());                                     // COMMENT_DELETED
+        pushChange(post, comment, "comment.deleted");
+    }
+
+    private Comment load(UUID commentId) {
+        return comments.findById(commentId)
+            .orElseThrow(() -> new NotFoundException("COMMENT_NOT_FOUND", "Comment not found"));
+    }
+
+    private static void requireCurrentEra(ChannelAccess access, Post post) {
+        if (!access.isCurrentEra(post.era())) {                                                  // BR-15
+            throw new BusinessRuleException("HISTORY_READ_ONLY", "Posts from previous eras are read-only.");
+        }
+    }
+
+    /** IDs only: each open thread reloads what its viewer may see. */
+    private void pushChange(Post post, Comment comment, String type) {
+        realtime.toTopic(ForumTopics.post(post.id()), type, Map.of("postId", post.id(), "commentId", comment.id()));
     }
 
     /** Oldest first, replies by time among the comments; the SPA groups them under their parents. */
@@ -93,24 +141,25 @@ public class CommentService {
     public CursorPage<CommentView> list(Actor actor, UUID postId, String cursor, int limit) {
         Post post = posts.findById(postId)
             .orElseThrow(() -> new NotFoundException("POST_NOT_FOUND", "Post not found"));
-        spaceAccess.forChannel(post.channelId(), actor).requireRead();
+        ChannelAccess access = spaceAccess.forChannel(post.channelId(), actor).requireRead();
         TimeCursor after = cursor == null ? FIRST_PAGE : TimeCursor.decode(cursor);
         List<Comment> rows = comments.findPage(postId, after.createdAt(), after.id(), Limit.of(limit + 1));
         List<Comment> page = rows.size() > limit ? rows.subList(0, limit) : rows;
         String next = rows.size() > limit ? new TimeCursor(page.getLast().createdAt(), page.getLast().id()).encode() : null;
-        return new CursorPage<>(toViews(page, actor.userId()), next);
+        return new CursorPage<>(toViews(page, post, access, actor.userId()), next);
     }
 
-    private List<CommentView> toViews(List<Comment> page, UUID viewerId) {
+    private List<CommentView> toViews(List<Comment> page, Post post, ChannelAccess access, UUID viewerId) {
         Map<UUID, UserSummary> authors = users.findByIds(page.stream().map(Comment::authorId).distinct().toList());
         Map<UUID, ReactionSummary.Reactions> reacted =
             reactions.of(ReactionTarget.COMMENT, page.stream().map(Comment::id).toList(), viewerId);
         return page.stream()
             .map(c -> {
                 ReactionSummary.Reactions r = reacted.getOrDefault(c.id(), ReactionSummary.Reactions.NONE);
+                ForumActions can = ForumActions.of(access, post.era(), c.authorId(), viewerId, c.isDeleted());
                 return new CommentView(c.id(), c.postId(), c.parentId(), authors.get(c.authorId()),
                     c.isDeleted() ? null : c.body(), r.counts(), r.mine(), c.isDeleted(), c.deletedByModerator(),
-                    c.createdAt(), c.editedAt());
+                    can.edit(), can.delete(), c.createdAt(), c.editedAt());
             })
             .toList();
     }

@@ -60,9 +60,26 @@ public class Comment {
         return c;
     }
 
+    public void edit(UUID editor, String newBody, Instant now) {
+        requireNotDeleted();
+        if (!authorId.equals(editor)) {
+            throw new BusinessRuleException("NOT_AUTHOR", "Only the author can edit this comment.");
+        }
+        this.body = newBody.strip();
+        this.editedAt = now.truncatedTo(ChronoUnit.MICROS);
+    }
+
+    /** BR-16: tombstone, never a hard delete. Its replies stay. */
     public void softDelete(UUID by, Instant now) {
+        requireNotDeleted();
         this.deletedBy = by;
         this.deletedAt = now.truncatedTo(ChronoUnit.MICROS);
+    }
+
+    private void requireNotDeleted() {
+        if (isDeleted()) {
+            throw new BusinessRuleException("COMMENT_DELETED", "This comment was deleted.");
+        }
     }
 
     public String excerpt() {
