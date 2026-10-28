@@ -56,3 +56,47 @@ export function useMarkAllRead() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationKeys.all }),
   });
 }
+
+export type Preference = components["schemas"]["PreferenceView"];
+export type PreferenceChoice = components["schemas"]["PreferenceRequest"];
+
+export const preferenceKeys = {
+  mine: ["notification-preferences"] as const,
+};
+
+/** Every type with what applies to me and its defaults (R-15). */
+export function usePreferences() {
+  return useQuery({
+    queryKey: preferenceKeys.mine,
+    queryFn: async () => (await api.GET("/api/me/notification-preferences")).data ?? [],
+  });
+}
+
+/**
+ * The switches move at once and go back if the server refuses. Saves can overlap and finish in any order, so the list
+ * is read again once the last one is done.
+ */
+export function useSavePreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: preferenceKeys.mine,
+    mutationFn: async (choices: PreferenceChoice[]) => {
+      await api.PUT("/api/me/notification-preferences", { body: choices });
+    },
+    onMutate: async (choices) => {
+      await queryClient.cancelQueries({ queryKey: preferenceKeys.mine });
+      const before = queryClient.getQueryData<Preference[]>(preferenceKeys.mine);
+      queryClient.setQueryData<Preference[]>(preferenceKeys.mine, (list) => list?.map((p) => {
+        const choice = choices.find((c) => c.type === p.type);
+        return choice ? { ...p, inApp: choice.inApp, email: choice.email } : p;
+      }));
+      return { before };
+    },
+    onError: (_error, _choices, context) => queryClient.setQueryData(preferenceKeys.mine, context?.before),
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: preferenceKeys.mine }) === 1) {
+        return queryClient.invalidateQueries({ queryKey: preferenceKeys.mine });
+      }
+    },
+  });
+}
