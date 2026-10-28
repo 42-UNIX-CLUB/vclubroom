@@ -174,7 +174,7 @@ app:
     allowed-origins: ${app.public-url}
     redis-channel: vclubroom:rt
   calendar:
-    reminder-offsets: [24h, 1h]
+    reminder-interval: PT1M            # how often ReminderScheduler sends due reminders (24 h and 1 h before: ReminderKind)
     display-zone: Europe/Lisbon
   fortytwo:
     campus-groups-enabled: true
