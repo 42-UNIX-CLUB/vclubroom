@@ -100,3 +100,35 @@ export function useCancelEvent(eventId: string) {
     onSuccess: (event) => eventChanged(queryClient, event),
   });
 }
+
+export type CalendarFeed = components["schemas"]["CalendarFeedResponse"];
+
+/** My calendar feed (E11-S05), outside ["calendar"]: refreshing the calendars needn't ask about it again. */
+export const feedKeys = { mine: ["calendar-feed"] as const };
+
+/** Whether I have a feed, and since when; its URL is never shown again after it was made. */
+export function useCalendarFeed() {
+  return useQuery({
+    queryKey: feedKeys.mine,
+    queryFn: async () => (await api.GET("/api/me/calendar-feed")).data ?? {},
+  });
+}
+
+/** A new secret URL; an older one stops working. The answer is the only time the URL is seen. */
+export function useNewCalendarFeed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => (await api.POST("/api/me/calendar-feed")).data as CalendarFeed,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: feedKeys.mine }),
+  });
+}
+
+export function useTurnOffCalendarFeed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await api.DELETE("/api/me/calendar-feed");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: feedKeys.mine }),
+  });
+}
