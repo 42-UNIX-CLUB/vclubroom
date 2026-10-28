@@ -152,7 +152,8 @@ app:
     private-bucket: media-private
     upload-url-ttl: 10m
     download-url-ttl: 15m
-    orphan-ttl: 24h
+    orphan-ttl: 24h                    # uploads not used by then are deleted (E08-S03)
+    orphan-cleanup-interval: PT1H      # how often OrphanMediaCleanupJob runs
     limits:
       IMAGE:
         max-bytes: 10485760
