@@ -9,14 +9,15 @@ import org.springframework.stereotype.Component;
 import pt.vclubroom.calendar.api.RsvpQuery;
 import pt.vclubroom.calendar.api.RsvpStatus;
 import pt.vclubroom.calendar.events.EventCancelled;
+import pt.vclubroom.calendar.events.EventReminderDue;
 import pt.vclubroom.calendar.events.EventScheduled;
 import pt.vclubroom.calendar.events.EventUpdated;
 import pt.vclubroom.notification.domain.NotificationType;
 import pt.vclubroom.space.api.SpaceAudience;
 
 /**
- * A new event reaches the club members who can read its space (R-06); a change or a cancellation reaches the people
- * who said they were going or interested. E11-S04 brings the reminders.
+ * A new event reaches the club members who can read its space (R-06); a change, a cancellation or a reminder reaches
+ * the people who said they were going or interested.
  */
 @Component
 class CalendarNotificationListener {
@@ -50,10 +51,19 @@ class CalendarNotificationListener {
             "EVENT_UPDATED:" + e.eventId() + ":" + e.occurredAt()), rsvps.attendees(e.eventId(), ANSWERED));
     }
 
+    /** One per reminder and start time: an event moved after a reminder can remind again for its new time. */
+    @ApplicationModuleListener
+    void on(EventReminderDue e) {
+        String title = ("DAY_BEFORE".equals(e.kind()) ? "Tomorrow: " : "In an hour: ") + e.title();
+        dispatcher.dispatch(new NotificationDraft(NotificationType.EVENT_REMINDER, title, null, "/events/" + e.eventId(),
+            Map.of("eventId", e.eventId(), "startsAt", e.startsAt().toString()),
+            "EVENT_REMINDER:" + e.eventId() + ":" + e.kind() + ":" + e.startsAt()), rsvps.attendees(e.eventId(), ANSWERED));
+    }
+
     @ApplicationModuleListener
     void on(EventCancelled e) {
         dispatcher.dispatch(new NotificationDraft(NotificationType.EVENT_CANCELLED, e.title() + " is cancelled",
-            e.reason(), "/events/" + e.eventId(), Map.of("eventId", e.eventId()), "EVENT_CANCELLED:" + e.eventId()),
+                e.reason(), "/events/" + e.eventId(), Map.of("eventId", e.eventId()), "EVENT_CANCELLED:" + e.eventId()),
             rsvps.attendees(e.eventId(), ANSWERED));
     }
 }
