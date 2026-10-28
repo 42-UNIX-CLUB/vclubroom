@@ -2,12 +2,15 @@ import { HistoryIcon } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { useMe } from "@/features/auth";
 import { formatDateTime, formatTime } from "@/shared/lib/dates";
 import { cn } from "@/shared/lib/utils";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { type ChatMessage, useChatLive, useChatMessages, useSendMessage } from "./api";
+import { Textarea } from "@/shared/ui/textarea";
+import { type ChatMessage, useChatLive, useChatMessages, useDeleteMessage, useEditMessage, useSendMessage } from "./api";
 import { MessageComposer } from "./MessageComposer";
 import { newNonce } from "./nonce";
 
@@ -15,6 +18,7 @@ import { newNonce } from "./nonce";
 export interface ChatChannel {
   id?: string;
   canWrite?: boolean;
+  canModerate?: boolean;
   currentEra?: number;
 }
 
@@ -32,6 +36,7 @@ export function ChatRoom({ channel }: { channel: ChatChannel }) {
   const viewingHistory = era !== null && era !== channel.currentEra;
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useChatMessages(channelId, era);
   const send = useSendMessage(channelId);
+  const { data: me } = useMe();
   const [pending, setPending] = useState<Pending[]>([]);
   // Screen readers hear other people's new messages (aria-live); my own are already on screen as I send them.
   const mine = useRef(new Set<string>());
@@ -124,7 +129,16 @@ export function ChatRoom({ channel }: { channel: ChatChannel }) {
           <p className="py-8 text-center text-sm text-muted-foreground">No messages yet. Say hi!</p>
         ) : (
           <ol aria-label="Messages" className="space-y-3">
-            {messages.map((message) => <li key={message.id}><MessageItem message={message} /></li>)}
+            {messages.map((message) => {
+              // Authors edit and delete their own, moderators delete anyone's; never in an earlier era (BR-15).
+              const current = !message.deleted && message.era === channel.currentEra;
+              const mine = !!me?.id && message.author?.id === me.id && !!channel.canWrite;
+              return (
+                <li key={message.id}>
+                  <MessageItem message={message} channelId={channelId} canEdit={current && mine} canDelete={current && (mine || !!channel.canModerate)} />
+                </li>
+              );
+            })}
             {waiting.map((item) => (
               <li key={item.clientNonce} className={cn("text-sm", !item.failed && "opacity-60")}>
                 <p className="break-words whitespace-pre-wrap">{item.body}</p>
@@ -146,12 +160,24 @@ export function ChatRoom({ channel }: { channel: ChatChannel }) {
   );
 }
 
-function MessageItem({ message }: { message: ChatMessage }) {
+function MessageItem({ message, channelId, canEdit, canDelete }: { message: ChatMessage; channelId: string; canEdit: boolean; canDelete: boolean }) {
   const author = message.author?.displayName ?? "Unknown user";
+  const edit = useEditMessage(channelId);
+  const remove = useDeleteMessage(channelId);
+  const [draft, setDraft] = useState<string | null>(null);              // null: not editing
+  const [deleting, setDeleting] = useState(false);
+
+  function save() {
+    edit.mutate({ messageId: message.id ?? 0, body: (draft ?? "").trim() }, {
+      onSuccess: () => setDraft(null),
+      onError: (error) => toast.error(error.message),
+    });
+  }
+
   return (
-    <div className="flex gap-2 text-sm">
+    <div className="group flex gap-2 text-sm">
       <ClubAvatar name={author} url={message.author?.avatarUrl} size="sm" />
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p>
           <span className="font-medium">{author}</span>{" "}
           {message.createdAt && (
@@ -160,10 +186,28 @@ function MessageItem({ message }: { message: ChatMessage }) {
             </time>
           )}
         </p>
-        {message.deleted
-          ? <p className="text-muted-foreground italic">Message deleted.</p>
-          : <p className="break-words whitespace-pre-wrap">{message.body}</p>}
+        {message.deleted ? (
+          <p className="text-muted-foreground italic">Message deleted.</p>
+        ) : draft !== null ? (
+          <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); save(); }}>
+            <Textarea aria-label="Edit your message" rows={2} autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} />
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setDraft(null)}>Cancel</Button>
+              <Button type="submit" size="sm" disabled={!draft.trim() || edit.isPending}>Save</Button>
+            </div>
+          </form>
+        ) : (
+          <p className="break-words whitespace-pre-wrap">{message.body}</p>
+        )}
+        {draft === null && (canEdit || canDelete) && (
+          <p className="flex gap-2">
+            {canEdit && <Button variant="link" size="sm" className="h-auto px-0 text-xs text-muted-foreground" onClick={() => setDraft(message.body ?? "")}>Edit</Button>}
+            {canDelete && <Button variant="link" size="sm" className="h-auto px-0 text-xs text-muted-foreground" onClick={() => setDeleting(true)}>Delete</Button>}
+          </p>
+        )}
       </div>
+      <ConfirmDialog open={deleting} onClose={() => setDeleting(false)} title="Delete this message?" confirmLabel="Delete message"
+                     description="It is replaced by “Message deleted.” for everyone." onConfirm={() => remove.mutateAsync(message.id ?? 0)} />
     </div>
   );
 }

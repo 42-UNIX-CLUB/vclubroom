@@ -45,17 +45,19 @@ class PostAssembler {
             reactions.of(ReactionTarget.POST, posts.stream().map(Post::id).toList(), viewerId);
         return posts.stream()
             .map(p -> view(p, accessOf.apply(p.channelId()), authors.get(p.authorId()), media,
-                reacted.getOrDefault(p.id(), ReactionSummary.Reactions.NONE)))
+                reacted.getOrDefault(p.id(), ReactionSummary.Reactions.NONE), viewerId))
             .toList();
     }
 
     private static PostView view(Post p, ChannelAccess access, UserSummary author, Map<UUID, MediaView> media,
-                                 ReactionSummary.Reactions reacted) {
+                                 ReactionSummary.Reactions reacted, UUID viewerId) {
         boolean readOnly = !access.canWrite() || !access.isCurrentEra(p.era());       // BR-15
         List<MediaView> attached = p.isDeleted() ? List.of()
             : p.mediaIds().stream().map(media::get).filter(Objects::nonNull).toList();
+        ForumActions can = ForumActions.of(access, p.era(), p.authorId(), viewerId, p.isDeleted());
         return new PostView(p.id(), p.channelId(), p.clubId(), p.era(), author, p.title(),
-            p.isDeleted() ? null : p.body(), attached, p.commentCount(), reacted.counts(), reacted.mine(),
-            p.isDeleted(), p.deletedByModerator(), readOnly, p.createdAt(), p.editedAt());
+            p.isDeleted() ? null : p.body(), attached, p.pinned(), p.commentCount(), reacted.counts(), reacted.mine(),
+            p.isDeleted(), p.deletedByModerator(), readOnly, can.edit(), can.delete(), can.moderate(),
+            p.createdAt(), p.editedAt());
     }
 }

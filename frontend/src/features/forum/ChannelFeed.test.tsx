@@ -20,8 +20,8 @@ const post = (n: number) => ({ id: `p${n}`, body: `Post ${n}`, author: { display
 function backend() {
   vi.mocked(api.GET).mockImplementation(((path: string, init: { params: { query: { cursor?: string } } }) =>
     Promise.resolve({ data: path === "/api/reactions" ? [] : init.params.query.cursor
-      ? { items: [post(1)], nextCursor: null }
-      : { items: [post(3), post(2)], nextCursor: "c2" } })) as never);
+        ? { items: [post(1)], nextCursor: null }
+        : { items: [post(3), post(2)], nextCursor: "c2" } })) as never);
 }
 
 /** The query of the n-th request for posts (the cards also ask for the reaction set). */
@@ -89,7 +89,9 @@ describe("ChannelFeed", () => {
   });
 
   it("invites the first post in an empty channel", async () => {
-    vi.mocked(api.GET).mockResolvedValue({ data: { items: [], nextCursor: null } } as never);
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: path === "/api/channels/{channelId}/posts/pinned" ? [] : { items: [], nextCursor: null },
+    })) as never);
     renderFeed({ id: "ch1", canWrite: true, currentEra: 1 });
 
     expect(await screen.findByText("Be the first to share something.")).toBeTruthy();

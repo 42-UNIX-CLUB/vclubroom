@@ -11,12 +11,14 @@ type ReactionsState = components["schemas"]["ReactionsResponse"];
 type PostPage = components["schemas"]["CursorPagePostResponse"];
 
 /**
- * Query keys of this feature (08-frontend §5.1): ["channel", channelId, "posts", { era }], ["feed", clubId, { era }],
- * ["post", postId, "comments"]. A post can sit in its channel's pages and in a club feed: changes go to both.
+ * Query keys of this feature (08-frontend §5.1): ["channel", channelId, "posts", { era }], ["channel", channelId,
+ * "pinned"], ["feed", clubId, { era }], ["post", postId, "comments"]. A post can sit in its channel's pages, its
+ * pinned list and a club feed: changes go to all of them.
  */
 export const forumKeys = {
   allPosts: (channelId: string) => ["channel", channelId, "posts"] as const,
   posts: (channelId: string, era: number | null) => ["channel", channelId, "posts", { era }] as const,
+  pinned: (channelId: string) => ["channel", channelId, "pinned"] as const,
   allFeeds: ["feed"] as const,
   feed: (clubId: string, era: number | null) => ["feed", clubId, { era }] as const,
   comments: (postId: string) => ["post", postId, "comments"] as const,
@@ -57,6 +59,50 @@ export function useCreatePost(channelId: string) {
   });
 }
 
+/** The channel's pinned posts in the current era (E09-S04), shown above the others. */
+export function usePinnedPosts(channelId: string) {
+  return useQuery({
+    queryKey: forumKeys.pinned(channelId),
+    queryFn: async () => (await api.GET("/api/channels/{channelId}/posts/pinned", { params: { path: { channelId } } })).data ?? [],
+    enabled: !!channelId,
+  });
+}
+
+/** Reloads everywhere a post of this channel may be shown: its pages, its pinned list, the club feeds. */
+function refreshPosts(queryClient: QueryClient, channelId: string) {
+  return Promise.all([...postKeys(channelId), forumKeys.pinned(channelId)].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+}
+
+export function useEditPost(channelId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ postId, title, body }: { postId: string; title?: string; body: string }) =>
+      (await api.PATCH("/api/posts/{postId}", { params: { path: { postId } }, body: { title, body } })).data as Post,
+    onSuccess: () => refreshPosts(queryClient, channelId),
+  });
+}
+
+export function useDeletePost(channelId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      await api.DELETE("/api/posts/{postId}", { params: { path: { postId } } });
+    },
+    onSuccess: () => refreshPosts(queryClient, channelId),
+  });
+}
+
+export function usePinPost(channelId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ postId, pinned }: { postId: string; pinned: boolean }) => {
+      const params = { path: { postId } };
+      await (pinned ? api.POST("/api/posts/{postId}/pin", { params }) : api.DELETE("/api/posts/{postId}/pin", { params }));
+    },
+    onSuccess: () => refreshPosts(queryClient, channelId),
+  });
+}
+
 /** A post's thread, oldest first, 50 per page; replies come mixed in by time and carry their parentId. */
 export function useComments(postId: string) {
   return useInfiniteQuery({
@@ -82,6 +128,25 @@ export function useAddComment(postId: string, channelId: string) {
       }
       return queryClient.invalidateQueries({ queryKey: forumKeys.comments(postId) });
     },
+  });
+}
+
+export function useEditComment(postId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, body }: { commentId: string; body: string }) =>
+      (await api.PATCH("/api/comments/{commentId}", { params: { path: { commentId } }, body: { body } })).data as Comment,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: forumKeys.comments(postId) }),
+  });
+}
+
+export function useDeleteComment(postId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      await api.DELETE("/api/comments/{commentId}", { params: { path: { commentId } } });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: forumKeys.comments(postId) }),
   });
 }
 
@@ -143,11 +208,11 @@ export function useToggleReaction(target: ReactionTarget) {
       if (target.kind === "post") {
         const params = { path: { postId: target.id, code } };
         return (add ? await api.PUT("/api/posts/{postId}/reactions/{code}", { params })
-                    : await api.DELETE("/api/posts/{postId}/reactions/{code}", { params })).data as ReactionsState;
+          : await api.DELETE("/api/posts/{postId}/reactions/{code}", { params })).data as ReactionsState;
       }
       const params = { path: { commentId: target.id, code } };
       return (add ? await api.PUT("/api/comments/{commentId}/reactions/{code}", { params })
-                  : await api.DELETE("/api/comments/{commentId}/reactions/{code}", { params })).data as ReactionsState;
+        : await api.DELETE("/api/comments/{commentId}/reactions/{code}", { params })).data as ReactionsState;
     },
     onMutate: async ({ code, add }) => {
       await Promise.all(keys.map((queryKey) => queryClient.cancelQueries({ queryKey })));   // a refetch would undo the guess
@@ -171,11 +236,16 @@ type LivePayload = { postId?: string; commentId?: string; commentCount?: number;
 /**
  * A feed listens to its channel (realtime, E10-S01): new posts reload the pages, comment counts and post reactions
  * are written into the cached posts (the channel's and the club feeds'). Pushes carry values, not changes, and a
- * comment whose push came first is not counted again by its own mutation (countedByPush): never twice.
+ * comment whose push came first is not counted again by its own mutation (countedByPush): never twice. An edited,
+ * deleted, pinned or unpinned post reloads what shows it: the push holds its ID only (E09-S04).
  */
 export function useChannelLive(channelId: string) {
   const queryClient = useQueryClient();
   useTopic<LivePayload>(channelId ? `/topic/channels/${channelId}/posts` : null, ({ type, payload }) => {
+    if (type === "post.updated" || type === "post.deleted") {
+      void refreshPosts(queryClient, channelId);
+      return;
+    }
     postKeys(channelId).forEach((key) => {
       if (type === "post.created") void queryClient.invalidateQueries({ queryKey: key });
       if (type === "comment.created" && payload.postId && payload.commentCount !== undefined) {
@@ -189,12 +259,14 @@ export function useChannelLive(channelId: string) {
   });
 }
 
-/** An open thread listens to its post: new comments reload it, comment reactions update their counts. */
+/** An open thread listens to its post: new, edited and deleted comments reload it, comment reactions update their counts. */
 export function usePostLive(postId: string) {
   const queryClient = useQueryClient();
   useTopic<LivePayload>(postId ? `/topic/posts/${postId}` : null, ({ type, payload }) => {
     const key = forumKeys.comments(postId);
-    if (type === "comment.created") void queryClient.invalidateQueries({ queryKey: key });
+    if (type === "comment.created" || type === "comment.updated" || type === "comment.deleted") {
+      void queryClient.invalidateQueries({ queryKey: key });
+    }
     if (type === "reactions.changed" && payload.targetId) {
       updateCachedItems<{ items?: Comment[] }>(queryClient, key, payload.targetId, (comment) => ({ ...comment, reactionCounts: payload.counts ?? {} }));
     }

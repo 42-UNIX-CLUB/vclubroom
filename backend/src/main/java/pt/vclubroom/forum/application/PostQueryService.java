@@ -44,6 +44,13 @@ public class PostQueryService {
         return assembler.toViews(List.of(post), access, actor.userId()).getFirst();
     }
 
+    /** The channel's pinned posts in the current era, newest first: what moderators keep on top (E09-S04). */
+    public List<PostView> pinned(Actor actor, UUID channelId) {
+        ChannelAccess access = spaceAccess.forChannel(channelId, actor).requireType(ChannelType.FORUM).requireRead();
+        List<Post> pinned = posts.findByChannelIdAndEraAndPinnedTrueOrderByCreatedAtDesc(channelId, access.currentEra(), Limit.of(10));
+        return assembler.toViews(pinned, access, actor.userId());
+    }
+
     /** Newest first; era = null for every era, else only that era (the History tab, E14-S03). */
     public CursorPage<PostView> list(Actor actor, UUID channelId, Integer era, String cursor, int limit) {
         ChannelAccess access = spaceAccess.forChannel(channelId, actor).requireType(ChannelType.FORUM).requireRead();

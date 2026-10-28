@@ -15,7 +15,7 @@ import pt.vclubroom.forum.domain.Post;
 
 /**
  * Keyset pages, newest first: "older than (cursorAt, cursorId)" stays fast however deep you scroll, unlike OFFSET,
- * and a post published meanwhile never shifts the next page. E09-S04 adds the pinned posts.
+ * and a post published meanwhile never shifts the next page.
  */
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
@@ -55,6 +55,9 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            """)
     List<Post> findFeedPageInEra(@Param("channelIds") Collection<UUID> channelIds, @Param("era") int era,
                                  @Param("cursorAt") Instant cursorAt, @Param("cursorId") UUID cursorId, Limit limit);
+
+    /** A channel's pinned posts of one era, newest first (deleting a post unpins it). */
+    List<Post> findByChannelIdAndEraAndPinnedTrueOrderByCreatedAtDesc(UUID channelId, int era, Limit limit);
 
     /**
      * Commenting changes the post's counter: two comments at the same moment wait for each other here instead of

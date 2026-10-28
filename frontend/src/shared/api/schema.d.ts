@@ -132,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts/{postId}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pin"];
+        delete: operations["unpin"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{postId}/comments": {
         parameters: {
             query?: never;
@@ -612,6 +628,22 @@ export interface paths {
         patch: operations["update"];
         trace?: never;
     };
+    "/api/posts/{postId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch: operations["edit"];
+        trace?: never;
+    };
     "/api/messages/{messageId}": {
         parameters: {
             query?: never;
@@ -622,10 +654,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
-        patch: operations["edit"];
+        patch: operations["edit_1"];
         trace?: never;
     };
     "/api/events/{eventId}": {
@@ -635,13 +667,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["edit_1"];
+        patch: operations["edit_2"];
+        trace?: never;
+    };
+    "/api/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch: operations["edit_3"];
         trace?: never;
     };
     "/api/clubs/{clubId}": {
@@ -670,7 +718,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_1"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch: operations["update_2"];
@@ -686,7 +734,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch: operations["update_3"];
@@ -812,22 +860,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["categories"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/posts/{postId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1108,6 +1140,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/channels/{channelId}/posts/pinned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["pinned"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calendar": {
         parameters: {
             query?: never;
@@ -1355,6 +1403,8 @@ export interface components {
             myReactions?: string[];
             deleted?: boolean;
             deletedByModerator?: boolean;
+            canEdit?: boolean;
+            canDelete?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -1550,6 +1600,7 @@ export interface components {
             title?: string;
             body?: string;
             media?: components["schemas"]["MediaView"][];
+            pinned?: boolean;
             /** Format: int32 */
             commentCount?: number;
             reactionCounts?: {
@@ -1559,6 +1610,9 @@ export interface components {
             deleted?: boolean;
             deletedByModerator?: boolean;
             readOnly?: boolean;
+            canEdit?: boolean;
+            canDelete?: boolean;
+            canPin?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -1617,6 +1671,10 @@ export interface components {
             readRule?: components["schemas"]["RuleRequest"];
             writeRule?: components["schemas"]["RuleRequest"];
         };
+        UpdatePostRequest: {
+            title?: string;
+            body?: string;
+        };
         EditMessageRequest: {
             body: string;
         };
@@ -1629,6 +1687,9 @@ export interface components {
             startsAt: string;
             /** Format: date-time */
             endsAt: string;
+        };
+        UpdateCommentRequest: {
+            body: string;
         };
         UpdateClubRequest: {
             name?: string;
@@ -2246,6 +2307,46 @@ export interface operations {
             header?: never;
             path: {
                 spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    pin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unpin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
             };
             cookie?: never;
         };
@@ -3184,7 +3285,75 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
     delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    edit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3206,7 +3375,7 @@ export interface operations {
             };
         };
     };
-    edit: {
+    edit_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3232,7 +3401,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3254,7 +3423,7 @@ export interface operations {
             };
         };
     };
-    edit_1: {
+    edit_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3276,6 +3445,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    edit_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommentResponse"];
                 };
             };
         };
@@ -3306,7 +3521,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3354,7 +3569,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3599,28 +3814,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": string[];
-                };
-            };
-        };
-    };
-    get_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                postId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PostResponse"];
                 };
             };
         };
@@ -4004,6 +4197,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CursorPagePostResponse"];
+                };
+            };
+        };
+    };
+    pinned: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"][];
                 };
             };
         };

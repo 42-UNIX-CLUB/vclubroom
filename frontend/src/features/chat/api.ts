@@ -67,3 +67,23 @@ export function useSendMessage(channelId: string) {
     onSuccess: (message) => addMessage(queryClient, channelId, message),
   });
 }
+
+/** The author changes their message; everyone else gets the new text by push. */
+export function useEditMessage(channelId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ messageId, body }: { messageId: number; body: string }) =>
+      (await api.PATCH("/api/messages/{messageId}", { params: { path: { messageId } }, body: { body } })).data as ChatMessage,
+    onSuccess: (message) => replaceMessage(queryClient, channelId, message),
+  });
+}
+
+/** The author or a moderator; the message stays as "Message deleted." (BR-16). */
+export function useDeleteMessage(channelId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: number) =>
+      (await api.DELETE("/api/messages/{messageId}", { params: { path: { messageId } } })).data as ChatMessage,
+    onSuccess: (message) => replaceMessage(queryClient, channelId, message),
+  });
+}

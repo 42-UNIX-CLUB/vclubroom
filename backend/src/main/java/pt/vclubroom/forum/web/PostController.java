@@ -1,10 +1,13 @@
 package pt.vclubroom.forum.web;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +18,7 @@ import pt.vclubroom.forum.application.PostQueryService;
 import pt.vclubroom.forum.application.PostService;
 import pt.vclubroom.forum.web.dto.CreatePostRequest;
 import pt.vclubroom.forum.web.dto.PostResponse;
+import pt.vclubroom.forum.web.dto.UpdatePostRequest;
 import pt.vclubroom.shared.security.AuthenticatedUser;
 import pt.vclubroom.shared.web.CursorPage;
 
@@ -37,6 +41,11 @@ class PostController {
         return queries.list(me.actor(), channelId, era, cursor, Math.clamp(limit, 1, 50)).map(PostResponse::from);
     }
 
+    @GetMapping("/api/channels/{channelId}/posts/pinned")
+    List<PostResponse> pinned(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("channelId") UUID channelId) {
+        return queries.pinned(me.actor(), channelId).stream().map(PostResponse::from).toList();
+    }
+
     @GetMapping("/api/posts/{postId}")
     PostResponse get(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId) {
         return PostResponse.from(queries.get(me.actor(), postId));
@@ -47,5 +56,29 @@ class PostController {
     PostResponse create(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("channelId") UUID channelId,
                         @Valid @RequestBody CreatePostRequest request) {
         return PostResponse.from(posts.createPost(me.actor(), channelId, request.toCommand()));
+    }
+
+    @PatchMapping("/api/posts/{postId}")
+    PostResponse edit(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId,
+                      @Valid @RequestBody UpdatePostRequest request) {
+        return PostResponse.from(posts.edit(me.actor(), postId, request.title(), request.body()));
+    }
+
+    @DeleteMapping("/api/posts/{postId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId) {
+        posts.delete(me.actor(), postId);
+    }
+
+    @PostMapping("/api/posts/{postId}/pin")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void pin(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId) {
+        posts.pin(me.actor(), postId, true);
+    }
+
+    @DeleteMapping("/api/posts/{postId}/pin")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void unpin(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("postId") UUID postId) {
+        posts.pin(me.actor(), postId, false);
     }
 }

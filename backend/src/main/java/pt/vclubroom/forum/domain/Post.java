@@ -91,10 +91,7 @@ public class Post {
 
     public static Post publish(UUID channelId, UUID spaceId, UUID clubId, int era, UUID authorId,
                                String title, String body, List<UUID> mediaIds, Instant now) {
-        String text = body == null ? "" : body.strip();
-        if (text.isEmpty() && (mediaIds == null || mediaIds.isEmpty())) {
-            throw new InvalidRequestException("EMPTY_POST", "A post needs text or at least one attachment.");
-        }
+        String text = textOf(body, mediaIds);
         Post p = new Post();
         p.id = UUID.randomUUID();
         p.channelId = channelId;
@@ -102,7 +99,7 @@ public class Post {
         p.clubId = clubId;
         p.era = era;
         p.authorId = authorId;
-        p.title = title == null || title.isBlank() ? null : title.strip();
+        p.title = titleOf(title);
         p.body = text;
         p.mediaIds = new ArrayList<>(mediaIds == null ? List.of() : mediaIds);
         p.status = PostStatus.PUBLISHED;
@@ -111,13 +108,14 @@ public class Post {
         return p;
     }
 
+    /** The title and text; the attachments stay as they are. */
     public void edit(UUID editor, String newTitle, String newBody, Instant now) {
         requirePublished();
         if (!authorId.equals(editor)) {
             throw new BusinessRuleException("NOT_AUTHOR", "Only the author can edit this post.");
         }
-        this.title = newTitle;
-        this.body = newBody.strip();
+        this.body = textOf(newBody, mediaIds);
+        this.title = titleOf(newTitle);
         this.editedAt = now.truncatedTo(ChronoUnit.MICROS);
     }
 
@@ -142,6 +140,18 @@ public class Post {
 
     public String excerpt() {
         return body.length() <= 140 ? body : body.substring(0, 137) + "...";
+    }
+
+    private static String textOf(String body, List<UUID> mediaIds) {
+        String text = body == null ? "" : body.strip();
+        if (text.isEmpty() && (mediaIds == null || mediaIds.isEmpty())) {
+            throw new InvalidRequestException("EMPTY_POST", "A post needs text or at least one attachment.");
+        }
+        return text;
+    }
+
+    private static String titleOf(String title) {
+        return title == null || title.isBlank() ? null : title.strip();
     }
 
     private void requirePublished() {
