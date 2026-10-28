@@ -113,8 +113,7 @@ class IdentityIntegrationTests {
         Cookie admin = sessionOf(localUser("boss", PlatformRole.ADMIN));
 
         mvc.perform(get("/api/admin/users").cookie(member)).andExpect(status().isForbidden());
-        // The admin passes the URL rule; 404 only because no admin endpoint exists yet.
-        mvc.perform(get("/api/admin/users").cookie(admin)).andExpect(status().isNotFound());
+        mvc.perform(get("/api/admin/users").cookie(admin)).andExpect(status().isOk());       // E15-S02's user list
     }
 
     @Test
