@@ -53,7 +53,7 @@ export const routes: RouteObject[] = [
                       { path: "requests", lazy: () => import("@/features/membership").then((m) => ({ Component: m.JoinRequestsPage })) },
                       { path: "roles", lazy: () => import("@/features/membership").then((m) => ({ Component: m.RolesEditor })) },
                       { path: "groups", lazy: () => import("@/features/groups").then((m) => ({ Component: m.GroupsSettings })) },
-                      { path: "spaces", element: soon("Spaces", "E05-S03") },
+                      { path: "spaces", lazy: () => import("@/features/spaces").then((m) => ({ Component: m.SpaceSettings })) },
                       { path: "ownership", lazy: () => import("@/features/membership").then((m) => ({ Component: m.OwnershipPanel })) },
                     ],
                   },

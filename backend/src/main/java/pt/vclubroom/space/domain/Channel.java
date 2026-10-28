@@ -63,6 +63,15 @@ public class Channel {
         this.archivedAt = now.truncatedTo(ChronoUnit.MICROS);
     }
 
+    /** The slug stays: links to the channel keep working after a rename. */
+    public void rename(String newName) {
+        this.name = newName;
+    }
+
+    public void moveTo(int newPosition) {
+        this.position = newPosition;
+    }
+
     public boolean isArchived() { return archivedAt != null; }
     public UUID id() { return id; }
     public UUID spaceId() { return spaceId; }

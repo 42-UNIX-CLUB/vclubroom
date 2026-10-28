@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.club.api.ClubCatalog;
 import pt.vclubroom.club.events.ClubApproved;
+import pt.vclubroom.group.api.GroupCatalog;
 import pt.vclubroom.group.api.GroupMembershipQuery;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.space.persistence.SpaceRepository;
@@ -33,6 +34,9 @@ class DefaultSpaceModuleTests {
 
     @MockitoBean
     GroupMembershipQuery groupMembership;
+
+    @MockitoBean
+    GroupCatalog groupCatalog;                 // SpaceService checks rules with it (E05-S03)
 
     @Autowired
     SpaceRepository spaces;
