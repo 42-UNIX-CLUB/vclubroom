@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/members/{userId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["assign"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{postId}/comments": {
         parameters: {
             query?: never;
@@ -196,6 +212,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{clubId}/revival-requests": {
         parameters: {
             query?: never;
@@ -315,9 +347,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -413,7 +445,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["assign"];
+        post: operations["assign_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -498,6 +530,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update"];
+        trace?: never;
+    };
+    "/api/clubs/{clubId}/roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch: operations["update_1"];
         trace?: never;
     };
     "/api/users": {
@@ -636,6 +684,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["permissions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -843,7 +907,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -875,7 +939,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -971,7 +1035,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1116,6 +1180,9 @@ export interface components {
             sizeBytes?: number;
             url?: string;
         };
+        MemberRolesRequest: {
+            roleIds: string[];
+        };
         CreateCommentRequest: {
             body: string;
             /** Format: uuid */
@@ -1219,6 +1286,22 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             eras?: components["schemas"]["ClubEraResponse"][];
+        };
+        RoleRequest: {
+            name?: string;
+            color?: string;
+            permissions?: ("CLUB_SETTINGS_MANAGE" | "MEMBER_APPROVE" | "MEMBER_REMOVE" | "ROLE_MANAGE" | "GROUP_MANAGE" | "SPACE_MANAGE" | "SPACE_ACCESS_ALL" | "CONTENT_MODERATE" | "EVENT_MANAGE")[];
+        };
+        ClubRoleView: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            color?: string;
+            system?: boolean;
+            owner?: boolean;
+            permissions?: ("CLUB_SETTINGS_MANAGE" | "MEMBER_APPROVE" | "MEMBER_REMOVE" | "ROLE_MANAGE" | "GROUP_MANAGE" | "SPACE_MANAGE" | "SPACE_ACCESS_ALL" | "CONTENT_MODERATE" | "EVENT_MANAGE")[];
+            /** Format: int64 */
+            memberCount?: number;
         };
         RevivalRequestBody: {
             motivation: string;
@@ -1486,6 +1569,12 @@ export interface components {
         CursorPageCommentResponse: {
             items?: components["schemas"]["CommentResponse"][];
             nextCursor?: string;
+        };
+        PermissionInfo: {
+            /** @enum {string} */
+            code?: "CLUB_SETTINGS_MANAGE" | "MEMBER_APPROVE" | "MEMBER_REMOVE" | "ROLE_MANAGE" | "GROUP_MANAGE" | "SPACE_MANAGE" | "SPACE_ACCESS_ALL" | "CONTENT_MODERATE" | "EVENT_MANAGE";
+            label?: string;
+            description?: string;
         };
         CursorPageNotificationView: {
             items?: components["schemas"]["NotificationView"][];
@@ -1814,6 +1903,33 @@ export interface operations {
             };
         };
     };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRolesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -2039,6 +2155,54 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubRoleView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubRoleView"];
+                };
+            };
+        };
+    };
     request: {
         parameters: {
             query?: never;
@@ -2252,7 +2416,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 era?: number;
@@ -2278,7 +2442,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2454,7 +2618,7 @@ export interface operations {
             };
         };
     };
-    assign: {
+    assign_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2644,6 +2808,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClubRoleView"];
                 };
             };
         };
@@ -2843,6 +3055,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PermissionInfo"][];
                 };
             };
         };
@@ -3112,7 +3344,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 query?: string;
@@ -3161,7 +3393,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -3299,7 +3531,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";

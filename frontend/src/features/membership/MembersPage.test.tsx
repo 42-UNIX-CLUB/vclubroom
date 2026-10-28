@@ -7,7 +7,7 @@ import { api } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
 import { MembersPage } from "./MembersPage";
 
-vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), DELETE: vi.fn() } }));
+vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), DELETE: vi.fn(), PUT: vi.fn() } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const owner = { userId: "u1", login: "ada", displayName: "Ada Founder", owner: true, joinedAt: "2026-10-18T10:00:00Z",
@@ -18,10 +18,19 @@ const bob = { userId: "u2", login: "bob", displayName: "Bob Martins", owner: fal
 function backend(permissions: string[], members: unknown = { items: [owner, bob], page: 0, size: 50, totalElements: 2 }) {
   vi.mocked(api.GET).mockImplementation(((path: string) => {
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: { member: true, permissions, roles: [] } });
+    if (path === "/api/clubs/{clubId}/roles") return Promise.resolve({ data: clubRoles });
     return members instanceof Error ? Promise.reject(members) : Promise.resolve({ data: members });
   }) as never);
   vi.mocked(api.DELETE).mockResolvedValue({} as never);
+  vi.mocked(api.PUT).mockResolvedValue({} as never);
 }
+
+const clubRoles = [
+  { id: "r1", name: "Owner", system: true, owner: true, permissions: ["EVENT_MANAGE", "ROLE_MANAGE", "MEMBER_REMOVE"] },
+  { id: "r3", name: "Event lead", system: false, permissions: ["EVENT_MANAGE"] },
+  { id: "r4", name: "Treasurer", system: false, permissions: ["MEMBER_REMOVE"] },
+  { id: "r2", name: "Member", system: true, permissions: [] },
+];
 
 function renderPage() {
   const router = createMemoryRouter([
@@ -62,6 +71,21 @@ describe("MembersPage", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: "Search members" }), { target: { value: "bob" } });
     await waitFor(() => expect(api.GET).toHaveBeenCalledWith("/api/clubs/{clubId}/members",
       { params: { path: { clubId: "c1" }, query: { query: "bob", page: 0, size: 50 } } }));
+  });
+
+  it("gives out custom roles within the manager's own permissions (E13-S02)", async () => {
+    backend(["ROLE_MANAGE", "EVENT_MANAGE"]);
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Roles of Bob Martins" }, { timeout: 3000 }));
+    const dialog = await screen.findByRole("dialog");
+    expect((await within(dialog).findByRole("checkbox", { name: /Treasurer/ }) as HTMLInputElement).disabled).toBe(true);
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /Event lead/ }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save roles" }));
+
+    await waitFor(() => expect(api.PUT).toHaveBeenCalledWith("/api/clubs/{clubId}/members/{userId}/roles",
+      { params: { path: { clubId: "c1", userId: "u2" } }, body: { roleIds: ["r3"] } }));
+    expect(screen.queryByRole("button", { name: "Roles of Ada Founder" })).toBeNull();          // owners: Ownership tab
   });
 
   it("tells visitors the list is for members", async () => {
