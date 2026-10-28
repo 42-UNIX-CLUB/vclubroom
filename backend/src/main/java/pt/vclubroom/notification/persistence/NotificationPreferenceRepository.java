@@ -10,4 +10,6 @@ import pt.vclubroom.notification.domain.NotificationType;
 public interface NotificationPreferenceRepository extends JpaRepository<NotificationPreference, NotificationPreference.Key> {
 
     List<NotificationPreference> findByUserIdInAndType(Collection<UUID> userIds, NotificationType type);
+
+    List<NotificationPreference> findByUserId(UUID userId);
 }

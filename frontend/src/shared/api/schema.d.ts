@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/notification-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine"];
+        put: operations["save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/{eventId}/rsvp": {
         parameters: {
             query?: never;
@@ -1246,6 +1262,20 @@ export interface components {
             };
             mine?: string[];
         };
+        PreferenceRequest: {
+            /** @enum {string} */
+            type: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER";
+            inApp?: boolean;
+            email?: boolean;
+        };
+        PreferenceView: {
+            /** @enum {string} */
+            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER";
+            inApp?: boolean;
+            email?: boolean;
+            defaultInApp?: boolean;
+            defaultEmail?: boolean;
+        };
         RsvpRequest: {
             /** @enum {string} */
             status: "GOING" | "INTERESTED" | "NOT_GOING";
@@ -1971,6 +2001,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReactionsResponse"];
+                };
+            };
+        };
+    };
+    mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PreferenceView"][];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferenceRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PreferenceView"][];
                 };
             };
         };

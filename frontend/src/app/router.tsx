@@ -63,7 +63,7 @@ export const routes: RouteObject[] = [
               { path: "events/:eventId", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.EventPage })) },
               { path: "calendar", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.CampusCalendarPage })) },
               { path: "notifications", lazy: () => import("@/features/notifications").then((m) => ({ Component: m.NotificationsPage })) },
-              { path: "settings", element: soon("Settings", "E12-S02") },
+              { path: "settings", lazy: () => import("./SettingsPage").then((m) => ({ Component: m.SettingsPage })) },
             ],
           },
 
