@@ -10,6 +10,9 @@ type JoinResponse = components["schemas"]["JoinResponse"];
 export type OwnershipInvitation = components["schemas"]["InvitationView"];
 export type UserSummary = components["schemas"]["UserSummary"];
 export type Member = components["schemas"]["MemberResponse"];
+export type ClubRole = components["schemas"]["ClubRoleView"];
+export type PermissionInfo = components["schemas"]["PermissionInfo"];
+export type RoleInput = components["schemas"]["RoleRequest"];
 
 /** Query keys of this feature (08-frontend §5.1): everything about one club lives under ["club", clubId]. */
 export const membershipKeys = {
@@ -17,6 +20,8 @@ export const membershipKeys = {
   me: (clubId: string) => ["club", clubId, "membership", "me"] as const,
   joinRequests: (clubId: string) => ["club", clubId, "join-requests"] as const,
   members: (clubId: string, query: string) => ["club", clubId, "members", { query }] as const,
+  roles: (clubId: string) => ["club", clubId, "roles"] as const,
+  permissions: ["permissions"] as const,
   clubInvitations: (clubId: string) => ["club", clubId, "ownership-invitations"] as const,
   myInvitations: ["me", "ownership-invitations"] as const,
   userSearch: (query: string) => ["users", { query }] as const,
@@ -71,6 +76,58 @@ export function useRemoveMember(clubId: string) {
   return useMutation({
     mutationFn: async (userId: string) => {
       await api.DELETE("/api/clubs/{clubId}/members/{userId}", { params: { path: { clubId, userId } } });
+    },
+    onSuccess: () => refreshClub(queryClient, clubId),
+  });
+}
+
+/** The permission catalogue with labels and descriptions (fixed while the app runs). */
+export function usePermissions() {
+  return useQuery({
+    queryKey: membershipKeys.permissions,
+    queryFn: async () => (await api.GET("/api/permissions")).data ?? [],
+    staleTime: Infinity,
+  });
+}
+
+/** The club's roles: Owner, custom roles, Member (members and admins). */
+export function useRoles(clubId: string, enabled = true) {
+  return useQuery({
+    queryKey: membershipKeys.roles(clubId),
+    queryFn: async () => (await api.GET("/api/clubs/{clubId}/roles", { params: { path: { clubId } } })).data ?? [],
+    enabled: !!clubId && enabled,
+  });
+}
+
+/**
+ * Creating, editing and deleting roles, and giving them out, change permissions: my membership, the member list and
+ * the roles under ["club", clubId] are all refreshed.
+ */
+export function useSaveRole(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ roleId, body }: { roleId?: string; body: RoleInput }) => (roleId
+      ? await api.PATCH("/api/clubs/{clubId}/roles/{roleId}", { params: { path: { clubId, roleId } }, body })
+      : await api.POST("/api/clubs/{clubId}/roles", { params: { path: { clubId } }, body })).data as ClubRole,
+    onSuccess: () => refreshClub(queryClient, clubId),
+  });
+}
+
+export function useDeleteRole(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (roleId: string) => {
+      await api.DELETE("/api/clubs/{clubId}/roles/{roleId}", { params: { path: { clubId, roleId } } });
+    },
+    onSuccess: () => refreshClub(queryClient, clubId),
+  });
+}
+
+export function useAssignRoles(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, roleIds }: { userId: string; roleIds: string[] }) => {
+      await api.PUT("/api/clubs/{clubId}/members/{userId}/roles", { params: { path: { clubId, userId } }, body: { roleIds } });
     },
     onSuccess: () => refreshClub(queryClient, clubId),
   });

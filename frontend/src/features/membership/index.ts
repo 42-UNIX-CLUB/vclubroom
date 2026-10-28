@@ -8,4 +8,5 @@ export { JoinRequestsPage } from "./JoinRequestsPage";
 export { MembersPage } from "./MembersPage";
 export { OwnershipInvitations } from "./OwnershipInvitations";
 export { OwnershipPanel } from "./OwnershipPanel";
+export { RolesEditor } from "./RolesEditor";
 export { UserPicker } from "./UserPicker";

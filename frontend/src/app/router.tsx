@@ -51,7 +51,7 @@ export const routes: RouteObject[] = [
                       { index: true, lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsIndex })) },
                       { path: "profile", lazy: () => import("@/features/clubs").then((m) => ({ Component: m.ClubSettingsProfile })) },
                       { path: "requests", lazy: () => import("@/features/membership").then((m) => ({ Component: m.JoinRequestsPage })) },
-                      { path: "roles", element: soon("Roles", "E13-S02") },
+                      { path: "roles", lazy: () => import("@/features/membership").then((m) => ({ Component: m.RolesEditor })) },
                       { path: "groups", element: soon("Groups", "E13-S03") },
                       { path: "spaces", element: soon("Spaces", "E05-S03") },
                       { path: "ownership", lazy: () => import("@/features/membership").then((m) => ({ Component: m.OwnershipPanel })) },
