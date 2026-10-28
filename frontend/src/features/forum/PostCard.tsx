@@ -1,18 +1,20 @@
-import { MessageSquareIcon } from "lucide-react";
+import { MessageSquareIcon, PinIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { MediaView } from "@/features/media";
 import { formatDateTime, formatRelative } from "@/shared/lib/dates";
+import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/ui/card";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import { Markdown } from "@/shared/ui/Markdown";
 import type { Post } from "./api";
 import { Comments } from "./Comments";
+import { PostActions } from "./PostActions";
 import { Reactions } from "./Reactions";
 
 /**
  * One post: author and time, optional title, Markdown body, players for its media, and its thread on demand.
- * context: where it was posted, for lists that mix channels (the club feed).
+ * context: where it was posted, for lists that mix channels (the club feed). The menu holds what the viewer may do.
  */
 export function PostCard({ post, context }: { post: Post; context?: ReactNode }) {
   const author = post.author?.displayName ?? "Unknown user";
@@ -30,6 +32,10 @@ export function PostCard({ post, context }: { post: Post; context?: ReactNode })
             </time>
           )}
           {context && <span className="text-muted-foreground"> · {context}</span>}
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          {post.pinned && <Badge variant="secondary"><PinIcon aria-hidden="true" /> Pinned</Badge>}
+          <PostActions post={post} />
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -51,10 +57,10 @@ export function PostCard({ post, context }: { post: Post; context?: ReactNode })
         <div className="flex flex-wrap items-center gap-2">
           {!post.deleted && (
             <Reactions target={{ kind: "post", id: post.id ?? "", channelId: post.channelId ?? "" }}
-              counts={post.reactionCounts} mine={post.myReactions} readOnly={post.readOnly} />
+                       counts={post.reactionCounts} mine={post.myReactions} readOnly={post.readOnly} />
           )}
           <Button variant="ghost" size="sm" className="text-muted-foreground" aria-expanded={showComments}
-            onClick={() => setShowComments((open) => !open)}>
+                  onClick={() => setShowComments((open) => !open)}>
             <MessageSquareIcon aria-hidden="true" />
             {count} {count === 1 ? "comment" : "comments"}
           </Button>

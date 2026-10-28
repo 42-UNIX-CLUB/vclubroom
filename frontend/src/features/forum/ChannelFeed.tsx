@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { useChannelLive, useChannelPosts } from "./api";
+import { useChannelLive, useChannelPosts, usePinnedPosts } from "./api";
 import { PostCard } from "./PostCard";
 import { PostComposer } from "./PostComposer";
 
@@ -16,8 +16,8 @@ export interface FeedChannel {
 }
 
 /**
- * A forum channel: the composer (if you may write), then the posts, newest first, loading older ones as you scroll.
- * ?era=n shows an earlier era of the club, read-only (BR-15).
+ * A forum channel: the composer (if you may write), the pinned posts (E09-S04), then the others, newest first,
+ * loading older ones as you scroll. ?era=n shows an earlier era of the club, read-only (BR-15), without pins.
  */
 export function ChannelFeed({ channel }: { channel: FeedChannel }) {
   const [params] = useSearchParams();
@@ -25,7 +25,10 @@ export function ChannelFeed({ channel }: { channel: FeedChannel }) {
   const viewingHistory = era !== null && era !== channel.currentEra;
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useChannelPosts(channel.id ?? "", era);
   useChannelLive(channel.id ?? "");                         // new posts, counts and reactions as they happen
-  const posts = data?.pages.flatMap((page) => page.items ?? []) ?? [];
+  const { data: pinned = [] } = usePinnedPosts(viewingHistory ? "" : channel.id ?? "");
+  const shownPinned = viewingHistory ? [] : pinned;
+  const pinnedIds = new Set(shownPinned.map((post) => post.id));
+  const posts = (data?.pages.flatMap((page) => page.items ?? []) ?? []).filter((post) => !pinnedIds.has(post.id));
 
   // Infinite scroll: load the next page when the end of the list comes into view (the button works without it).
   const end = useRef<HTMLDivElement>(null);
@@ -48,9 +51,18 @@ export function ChannelFeed({ channel }: { channel: FeedChannel }) {
       )}
       {channel.canWrite && !viewingHistory && channel.id && <PostComposer channelId={channel.id} />}
 
+      {shownPinned.length > 0 && (
+        <section aria-labelledby="pinned-heading" className="space-y-3">
+          <h2 id="pinned-heading" className="text-sm font-semibold text-muted-foreground">Pinned</h2>
+          <ul className="space-y-4">
+            {shownPinned.map((post) => <li key={post.id}><PostCard post={post} /></li>)}
+          </ul>
+        </section>
+      )}
+
       {isPending ? (
         <div className="space-y-4" aria-hidden="true">{[0, 1].map((i) => <Skeleton key={i} className="h-40" />)}</div>
-      ) : posts.length === 0 ? (
+      ) : posts.length === 0 && shownPinned.length === 0 ? (
         <EmptyState
           icon={NewspaperIcon}
           title="No posts yet"
