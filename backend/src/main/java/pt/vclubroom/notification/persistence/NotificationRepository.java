@@ -12,6 +12,17 @@ import pt.vclubroom.notification.domain.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
+    /** Emails due now, oldest first. SKIP LOCKED: several backend instances share the work without sending twice. */
+    @Query(value = """
+           select * from notification.notifications
+           where email_requested and email_sent_at is null and email_attempts < :maxAttempts
+             and (email_next_attempt_at is null or email_next_attempt_at <= :now)
+           order by created_at
+           limit :batch
+           for update skip locked
+           """, nativeQuery = true)
+    List<Notification> claimPendingEmails(@Param("maxAttempts") int maxAttempts, @Param("now") Instant now, @Param("batch") int batch);
+
     /** The inbox: in-app notifications, newest first, keyset (ix_notifications_inbox). */
     @Query("""
            select n from Notification n
