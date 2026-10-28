@@ -84,6 +84,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spaces/{spaceId}/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spaces/{spaceId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{postId}/comments": {
         parameters: {
             query?: never;
@@ -228,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clubs/{clubId}/spaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["spaces"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clubs/{clubId}/roles": {
         parameters: {
             query?: never;
@@ -237,7 +285,7 @@ export interface paths {
         };
         get: operations["list_1"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -349,7 +397,7 @@ export interface paths {
         };
         get: operations["list_2"];
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -381,7 +429,7 @@ export interface paths {
         };
         get: operations["list_3"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -398,6 +446,22 @@ export interface paths {
         get: operations["history"];
         put?: never;
         post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/channels/{channelId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -493,7 +557,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["archive"];
+        post: operations["archive_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -514,6 +578,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/spaces/{spaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["space"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update"];
         trace?: never;
     };
     "/api/messages/{messageId}": {
@@ -561,7 +641,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update"];
+        patch: operations["update_1"];
         trace?: never;
     };
     "/api/clubs/{clubId}/roles/{roleId}": {
@@ -577,7 +657,7 @@ export interface paths {
         delete: operations["delete_1"];
         options?: never;
         head?: never;
-        patch: operations["update_1"];
+        patch: operations["update_2"];
         trace?: never;
     };
     "/api/clubs/{clubId}/groups/{groupId}": {
@@ -593,7 +673,23 @@ export interface paths {
         delete: operations["delete_2"];
         options?: never;
         head?: never;
-        patch: operations["update_2"];
+        patch: operations["update_3"];
+        trace?: never;
+    };
+    "/api/channels/{channelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["channel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update_4"];
         trace?: never;
     };
     "/api/users": {
@@ -620,22 +716,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["user"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/spaces/{spaceId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["space"];
         put?: never;
         post?: never;
         delete?: never;
@@ -916,22 +996,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/clubs/{clubId}/spaces": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["spaces"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/clubs/{clubId}/membership/me": {
         parameters: {
             query?: never;
@@ -1020,22 +1084,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["feed"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/channels/{channelId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["channel"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1247,6 +1295,16 @@ export interface components {
         MemberRolesRequest: {
             roleIds: string[];
         };
+        CreateChannelRequest: {
+            /** @enum {string} */
+            type: "FORUM" | "CHAT";
+            name: string;
+        };
+        CreatedResponse: {
+            /** Format: uuid */
+            id?: string;
+            slug?: string;
+        };
         CreateCommentRequest: {
             body: string;
             /** Format: uuid */
@@ -1350,6 +1408,17 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             eras?: components["schemas"]["ClubEraResponse"][];
+        };
+        CreateSpaceRequest: {
+            name: string;
+            description?: string;
+            readRule: components["schemas"]["RuleRequest"];
+            writeRule: components["schemas"]["RuleRequest"];
+        };
+        RuleRequest: {
+            /** @enum {string} */
+            level: "PUBLIC" | "CLUB_MEMBERS" | "GROUPS";
+            groupIds?: string[];
         };
         RoleRequest: {
             name?: string;
@@ -1510,6 +1579,14 @@ export interface components {
             /** Format: uuid */
             userId: string;
         };
+        UpdateSpaceRequest: {
+            name?: string;
+            description?: string;
+            /** Format: int32 */
+            position?: number;
+            readRule?: components["schemas"]["RuleRequest"];
+            writeRule?: components["schemas"]["RuleRequest"];
+        };
         EditMessageRequest: {
             body: string;
         };
@@ -1535,6 +1612,11 @@ export interface components {
             bannerMediaId?: string;
             /** @enum {string} */
             joinPolicy?: "OPEN" | "APPROVAL";
+        };
+        UpdateChannelRequest: {
+            name?: string;
+            /** Format: int32 */
+            position?: number;
         };
         ChannelView: {
             /** Format: uuid */
@@ -1565,8 +1647,10 @@ export interface components {
             position?: number;
             /** @enum {string} */
             readLevel?: "PUBLIC" | "CLUB_MEMBERS" | "GROUPS";
+            readGroupIds?: string[];
             /** @enum {string} */
             writeLevel?: "PUBLIC" | "CLUB_MEMBERS" | "GROUPS";
+            writeGroupIds?: string[];
             archived?: boolean;
             canWrite?: boolean;
             canModerate?: boolean;
@@ -2056,6 +2140,52 @@ export interface operations {
             };
         };
     };
+    addChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedResponse"];
+                };
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -2281,6 +2411,56 @@ export interface operations {
             };
         };
     };
+    spaces: {
+        parameters: {
+            query?: {
+                includeArchived?: boolean;
+            };
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SpaceView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSpaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedResponse"];
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: never;
@@ -2303,7 +2483,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2513,7 +2693,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2616,7 +2796,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2691,6 +2871,26 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ChatMessageView"];
                 };
+            };
+        };
+    };
+    archive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2816,7 +3016,7 @@ export interface operations {
             };
         };
     };
-    archive: {
+    archive_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2861,6 +3061,52 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ClubResponse"];
                 };
+            };
+        };
+    };
+    space: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SpaceView"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSpaceRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2960,7 +3206,7 @@ export interface operations {
             };
         };
     };
-    update: {
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3007,7 +3253,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3055,7 +3301,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3079,6 +3325,52 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ClubGroupView"];
                 };
+            };
+        };
+    };
+    channel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChannelView"];
+                };
+            };
+        };
+    };
+    update_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3123,28 +3415,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserSummary"];
-                };
-            };
-        };
-    };
-    space: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                spaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SpaceView"];
                 };
             };
         };
@@ -3520,30 +3790,6 @@ export interface operations {
             };
         };
     };
-    spaces: {
-        parameters: {
-            query?: {
-                includeArchived?: boolean;
-            };
-            header?: never;
-            path: {
-                clubId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SpaceView"][];
-                };
-            };
-        };
-    };
     membership: {
         parameters: {
             query?: never;
@@ -3684,28 +3930,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CursorPagePostResponse"];
-                };
-            };
-        };
-    };
-    channel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                channelId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ChannelView"];
                 };
             };
         };
