@@ -181,3 +181,4 @@ app:
     transport: ${MAIL_TRANSPORT:smtp}   # smtp | log (log = print emails instead of sending, for offline dev)
     from: ${MAIL_FROM:Virtual Clubroom <no-reply@localhost>}   # demo: Virtual Clubroom <no-reply@42clubroom.ensui.dev>
     reply-to: ${MAIL_REPLY_TO:}
+    poll-interval: PT30S                # how often EmailDispatchJob looks for emails to send
