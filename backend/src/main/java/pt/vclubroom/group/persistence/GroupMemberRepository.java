@@ -36,4 +36,15 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, GroupM
              (select g.id from Group g where g.scope = pt.vclubroom.group.api.GroupScope.CLUB and g.clubId = :clubId)
            """)
     int deleteFromClubGroups(@Param("clubId") UUID clubId, @Param("userId") UUID userId);
+
+    /** The synced campus groups someone is in now (E13-S04); manual ones are never touched by the sync. */
+    @Query("""
+           select m.groupId from GroupMember m, Group g
+           where g.id = m.groupId and m.userId = :userId and g.source = pt.vclubroom.group.domain.GroupSource.SYNCED
+           """)
+    Set<UUID> findSyncedGroupIdsOfUser(@Param("userId") UUID userId);
+
+    @Modifying
+    @Query("delete from GroupMember m where m.userId = :userId and m.groupId in :groupIds")
+    void deleteMemberships(@Param("userId") UUID userId, @Param("groupIds") Collection<UUID> groupIds);
 }
