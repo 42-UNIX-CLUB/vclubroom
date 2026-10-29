@@ -1,5 +1,6 @@
 # Secrets
 .env
+deploy/seaweedfs/s3.prod.json
 
 # Java / Maven
 backend/target/
