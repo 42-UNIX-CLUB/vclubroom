@@ -15,14 +15,19 @@ import { PageHeader } from "@/shared/ui/PageHeader";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 import { type AdminClub, useAdminClubs, useApproveClub, useRejectClub } from "./api";
+import { OpsCard } from "./OpsCard";
 
-/** /admin/approvals (E04-S02-T4): pending club requests, oldest first, approve or reject with a reason. */
+/**
+ * /admin/approvals, the admin home (E04-S02-T4): the platform's health (E15-S04), then pending club requests, oldest
+ * first, to approve or reject with a reason.
+ */
 export function ApprovalQueuePage() {
   const { data, isPending, isError } = useAdminClubs("PENDING_APPROVAL");
   const [rejecting, setRejecting] = useState<AdminClub | null>(null);
 
   return (
     <>
+      <OpsCard />
       <PageHeader title="Club approvals" description="Requests are listed oldest first." />
       {isPending && <Skeleton className="h-32" />}
       {isError && <p className="text-sm text-destructive">Could not load the requests.</p>}

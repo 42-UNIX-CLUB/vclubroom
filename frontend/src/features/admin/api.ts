@@ -186,3 +186,14 @@ export function useCampusGroupMembership(groupId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: campusKey }),
   });
 }
+
+export type OpsReport = components["schemas"]["OpsReport"];
+
+/** The operations report (E15-S04), refreshed every 30 s while the admin home is open. */
+export function useOps() {
+  return useQuery({
+    queryKey: ["admin", "ops"],
+    queryFn: async () => (await api.GET("/api/admin/ops")).data,
+    refetchInterval: 30_000,
+  });
+}
