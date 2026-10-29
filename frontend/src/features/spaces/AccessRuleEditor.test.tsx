@@ -33,7 +33,9 @@ describe("audienceSentence", () => {
 
 describe("AccessRuleEditor", () => {
   it("offers the club's groups for a GROUPS rule and keeps the sentence in step", async () => {
-    vi.mocked(api.GET).mockResolvedValue({ data: [{ id: "g1", name: "Board", memberCount: 2 }] } as never);
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: path === "/api/campus-groups" ? [] : [{ id: "g1", name: "Board", memberCount: 2 }],
+    })) as never);
     render(
       <QueryClientProvider client={new QueryClient()}>
         <Editor initial={[{ level: "CLUB_MEMBERS", groupIds: [] }, { level: "CLUB_MEMBERS", groupIds: [] }]} />

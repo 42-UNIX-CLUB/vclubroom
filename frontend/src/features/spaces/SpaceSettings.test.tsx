@@ -26,6 +26,7 @@ function backend(permissions: string[]) {
     if (path === "/api/clubs/{clubId}/membership/me") return Promise.resolve({ data: { member: true, permissions, roles: [] } });
     if (path === "/api/clubs/{clubId}/spaces") return Promise.resolve({ data: [general, board, old] });
     if (path === "/api/clubs/{clubId}/groups") return Promise.resolve({ data: [{ id: "g1", name: "Board", memberCount: 2 }] });
+    if (path === "/api/campus-groups") return Promise.resolve({ data: [{ id: "cg1", name: "Tutors", memberCount: 4, synced: false }] });
     return Promise.reject(new Error(`unexpected GET ${path}`));
   }) as never);
   vi.mocked(api.POST).mockResolvedValue({ data: {} } as never);
