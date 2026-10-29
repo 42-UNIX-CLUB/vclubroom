@@ -129,3 +129,60 @@ export function useResetPassword() {
     },
   });
 }
+
+export type CampusGroup = components["schemas"]["CampusGroupView"];
+export type CampusGroupMember = components["schemas"]["GroupMemberView"];
+
+/** Campus groups are read from GET /api/campus-groups (everyone's list); admins change the manual ones (E15-S03). */
+const campusKey = ["campus-groups"] as const;
+
+export function useAdminCampusGroups() {
+  return useQuery({
+    queryKey: campusKey,
+    queryFn: async () => (await api.GET("/api/campus-groups")).data ?? [],
+  });
+}
+
+export function useCampusGroupMembers(groupId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...campusKey, groupId, "members"],
+    queryFn: async () => (await api.GET("/api/admin/campus-groups/{groupId}/members", { params: { path: { groupId } } })).data ?? [],
+    enabled,
+  });
+}
+
+export function useSaveCampusGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, name, description }: { groupId?: string; name?: string; description?: string }) => (groupId
+      ? await api.PATCH("/api/admin/campus-groups/{groupId}", { params: { path: { groupId } }, body: { name, description } })
+      : await api.POST("/api/admin/campus-groups", { body: { name, description } })).data as CampusGroup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: campusKey }),
+  });
+}
+
+/** Spaces that named it lose it from their rules (E13-S03): their lists change too. */
+export function useDeleteCampusGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (groupId: string) => {
+      await api.DELETE("/api/admin/campus-groups/{groupId}", { params: { path: { groupId } } });
+    },
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: campusKey }),
+      queryClient.invalidateQueries({ queryKey: ["club"] }),
+    ]),
+  });
+}
+
+export function useCampusGroupMembership(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, member }: { userId: string; member: boolean }) => {
+      const params = { path: { groupId, userId } };
+      await (member ? api.PUT("/api/admin/campus-groups/{groupId}/members/{userId}", { params })
+        : api.DELETE("/api/admin/campus-groups/{groupId}/members/{userId}", { params }));
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: campusKey }),
+  });
+}

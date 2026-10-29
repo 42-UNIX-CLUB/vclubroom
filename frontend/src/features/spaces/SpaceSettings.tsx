@@ -2,7 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, LockIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useOutletContext } from "react-router";
 import { toast } from "sonner";
-import { useClubGroups } from "@/features/groups";
+import { useGroupNames } from "@/features/groups";
 import { can, useMyMembership } from "@/features/membership";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -33,7 +33,7 @@ export function SpaceSettings() {
   const { data: membership } = useMyMembership(clubId);
   const allowed = can(membership, "SPACE_MANAGE");
   const { data: spaces } = useManagedSpaces(allowed ? clubId : "");
-  const { data: groups = [] } = useClubGroups(allowed ? clubId : "");
+  const names = useGroupNames(allowed ? clubId : "");
   const save = useSaveSpace(clubId);
   const [editing, setEditing] = useState<Space | "new" | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
@@ -43,7 +43,6 @@ export function SpaceSettings() {
     return <EmptyState icon={LockIcon} title="Only space managers see this" description="Ask an owner for a role with the Manage spaces permission." />;
   }
   if (!spaces) return <FullPageSpinner />;
-  const names = new Map(groups.map((g) => [g.id ?? "", g.name ?? ""]));
   const active = spaces.filter((s) => !s.archived);
 
   function move(space: Space, by: number) {

@@ -4,12 +4,33 @@ import type { components } from "@/shared/api/schema";
 
 export type ClubGroup = components["schemas"]["ClubGroupView"];
 export type GroupMember = components["schemas"]["GroupMemberView"];
+export type CampusGroup = components["schemas"]["CampusGroupView"];
 
-/** Query keys of this feature (08-frontend §5.1): a club's groups live under ["club", clubId, "groups"]. */
+/**
+ * Query keys of this feature (08-frontend §5.1): a club's groups live under ["club", clubId, "groups"], campus groups
+ * under ["campus-groups"].
+ */
 export const groupKeys = {
   ofClub: (clubId: string) => ["club", clubId, "groups"] as const,
   members: (clubId: string, groupId: string) => ["club", clubId, "groups", groupId, "members"] as const,
+  campus: ["campus-groups"] as const,
 };
+
+/** Every campus group (E15-S03): synced from 42 (E13-S04) or kept by admins. */
+export function useCampusGroups(enabled = true) {
+  return useQuery({
+    queryKey: groupKeys.campus,
+    queryFn: async () => (await api.GET("/api/campus-groups")).data ?? [],
+    enabled,
+  });
+}
+
+/** Names of the groups a club's rules can use (its own and the campus ones), for the sentences that read them out. */
+export function useGroupNames(clubId: string): Map<string, string> {
+  const { data: club = [] } = useClubGroups(clubId);
+  const { data: campus = [] } = useCampusGroups(!!clubId);
+  return new Map([...club, ...campus].map((g) => [g.id ?? "", g.name ?? ""]));
+}
 
 /** The club's groups, by name, with their member counts (members and admins). */
 export function useClubGroups(clubId: string) {

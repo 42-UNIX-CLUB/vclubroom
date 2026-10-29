@@ -1,4 +1,4 @@
-import { GroupPicker, useClubGroups } from "@/features/groups";
+import { GroupPicker, useGroupNames } from "@/features/groups";
 import type { AccessLevel, Rule } from "./api";
 
 const LEVELS: { level: AccessLevel; label: string }[] = [
@@ -34,8 +34,7 @@ export function AccessRuleEditor({ clubId, read, write, onChange }: {
   write: Rule;
   onChange: (read: Rule, write: Rule) => void;
 }) {
-  const { data: groups = [] } = useClubGroups(clubId);
-  const names = new Map(groups.map((g) => [g.id ?? "", g.name ?? ""]));
+  const names = useGroupNames(clubId);
   const narrowed = effectiveWrite(read, write) !== write;
 
   return (

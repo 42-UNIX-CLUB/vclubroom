@@ -2,19 +2,14 @@ import type { RouteObject } from "react-router";
 import { createBrowserRouter, Navigate, Outlet } from "react-router";
 import { LoginPage, RequireAdmin, RequireAuth } from "@/features/auth";
 import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
 import { ErrorPage } from "./ErrorPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { NotFoundPage } from "./NotFoundPage";
 
 /**
- * Placeholder until the named story lands. Then replace it with the feature's page, loaded lazily
- * from the feature's public index so each feature becomes its own chunk, e.g.:
- *   { path: "clubs", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.ClubDirectoryPage })) },
+ * Every route of 08-frontend §4. Exported separately so tests can mount it in a memory router. Each page is loaded
+ * lazily from its feature's public index, so each feature becomes its own chunk.
  */
-const soon = (title: string, story: string) => <PlaceholderPage title={title} story={story} />;
-
-/** Every route of 08-frontend §4. Exported separately so tests can mount it in a memory router. */
 export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
@@ -80,7 +75,7 @@ export const routes: RouteObject[] = [
                   { path: "revivals", lazy: () => import("@/features/admin").then((m) => ({ Component: m.RevivalQueuePage })) },
                   { path: "clubs", lazy: () => import("@/features/admin").then((m) => ({ Component: m.AdminClubsPage })) },
                   { path: "users", lazy: () => import("@/features/admin").then((m) => ({ Component: m.UsersPage })) },
-                  { path: "campus-groups", element: soon("Campus groups", "E15-S03") },
+                  { path: "campus-groups", lazy: () => import("@/features/admin").then((m) => ({ Component: m.CampusGroupsPage })) },
                 ],
               },
             ],
