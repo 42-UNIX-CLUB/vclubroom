@@ -1,24 +1,22 @@
-# Logs
-logs
+# Secrets
+.env
+deploy/seaweedfs/s3.prod.json
+
+# Java / Maven
+backend/target/
+*.class
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
 
-# Editor directories and files
+# IDE / OS
+.idea/
+*.iml
 .vscode/*
 !.vscode/extensions.json
-.idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
