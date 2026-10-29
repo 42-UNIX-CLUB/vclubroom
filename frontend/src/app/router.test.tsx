@@ -43,8 +43,9 @@ describe("routes", () => {
 
   it("protects user pages", async () => {
     const router = renderApp("/calendar");
-    // The calendar page loads lazily: the guard redirects once its route is resolved.
-    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+    // The calendar page loads lazily: the guard redirects once its route is resolved. On a cold first run Vite
+    // transforms the chunk on demand, which can take over a second.
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"), { timeout: 5000 });
     expect(router.state.location.search).toBe("?returnTo=%2Fcalendar");
   });
 
@@ -66,8 +67,8 @@ describe("routes", () => {
     // Same nesting as router.tsx: the page-level errorElement sits inside AppLayout.
     const crashing: RouteObject[] = [
       { element: <AppLayout />, errorElement: <ErrorPage />, children: [
-        { errorElement: <ErrorPage />, children: [{ path: "*", element: <Boom /> }] },
-      ] },
+          { errorElement: <ErrorPage />, children: [{ path: "*", element: <Boom /> }] },
+        ] },
     ];
     const queryClient = new QueryClient();
     queryClient.setQueryData(["me"], null);
