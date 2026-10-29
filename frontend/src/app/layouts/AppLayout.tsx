@@ -22,7 +22,7 @@ export function AppLayout() {
         <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-1 px-4 sm:gap-2">
             <Link to="/" className="mr-2 flex shrink-0 items-center gap-2 font-semibold sm:mr-4">
-              <span className="size-6 rounded-md bg-primary" aria-hidden="true" />
+              <img src="/duck-no-border.svg" alt="" className="size-6" />
               <span className="sr-only sm:not-sr-only">Virtual Clubroom</span>
             </Link>
             <nav className="flex items-center gap-1" aria-label="Main">
