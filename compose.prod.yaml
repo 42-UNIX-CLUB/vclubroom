@@ -45,6 +45,9 @@ services:
       seaweedfs: { condition: service_healthy }
     deploy:
       replicas: ${BACKEND_REPLICAS:-2}       # stateless: sessions in Redis, WS fan-out via Redis
+      resources:
+        limits:
+          memory: ${BACKEND_MEMORY:-1g}      # per instance; the JVM heap is 75% of it (backend/Dockerfile)
     restart: unless-stopped
 
   proxy:
