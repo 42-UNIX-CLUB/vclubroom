@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaling demo (E16-S04, 09-deployment §11.3): several backend instances behind nginx, one chat room.
-# Run from UNIX_CLUB/ with the production stack up:   scripts/scale-demo.sh [instances, default 3]
+# Run from the repository root with the production stack up:   scripts/scale-demo.sh [instances, default 3]
 # Then open one chat channel in two browsers as two people: their messages appear instantly in both, while the
 # log below shows their live connections held by different instances (Redis relays between them, no sticky sessions).
 set -euo pipefail

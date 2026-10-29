@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-# Only files under UNIX_CLUB/ may be committed (shared repository); never commit .env files.
+# Never commit .env files (secrets).
 set -euo pipefail
-outside="$(git diff --cached --name-only | grep -v '^UNIX_CLUB/' || true)"
-if [[ -n "$outside" ]]; then
-  echo "✖ These staged files are outside UNIX_CLUB/:"
-  echo "$outside" | sed 's/^/    /'
-  echo "  Unstage them with: git restore --staged <file>"
-  exit 1
-fi
 if git diff --cached --name-only | grep -Eq '(^|/)\.env$'; then
   echo "✖ Refusing to commit a .env file (secrets). Use .env.example for documentation."
   exit 1

@@ -6,7 +6,7 @@
 //   JOINER=<login> JOINER_PASSWORD=<password> JOIN_CLUB=<slug of a club JOINER is not in> node scripts/screenshots.mjs
 //
 // Writes docs/media/{landing,club,posts,calendar,history,admin}.png, and docs/media/join-flow.gif when JOINER is set
-// (needs ffmpeg). Run it from UNIX_CLUB/. Uses Node's built-in WebSocket (Node 22+): no dependencies.
+// (needs ffmpeg). Run it from the repository root. Uses Node's built-in WebSocket (Node 22+): no dependencies.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

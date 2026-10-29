@@ -4,30 +4,24 @@
 
 ## 1. Repository layout and golden rules
 
-- **Repository:** the official hackathon repo `megyant/Hackathon_SA_2026`. Other teams work in the same repository.
-- **Our territory:** everything we write lives in **`UNIX_CLUB/`**. Never modify files outside it (root `README.md`, other teams' folders, `.github/`). The `pre-commit` hook enforces this.
-- **Integration branch:** **`UNIX_CLUB/main`**. It must always build and be demo-able.
-- **Never push to `main`.** The only change that reaches `main` is the final submission merge request `UNIX_CLUB/main` → `main`, merged by the organisers.
+- **Repository:** [`42-UNIX-CLUB/vclubroom`](https://github.com/42-UNIX-CLUB/vclubroom), private. Until the hackathon ended (2026-10-19), this code lived in `UNIX_CLUB/` of the hackathon repository `megyant/Hackathon_SA_2026`. That copy stays as the submission; its history was kept here, with the paths moved to the root.
+- **Integration branch:** **`main`**. It must always build and be demo-able: the demo server deploys it (`deploy/deploy.sh`).
+- **`main` changes only through squash-merged PRs.** Never push to it directly; the `pre-push` hook enforces this.
 
 ```mermaid
 gitGraph
-    commit id: "main (organisers)"
-    branch UNIX_CLUB/main
-    checkout UNIX_CLUB/main
     commit id: "chore(E01-S01): bootstrap"
-    branch "UNIX_CLUB/dev/feat(E04-S01)/club-request"
-    checkout "UNIX_CLUB/dev/feat(E04-S01)/club-request"
+    branch "dev/feat(E04-S01)/club-request"
+    checkout "dev/feat(E04-S01)/club-request"
     commit id: "feat(E04-S01-T2): club domain"
     commit id: "feat(E04-S01-T4): endpoints"
-    checkout UNIX_CLUB/main
-    merge "UNIX_CLUB/dev/feat(E04-S01)/club-request" id: "squash: feat(E04-S01)"
-    branch "UNIX_CLUB/dev/fix(E09-S03-T1)/reaction-count"
-    checkout "UNIX_CLUB/dev/fix(E09-S03-T1)/reaction-count"
-    commit id: "fix(E09-S03-T1): count"
-    checkout UNIX_CLUB/main
-    merge "UNIX_CLUB/dev/fix(E09-S03-T1)/reaction-count" id: "squash: fix(E09-S03-T1)"
     checkout main
-    merge UNIX_CLUB/main id: "Final MR (submission)"
+    merge "dev/feat(E04-S01)/club-request" id: "squash: feat(E04-S01)"
+    branch "dev/fix(E09-S03-T1)/reaction-count"
+    checkout "dev/fix(E09-S03-T1)/reaction-count"
+    commit id: "fix(E09-S03-T1): count"
+    checkout main
+    merge "dev/fix(E09-S03-T1)/reaction-count" id: "squash: fix(E09-S03-T1)"
 ```
 
 ---
@@ -37,7 +31,7 @@ gitGraph
 ### 2.1 Format
 
 ```text
-UNIX_CLUB/dev/<type>(<ID>)/<short-desc>
+dev/<type>(<ID>)/<short-desc>
 ```
 
 | Part | Rule | Examples |
@@ -49,11 +43,11 @@ UNIX_CLUB/dev/<type>(<ID>)/<short-desc>
 **Examples**
 
 ```text
-UNIX_CLUB/dev/feat(E04-S01)/club-creation-request
-UNIX_CLUB/dev/feat(E10-S02-T4)/chat-room-ui
-UNIX_CLUB/dev/fix(E09-S03-T1)/reaction-count
-UNIX_CLUB/dev/docs(E16-S05)/readme-screenshots
-UNIX_CLUB/dev/chore(E01-S01)/compose-files
+dev/feat(E04-S01)/club-creation-request
+dev/feat(E10-S02-T4)/chat-room-ui
+dev/fix(E09-S03-T1)/reaction-count
+dev/docs(E16-S05)/readme-screenshots
+dev/chore(E01-S01)/compose-files
 ```
 
 **Granularity.** One branch per **story** by default, which gives PRs that are big enough to be useful and small enough to review. Use a **task** branch when a story is split between people (e.g. BE and FE). Use an **epic** branch only for docs or chores that span a whole epic.
@@ -64,16 +58,16 @@ Parentheses are special in shells, so **always quote branch names**:
 
 ```bash
 git fetch origin
-git switch -c 'UNIX_CLUB/dev/feat(E04-S01)/club-creation-request' origin/UNIX_CLUB/main
-git push -u origin 'UNIX_CLUB/dev/feat(E04-S01)/club-creation-request'
+git switch -c 'dev/feat(E04-S01)/club-creation-request' origin/main
+git push -u origin 'dev/feat(E04-S01)/club-creation-request'
 ```
 
 ### 2.3 Lifetime
 
-- Branch from the **latest** `origin/UNIX_CLUB/main`.
-- Keep branches short-lived (hours, not days). Rebase on `UNIX_CLUB/main` before opening or updating a PR:
+- Branch from the **latest** `origin/main`.
+- Keep branches short-lived (hours, not days). Rebase on `main` before opening or updating a PR:
   ```bash
-  git fetch origin && git rebase origin/UNIX_CLUB/main
+  git fetch origin && git rebase origin/main
   git push --force-with-lease
   ```
 - Delete the branch after the squash merge (GitHub button, or `git push origin --delete '<branch>'`).
@@ -141,16 +135,16 @@ feat(club-module): add endpoint    ← scope must be a backlog ID (R-28)
 
 ```mermaid
 flowchart LR
-    A[Pick a Ready item<br/>set yourself as owner] --> B[Branch from<br/>UNIX_CLUB/main]
+    A[Pick a Ready item<br/>set yourself as owner] --> B[Branch from<br/>main]
     B --> C[Commit with<br/>Conventional Commits]
     C --> D[Local checks green]
-    D --> E[Open PR into<br/>UNIX_CLUB/main]
+    D --> E[Open PR into<br/>main]
     E --> F[1 approval<br/>from a teammate]
     F --> G[Squash merge<br/>title = commit message]
     G --> H[Delete branch,<br/>mark item Done]
 ```
 
-1. **Target:** `UNIX_CLUB/main` (never `main`).
+1. **Target:** `main`.
 2. **Title** = the squash commit message, a valid Conventional Commit for the **story** (or task):
    `feat(E04-S01): request club creation`
 3. **Description:** use the template below.
@@ -158,12 +152,12 @@ flowchart LR
 5. **Merge:** **Squash and merge** (D-38). Check that GitHub's proposed commit title is still your PR title.
 6. **After merge:** delete the branch and update the item status ([backlog/README.md §6](backlog/README.md#6-tracking-status)). If backend DTOs changed, the merger regenerates frontend types in a follow-up `build(<ID>): regenerate api types` commit (§6.3).
 
-> **Repository settings are owned by the organisers**, so branch protection and "squash only" may not be enforceable. The rules above are therefore conventions, backed by the local hooks (§5). If squash merging is disabled on the repository, squash locally:
+> **No branch protection:** GitHub Free has no protected branches or rulesets for private repositories, so the rules above are conventions, backed by the local hooks (§5). The repository only allows squash merging (Settings → General → Pull Requests). To squash locally instead:
 > ```bash
-> git switch UNIX_CLUB/main && git pull
-> git merge --squash 'UNIX_CLUB/dev/feat(E04-S01)/club-creation-request'
+> git switch main && git pull
+> git merge --squash 'dev/feat(E04-S01)/club-creation-request'
 > git commit -m "feat(E04-S01): request club creation"
-> git push
+> ALLOW_MAIN_PUSH=1 git push
 > ```
 
 ### 4.2 PR description template (copy-paste)
@@ -187,7 +181,7 @@ Implements E04-S01 (tasks T1–T6): students can request the creation of a club.
 - [ ] Frontend: `npm run lint && npm test && npm run build` green
 - [ ] New/changed endpoints visible in Swagger; `schema.d.ts` regenerated if DTOs changed
 - [ ] Flyway migration added (timestamp version) if the schema changed; no edits to applied migrations
-- [ ] No secrets, no files outside `UNIX_CLUB/`
+- [ ] No secrets (`.env` stays local)
 - [ ] Docs/decision log updated if a design decision changed
 ```
 
@@ -200,14 +194,14 @@ Implements E04-S01 (tasks T1–T6): students can request the creation of a club.
 
 ## 5. Local Git hooks (R-30)
 
-The hooks are dependency-free bash. They are committed in `UNIX_CLUB/.githooks/` and enabled **once per clone**:
+The hooks are dependency-free bash. They are committed in `.githooks/` and enabled **once per clone**:
 
 ```bash
-git config core.hooksPath UNIX_CLUB/.githooks
-chmod +x UNIX_CLUB/.githooks/*
+git config core.hooksPath .githooks
+chmod +x .githooks/*
 ```
 
-### 5.1 `UNIX_CLUB/.githooks/commit-msg`
+### 5.1 `.githooks/commit-msg`
 
 ```bash
 #!/usr/bin/env bash
@@ -233,53 +227,42 @@ if [[ ! "$header" =~ $pattern ]]; then
 fi
 ```
 
-### 5.2 `UNIX_CLUB/.githooks/pre-commit`
+### 5.2 `.githooks/pre-commit`
 
 ```bash
 #!/usr/bin/env bash
-# Only files under UNIX_CLUB/ may be committed (shared repository); never commit .env files.
+# Never commit .env files (secrets).
 set -euo pipefail
-outside="$(git diff --cached --name-only | grep -v '^UNIX_CLUB/' || true)"
-if [[ -n "$outside" ]]; then
-  echo "✖ These staged files are outside UNIX_CLUB/:"
-  echo "$outside" | sed 's/^/    /'
-  echo "  Unstage them with: git restore --staged <file>"
-  exit 1
-fi
 if git diff --cached --name-only | grep -Eq '(^|/)\.env$'; then
   echo "✖ Refusing to commit a .env file (secrets). Use .env.example for documentation."
   exit 1
 fi
 ```
 
-### 5.3 `UNIX_CLUB/.githooks/pre-push`
+### 5.3 `.githooks/pre-push`
 
 ```bash
 #!/usr/bin/env bash
-# Branch naming (D-36) and protection of main / UNIX_CLUB/main.
+# Branch naming (D-36) and protection of main.
 set -euo pipefail
 zero='0000000000000000000000000000000000000000'
 types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
 id='E[0-9]{2}(-S[0-9]{2}(-T[0-9]+)?)?'
-feature="^UNIX_CLUB/dev/(${types})\((${id})\)/[a-z0-9]+(-[a-z0-9]+)*$"
+feature="^dev/(${types})\((${id})\)/[a-z0-9]+(-[a-z0-9]+)*$"
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   [[ "$remote_ref" == refs/heads/* ]] || continue
   [[ "$local_sha" == "$zero" ]] && continue            # branch deletion
   branch="${remote_ref#refs/heads/}"
 
-  if [[ "$branch" == "main" ]]; then
-    echo "✖ Never push to main. The submission goes through a merge request UNIX_CLUB/main → main."
+  if [[ "$branch" == "main" && "${ALLOW_MAIN_PUSH:-0}" != "1" ]]; then
+    echo "✖ main is updated through squash-merged PRs."
+    echo "  (Bootstrap or local squash merge: ALLOW_MAIN_PUSH=1 git push …)"
     exit 1
   fi
-  if [[ "$branch" == "UNIX_CLUB/main" && "${ALLOW_INTEGRATION_PUSH:-0}" != "1" ]]; then
-    echo "✖ UNIX_CLUB/main is updated through squash-merged PRs."
-    echo "  (Bootstrap or local squash merge: ALLOW_INTEGRATION_PUSH=1 git push …)"
-    exit 1
-  fi
-  if [[ "$branch" != "UNIX_CLUB/main" && ! "$branch" =~ $feature ]]; then
-    echo "✖ Branch name '$branch' does not match UNIX_CLUB/dev/<type>(<ID>)/<short-desc>"
-    echo "  e.g. UNIX_CLUB/dev/feat(E04-S01)/club-creation-request"
+  if [[ "$branch" != "main" && ! "$branch" =~ $feature ]]; then
+    echo "✖ Branch name '$branch' does not match dev/<type>(<ID>)/<short-desc>"
+    echo "  e.g. dev/feat(E04-S01)/club-creation-request"
     exit 1
   fi
 done
@@ -303,12 +286,12 @@ done
 
 ### 6.3 Generated files
 
-- `frontend/src/shared/api/schema.d.ts` is **generated**. Never hand-edit it or hand-resolve conflicts in it: regenerate it from a running backend on the merged `UNIX_CLUB/main`.
+- `frontend/src/shared/api/schema.d.ts` is **generated**. Never hand-edit it or hand-resolve conflicts in it: regenerate it from a running backend on the merged `main`.
 
 ### 6.4 Database migrations
 
 - One folder per module (`db/migration/<module>/`), version = timestamp `V<yyyyMMddHHmm>__<description>.sql` (no collisions between three people).
-- **Never edit a migration that is already merged.** Add a new one. During the hackathon, wipe your local DB if needed: `docker compose … down -v`.
+- **Never edit a migration that is already merged.** Add a new one. Wipe your local DB if needed: `docker compose … down -v`.
 
 ### 6.5 Module ownership and boundaries
 
@@ -324,23 +307,20 @@ done
 
 - [ ] Acceptance criteria demonstrably met (manual test steps in the PR).
 - [ ] Tests from the story's test task pass; `mvn verify` and the frontend checks are green.
-- [ ] Squash-merged into `UNIX_CLUB/main`; the integration branch still starts with `docker compose` and the app runs.
+- [ ] Squash-merged into `main`; the integration branch still starts with `docker compose` and the app runs.
 - [ ] Status updated in the backlog.
 
-### 6.8 Communication rhythm (2-day hackathon)
+### 6.8 Communication rhythm
 
 | When | What |
 |------|------|
 | Start of each milestone (M0–M5) | 10-minute sync: pick items, check blockers, confirm contracts |
-| Every merge to `UNIX_CLUB/main` | Short message in the team chat: "merged feat(E04-S01), regenerate types" |
+| Every merge to `main` | Short message in the team chat: "merged feat(E04-S01), regenerate types" |
 | Blocked > 20 minutes | Ask immediately; pair if needed |
-| End of each milestone | Merge freeze → everyone pulls `UNIX_CLUB/main` → 5-minute demo of the milestone checklist |
+| End of each milestone | Merge freeze → everyone pulls `main` → 5-minute demo of the milestone checklist |
 
 ---
 
-## 7. Final submission
+## 7. Deploying
 
-1. Freeze `UNIX_CLUB/main` at **2026-10-19 11:00** (only `fix`/`docs` after that, by agreement).
-2. Check that the diff contains only `UNIX_CLUB/`: `git diff --stat origin/main...origin/UNIX_CLUB/main`.
-3. Open the merge request **`UNIX_CLUB/main` → `main`** titled `feat(E16): UNIX_CLUB virtual clubroom submission`, with a description linking the README, the demo URL `https://42clubroom.ensui.dev` and the docs.
-4. Do **not** squash the final MR yourselves. The organisers merge it.
+The demo server keeps its own clone and deploys the latest `main` with `deploy/deploy.sh` (09-deployment §11.2). Merge to `main` first, then run it there.
