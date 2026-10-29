@@ -1364,6 +1364,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/ops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/clubs": {
         parameters: {
             query?: never;
@@ -2239,6 +2255,31 @@ export interface components {
             size?: number;
             /** Format: int64 */
             totalElements?: number;
+        };
+        EmailBacklog: {
+            /** Format: int64 */
+            waiting?: number;
+            /** Format: int64 */
+            retrying?: number;
+            /** Format: int64 */
+            failed?: number;
+            /** Format: int64 */
+            sentLastDay?: number;
+            lastError?: string;
+        };
+        ListenerBacklog: {
+            listener?: string;
+            eventType?: string;
+            /** Format: int64 */
+            count?: number;
+            /** Format: date-time */
+            oldest?: string;
+        };
+        OpsReport: {
+            outbox?: components["schemas"]["ListenerBacklog"][];
+            emails?: components["schemas"]["EmailBacklog"];
+            /** Format: date-time */
+            measuredAt?: string;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
@@ -4855,6 +4896,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseRevivalRequestResponse"];
+                };
+            };
+        };
+    };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OpsReport"];
                 };
             };
         };
