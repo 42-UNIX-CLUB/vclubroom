@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/support/tickets/{number}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/spaces/{spaceId}/channels": {
         parameters: {
             query?: never;
@@ -1540,13 +1556,13 @@ export interface components {
         };
         PreferenceRequest: {
             /** @enum {string} */
-            type: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER";
+            type: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
             inApp?: boolean;
             email?: boolean;
         };
         PreferenceView: {
             /** @enum {string} */
-            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER";
+            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
             inApp?: boolean;
             email?: boolean;
             defaultInApp?: boolean;
@@ -1624,6 +1640,19 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        ReplyRequest: {
+            body: string;
+        };
+        MessageView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            author?: "REPORTER" | "TEAM";
+            body?: string;
+            delivered?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
         };
         CreateChannelRequest: {
             /** @enum {string} */
@@ -2010,6 +2039,24 @@ export interface components {
             /** @enum {string} */
             status?: "ACTIVE" | "DISABLED";
         };
+        TicketDetails: {
+            /** Format: int64 */
+            number?: number;
+            ref?: string;
+            /** @enum {string} */
+            type?: "BUG" | "SUGGESTION" | "QUESTION" | "ACCOUNT" | "REPORT" | "ACCESSIBILITY" | "PRIVACY" | "OTHER";
+            title?: string;
+            description?: string;
+            pageUrl?: string;
+            /** @enum {string} */
+            status?: "RECEIVED" | "OPEN" | "IN_PROGRESS" | "WAITING_ON_REPORTER" | "RESOLVED" | "DECLINED" | "DUPLICATE";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            messages?: components["schemas"]["MessageView"][];
+            canReply?: boolean;
+        };
         ChannelView: {
             /** Format: uuid */
             id?: string;
@@ -2137,7 +2184,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER";
+            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
             title?: string;
             body?: string;
             link?: string;
@@ -2714,6 +2761,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["TicketView"];
+                };
+            };
+        };
+    };
+    reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageView"];
                 };
             };
         };
@@ -4416,7 +4489,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TicketView"];
+                    "*/*": components["schemas"]["TicketDetails"];
                 };
             };
         };
