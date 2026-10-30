@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import pt.vclubroom.TestcontainersConfiguration;
 
-/** Sending and reading your own tickets over HTTP (E17-S02). */
+/** Sending, reading and answering your own tickets over HTTP (E17-S02, E17-S03). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -96,6 +96,39 @@ class SupportIntegrationTests {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
         submit(UUID.randomUUID(), "{\"title\":\"Broken\",\"description\":\"Broken\"}").andExpect(status().isBadRequest());
+    }
+
+    private ResultActions reply(UUID who, long ticket, String body) throws Exception {
+        return mvc.perform(post("/api/support/tickets/{n}/messages", ticket).with(user(who, false)).with(xsrf(mvc))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"%s\"}".formatted(body)));
+    }
+
+    @Test
+    void theReporterAnswersWhileTheTicketIsOpen() throws Exception {
+        UUID ada = UUID.randomUUID();
+        long ticket = number(ada, "BUG", "Login button does nothing");
+        jdbc.update("update support.tickets set tracker_issue = ?, status = 'WAITING_ON_REPORTER' where number = ?", (int) ticket, ticket);
+
+        reply(ada, ticket, "Firefox 140, on Linux").andExpect(status().isCreated())
+            .andExpect(jsonPath("$.author").value("REPORTER"))
+            .andExpect(jsonPath("$.delivered").value(false));                  // the tracker gets it with the next sync
+        mvc.perform(get("/api/support/tickets/{n}", ticket).with(user(ada, false)))
+            .andExpect(jsonPath("$.status").value("OPEN"))                     // no longer waiting for them
+            .andExpect(jsonPath("$.canReply").value(true))
+            .andExpect(jsonPath("$.messages[*].body").value(contains("Firefox 140, on Linux")));
+        reply(UUID.randomUUID(), ticket, "Not mine").andExpect(status().isNotFound());
+        reply(ada, ticket, " ").andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aClosedTicketTakesNoMoreReplies() throws Exception {
+        UUID ada = UUID.randomUUID();
+        long ticket = number(ada, "QUESTION", "How do I leave a club?");
+        jdbc.update("update support.tickets set tracker_issue = ?, status = 'RESOLVED' where number = ?", (int) ticket, ticket);
+
+        mvc.perform(get("/api/support/tickets/{n}", ticket).with(user(ada, false))).andExpect(jsonPath("$.canReply").value(false));
+        reply(ada, ticket, "One more thing").andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.code").value("TICKET_CLOSED"));
     }
 
     @Test

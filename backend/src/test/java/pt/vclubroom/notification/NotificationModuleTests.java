@@ -25,6 +25,8 @@ import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.space.api.SpaceAudience;
+import pt.vclubroom.support.events.TicketStatusChanged;
+import pt.vclubroom.support.events.TicketSubmitted;
 
 /** The notification module on its own (E12-S01): events in, rows and pushes out; the other modules are mocked. */
 @ApplicationModuleTest
@@ -72,6 +74,28 @@ class NotificationModuleTests {
         assertThat(rowsFor(author)).isZero();                                       // never about your own post
         verify(realtime, times(1)).toUser(eq(ada), eq("/queue/notifications"), eq("notification.created"), any());
         verify(realtime, times(1)).toUser(eq(bob), eq("/queue/notifications"), eq("notification.created"), any());
+    }
+
+    @Test
+    void supportTicketsAreOnlyEverToldToTheirReporter(Scenario scenario) {
+        UUID ada = UUID.randomUUID();
+        UUID ticket = UUID.randomUUID();
+
+        scenario.publish(new TicketStatusChanged(ticket, 17, "T-17", ada, "Login button does nothing", "WAITING_ON_REPORTER",
+                "Waiting for you", false, Instant.now()))
+            .andWaitForStateChange(() -> rowsFor(ada), count -> count == 1);
+
+        assertThat(jdbc.queryForMap("select type, title, body, link, in_app, email_requested from notification.notifications where recipient_id = ?", ada))
+            .containsEntry("type", "SUPPORT_TICKET_UPDATED")
+            .containsEntry("title", "T-17 is now waiting for you")
+            .containsEntry("body", "The team needs your answer to go on with “Login button does nothing”.")
+            .containsEntry("link", "/support/17")
+            .containsEntry("in_app", true)
+            .containsEntry("email_requested", false);                   // status changes: in-app only by default
+        scenario.publish(new TicketSubmitted(ticket, 17, "T-17", ada, "Login button does nothing", Instant.now()))
+            .andWaitForStateChange(() -> rowsFor(ada), count -> count == 2);
+        assertThat(jdbc.queryForObject("select email_requested from notification.notifications where recipient_id = ? and type = 'SUPPORT_TICKET_RECEIVED'",
+            Boolean.class, ada)).isTrue();
     }
 
     @Test

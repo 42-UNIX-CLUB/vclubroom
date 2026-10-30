@@ -1,8 +1,12 @@
 package pt.vclubroom.support.infrastructure;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,22 +19,30 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import pt.vclubroom.support.application.NewIssue;
+import pt.vclubroom.support.application.ReporterReply;
 import pt.vclubroom.support.application.TicketTracker;
+import pt.vclubroom.support.application.TrackerChanges;
 import pt.vclubroom.support.application.TrackerException;
 
 /**
- * Forgejo's REST API, as the bot account of scripts/tickets-setup.sh. Label IDs are looked up once and kept. Each
- * issue carries a hidden marker with its ticket's ID: that is how a retry finds an issue that was created after all.
+ * Forgejo's REST API, as the bot account of scripts/tickets-setup.sh. Label IDs are looked up once and kept. Issues and
+ * comments carry a hidden marker with their ticket's or message's ID: that is how a retry finds what was created after
+ * all. The bot's own comments are flagged, so its copies of the reporters' replies are never read back as answers.
  */
 @Component
 @ConditionalOnProperty(name = "app.support.tracker", havingValue = "forgejo")
 class ForgejoTicketTracker implements TicketTracker {
 
+    private static final int PAGE = 50;                               // Forgejo's largest page
     private static final ParameterizedTypeReference<List<Issue>> ISSUES = new ParameterizedTypeReference<>() { };
+    private static final ParameterizedTypeReference<List<Comment>> COMMENTS = new ParameterizedTypeReference<>() { };
     private static final ParameterizedTypeReference<List<Label>> LABELS = new ParameterizedTypeReference<>() { };
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Issue(int number, String body) { }
+    record Issue(int number, String body, String state, List<Label> labels) { }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Comment(long id, String body, @JsonProperty("issue_url") String issueUrl, User user) { }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Label(long id, String name) { }
@@ -60,7 +72,9 @@ class ForgejoTicketTracker implements TicketTracker {
         String marker = "<!-- vclubroom-ticket:" + issue.ticketId() + " -->";
         return call(() -> {
             if (issue.retry()) {
-                for (Issue existing : botIssues()) {
+                // The newest issues the bot created: a retry comes within the hour after its failed attempt.
+                for (Issue existing : http.get().uri(repo + "/issues?state=all&type=issues&created_by={bot}&limit=" + PAGE, bot())
+                    .retrieve().body(ISSUES)) {
                     if (existing.body() != null && existing.body().contains(marker)) {
                         return existing.number();
                     }
@@ -73,22 +87,69 @@ class ForgejoTicketTracker implements TicketTracker {
         });
     }
 
-    /** The newest issues the bot created: a retry comes within the hour after its failed attempt. */
-    private List<Issue> botIssues() {
+    @Override
+    public long addReporterReply(int issue, ReporterReply reply) {
+        String marker = "<!-- vclubroom-message:" + reply.messageId() + " -->";
+        return call(() -> {
+            Long id = null;
+            if (reply.retry()) {
+                id = pages(repo + "/issues/" + issue + "/comments?", COMMENTS).stream()
+                    .filter(c -> c.body() != null && c.body().contains(marker)).map(Comment::id).findFirst().orElse(null);
+            }
+            if (id == null) {
+                id = http.post().uri(repo + "/issues/{issue}/comments", issue)
+                    .body(Map.of("body", reply.body() + "\n" + marker)).retrieve().body(Comment.class).id();
+            }
+            // They answered, so the team no longer waits for them. Removing a label the issue doesn't have changes nothing.
+            http.delete().uri(repo + "/issues/{issue}/labels/{label}", issue, labelId(ForgejoLabels.WAITING))
+                .retrieve().toBodilessEntity();
+            return id;
+        });
+    }
+
+    @Override
+    public TrackerChanges changesSince(Instant since) {
+        String from = since.truncatedTo(ChronoUnit.SECONDS).toString();
+        return call(() -> {
+            String bot = bot();
+            List<TrackerChanges.Issue> issues = pages(repo + "/issues?state=all&type=issues&since=" + from + "&", ISSUES).stream()
+                .map(i -> new TrackerChanges.Issue(i.number(),
+                    ForgejoLabels.status("open".equals(i.state()), i.labels() == null ? List.of() : i.labels().stream().map(Label::name).toList())))
+                .toList();
+            List<TrackerChanges.Comment> comments = pages(repo + "/issues/comments?since=" + from + "&", COMMENTS).stream()
+                .map(c -> new TrackerChanges.Comment(c.id(), issueNumber(c.issueUrl()), c.user() != null && bot.equals(c.user().login()), c.body()))
+                .toList();
+            return new TrackerChanges(issues, comments);
+        });
+    }
+
+    /** ".../repos/vclubroom/support/issues/12" → 12. */
+    private static int issueNumber(String issueUrl) {
+        return Integer.parseInt(issueUrl.substring(issueUrl.lastIndexOf('/') + 1));
+    }
+
+    /** Every page of a list; uri ends with "?" or "&". */
+    private <T> List<T> pages(String uri, ParameterizedTypeReference<List<T>> type) {
+        List<T> all = new ArrayList<>();
+        for (int page = 1; ; page++) {
+            List<T> batch = http.get().uri(uri + "limit=" + PAGE + "&page=" + page).retrieve().body(type);
+            all.addAll(batch);
+            if (batch.size() < PAGE) {
+                return all;
+            }
+        }
+    }
+
+    private String bot() {
         if (botLogin == null) {
             botLogin = http.get().uri("/user").retrieve().body(User.class).login();
         }
-        return http.get().uri(repo + "/issues?state=all&type=issues&created_by={bot}&limit=50", botLogin).retrieve().body(ISSUES);
+        return botLogin;
     }
 
     private long labelId(String name) {
         if (!labelIds.containsKey(name)) {
-            List<Label> page;
-            int number = 1;
-            do {
-                page = http.get().uri(repo + "/labels?limit=50&page={page}", number++).retrieve().body(LABELS);
-                page.forEach(l -> labelIds.put(l.name(), l.id()));
-            } while (page.size() == 50);
+            pages(repo + "/labels?", LABELS).forEach(l -> labelIds.put(l.name(), l.id()));
         }
         Long id = labelIds.get(name);
         if (id == null) {

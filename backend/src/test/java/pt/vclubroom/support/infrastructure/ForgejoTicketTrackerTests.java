@@ -2,12 +2,14 @@ package pt.vclubroom.support.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.jayway.jsonpath.JsonPath;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +20,10 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import pt.vclubroom.support.application.NewIssue;
+import pt.vclubroom.support.application.ReporterReply;
+import pt.vclubroom.support.application.TrackerChanges;
 import pt.vclubroom.support.application.TrackerException;
+import pt.vclubroom.support.domain.TicketStatus;
 import pt.vclubroom.support.domain.TicketType;
 
 /**
@@ -38,6 +43,7 @@ class ForgejoTicketTrackerTests {
 
     private static final HttpClient http = HttpClient.newHttpClient();
     private static String bot;                                        // the app's account
+    private static String ada;                                        // someone of the team
 
     private static String url() {
         return "http://" + forgejo.getHost() + ":" + forgejo.getMappedPort(3000);
@@ -59,15 +65,19 @@ class ForgejoTicketTrackerTests {
         return http.send(request.build(), HttpResponse.BodyHandlers.ofString()).body();
     }
 
-    /** What scripts/tickets-setup.sh does, in short: the repository, two of its labels, the app's account. */
+    /** What scripts/tickets-setup.sh does, in short: the repository, some of its labels, the app's account, a team member. */
     @BeforeAll
     static void setUp() throws Exception {
         String owner = token("owner", "all");
         bot = token("bot", "write:issue,read:repository,read:user", "--restricted");
+        ada = token("ada", "all");
         api(owner, "POST", "/user/repos", "{\"name\":\"support\",\"private\":true}");
         api(owner, "PUT", "/repos/owner/support/collaborators/bot", "{\"permission\":\"write\"}");
-        api(owner, "POST", "/repos/owner/support/labels", "{\"name\":\"type/bug\",\"color\":\"#d73a4a\",\"exclusive\":true}");
+        api(owner, "PUT", "/repos/owner/support/collaborators/ada", "{\"permission\":\"write\"}");
         api(owner, "POST", "/repos/owner/support/labels", "{\"name\":\"source/app\",\"color\":\"#ededed\"}");
+        for (String label : List.of("type/bug", "status/in-progress", "status/waiting-on-reporter", "resolution/wont-fix")) {
+            api(owner, "POST", "/repos/owner/support/labels", "{\"name\":\"%s\",\"color\":\"#cccccc\",\"exclusive\":true}".formatted(label));
+        }
     }
 
     private static ForgejoTicketTracker tracker(String url, String token) {
@@ -96,6 +106,44 @@ class ForgejoTicketTrackerTests {
 
         assertThat(tracker.createIssue(issue(ticket, TicketType.BUG, true))).isEqualTo(first);
         assertThat(tracker.createIssue(issue(UUID.randomUUID(), TicketType.BUG, true))).isNotEqualTo(first);
+    }
+
+    @Test
+    void aReplyBecomesACommentAndTheIssueStopsWaiting() throws Exception {
+        ForgejoTicketTracker tracker = tracker(url(), bot);
+        int issue = tracker.createIssue(issue(UUID.randomUUID(), TicketType.BUG, false));
+        api(ada, "PUT", "/repos/owner/support/issues/" + issue + "/labels", "{\"labels\":[\"status/waiting-on-reporter\"]}");
+        ReporterReply reply = new ReporterReply(UUID.randomUUID(), "**Ada** replied in the app: Firefox", false);
+
+        long comment = tracker.addReporterReply(issue, reply);
+
+        assertThat(tracker.addReporterReply(issue, new ReporterReply(reply.messageId(), reply.body(), true))).isEqualTo(comment);
+        assertThat(JsonPath.<List<Integer>>read(api(bot, "GET", "/repos/owner/support/issues/" + issue + "/comments", null), "$[*].id"))
+            .hasSize(1);                                                   // the retry found it
+        assertThat(JsonPath.<List<String>>read(api(bot, "GET", "/repos/owner/support/issues/" + issue, null), "$.labels[*].name"))
+            .doesNotContain("status/waiting-on-reporter");
+    }
+
+    @Test
+    void readsStatusesAndCommentsSinceAMoment() throws Exception {
+        ForgejoTicketTracker tracker = tracker(url(), bot);
+        Instant before = Instant.now().minusSeconds(5);
+        int working = tracker.createIssue(issue(UUID.randomUUID(), TicketType.BUG, false));
+        int declined = tracker.createIssue(issue(UUID.randomUUID(), TicketType.BUG, false));
+        api(ada, "PUT", "/repos/owner/support/issues/" + working + "/labels", "{\"labels\":[\"status/in-progress\"]}");
+        api(ada, "POST", "/repos/owner/support/issues/" + working + "/comments", "{\"body\":\"/reply On it!\"}");
+        tracker.addReporterReply(working, new ReporterReply(UUID.randomUUID(), "**Ada** replied in the app: thanks", false));
+        api(ada, "PUT", "/repos/owner/support/issues/" + declined + "/labels", "{\"labels\":[\"resolution/wont-fix\"]}");
+        api(ada, "PATCH", "/repos/owner/support/issues/" + declined, "{\"state\":\"closed\"}");
+
+        TrackerChanges changes = tracker.changesSince(before);
+
+        assertThat(changes.issues()).contains(new TrackerChanges.Issue(working, TicketStatus.IN_PROGRESS),
+            new TrackerChanges.Issue(declined, TicketStatus.DECLINED));
+        assertThat(changes.comments()).filteredOn(c -> c.issue() == working)
+            .extracting(TrackerChanges.Comment::byTracker, c -> c.body().lines().findFirst().orElse(""))
+            .containsExactly(tuple(false, "/reply On it!"), tuple(true, "**Ada** replied in the app: thanks"));
+        assertThat(tracker.changesSince(Instant.now().plusSeconds(60)).issues()).isEmpty();
     }
 
     @Test

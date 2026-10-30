@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import pt.vclubroom.shared.security.AuthenticatedUser;
+import pt.vclubroom.support.application.MessageView;
 import pt.vclubroom.support.application.SupportService;
+import pt.vclubroom.support.application.TicketDetails;
 import pt.vclubroom.support.application.TicketView;
 import pt.vclubroom.support.web.dto.CreateTicketRequest;
+import pt.vclubroom.support.web.dto.ReplyRequest;
 
-/** My tickets (E17-S02). /api/** requires a logged-in user (SecurityConfig). */
+/** My tickets and their conversation (E17-S02, E17-S03). /api/** requires a logged-in user (SecurityConfig). */
 @RestController
 @RequestMapping("/api/support/tickets")
 class SupportController {
@@ -39,7 +42,14 @@ class SupportController {
     }
 
     @GetMapping("/{number}")
-    TicketView get(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("number") long number) {
+    TicketDetails get(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("number") long number) {
         return support.get(me.actor(), number);
+    }
+
+    @PostMapping("/{number}/messages")
+    @ResponseStatus(HttpStatus.CREATED)
+    MessageView reply(@AuthenticationPrincipal AuthenticatedUser me, @PathVariable("number") long number,
+                      @Valid @RequestBody ReplyRequest request) {
+        return support.reply(me.actor(), number, request.body());
     }
 }

@@ -16,6 +16,7 @@ class LoggingEmailSender implements EmailSender {
 
     @Override
     public void send(OutgoingEmail email) {
-        log.info("[mail] to={} subject={}\n{}", email.to(), email.subject(), email.textBody());
+        log.info("[mail] to={} from={} subject={}\n{}", email.to(), email.from() == null ? "default" : email.from(),
+            email.subject(), email.textBody());
     }
 }

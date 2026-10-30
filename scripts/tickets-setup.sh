@@ -73,7 +73,7 @@ echo "✓ repository $org/$repo, $bot can write to it"
 
 api GET "/repos/$org/$repo/labels?limit=50"; expect 200
 existing=$body added=0
-while IFS='|' read -r name color exclusive description; do
+while IFS='|' read -r name color exclusive description || [ -n "$name" ]; do
   case "$name" in ''|'#'*) continue ;; esac
   grep -qF "\"name\":\"$(json "$name")\"" <<<"$existing" && continue
   api POST "/repos/$org/$repo/labels" "{\"name\":\"$(json "$name")\",\"color\":\"$color\",\"exclusive\":$exclusive,\"description\":\"$(json "$description")\"}"

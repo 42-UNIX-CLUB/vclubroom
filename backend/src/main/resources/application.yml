@@ -182,6 +182,7 @@ app:
     transport: ${MAIL_TRANSPORT:smtp}   # smtp | log (log = print emails instead of sending, for offline dev)
     from: ${MAIL_FROM:Virtual Clubroom <no-reply@localhost>}   # demo: Virtual Clubroom <no-reply@42clubroom.ensui.dev>
     reply-to: ${MAIL_REPLY_TO:}
+    support-from: ${MAIL_SUPPORT_FROM:Virtual Clubroom Support <support@localhost>}   # E17: emails about your tickets
     poll-interval: PT30S                # how often EmailDispatchJob looks for emails to send
   support:
     tracker: ${TICKETS_TRACKER:log}     # forgejo | log (log = print tickets instead of creating issues, for offline dev)

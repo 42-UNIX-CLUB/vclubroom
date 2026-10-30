@@ -20,6 +20,8 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
     long countByReporterIdAndCreatedAtAfter(UUID reporterId, Instant since);
 
+    Optional<Ticket> findByTrackerIssue(int trackerIssue);
+
     /** Tickets the tracker doesn't have yet and that are due, oldest first. SKIP LOCKED: instances share the work. */
     @Query(value = """
            select * from support.tickets

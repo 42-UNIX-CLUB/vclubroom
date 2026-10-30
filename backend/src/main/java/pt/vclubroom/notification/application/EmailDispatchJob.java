@@ -16,7 +16,8 @@ import pt.vclubroom.notification.persistence.NotificationRepository;
 /**
  * Email outbox worker. Safe with N instances (FOR UPDATE SKIP LOCKED); at most 5 attempts with exponential backoff
  * (R-27), so a provider limit (e.g. Resend's 100/day) or an outage doesn't burn all retries at once. A failure is
- * recorded on the row and never reaches the event listeners that created it.
+ * recorded on the row and never reaches the event listeners that created it. Support emails (E17-S03) look different on
+ * purpose: their own sender (MAIL_SUPPORT_FROM), subject prefix and wording, so nobody mistakes them for club news.
  */
 @Component
 class EmailDispatchJob {
@@ -30,14 +31,16 @@ class EmailDispatchJob {
     private final EmailSender emailSender;
     private final Clock clock;
     private final String publicUrl;
+    private final String supportFrom;
 
     EmailDispatchJob(NotificationRepository notifications, UserDirectory users, EmailSender emailSender, Clock clock,
-                     @Value("${app.public-url}") String publicUrl) {
+                     @Value("${app.public-url}") String publicUrl, @Value("${app.mail.support-from}") String supportFrom) {
         this.notifications = notifications;
         this.users = users;
         this.emailSender = emailSender;
         this.clock = clock;
         this.publicUrl = publicUrl.replaceAll("/+$", "");
+        this.supportFrom = supportFrom;
     }
 
     @Scheduled(fixedDelayString = "${app.mail.poll-interval:PT30S}", initialDelayString = "${app.mail.poll-interval:PT30S}")
@@ -51,7 +54,9 @@ class EmailDispatchJob {
                 continue;
             }
             try {
-                emailSender.send(new OutgoingEmail(contact.email(), "[Virtual Clubroom] " + n.title(), text(n)));
+                emailSender.send(n.type().support()
+                    ? new OutgoingEmail(contact.email(), "[Virtual Clubroom Support] " + n.title(), supportText(n), supportFrom)
+                    : new OutgoingEmail(contact.email(), "[Virtual Clubroom] " + n.title(), text(n)));
                 n.emailSent(now);
             } catch (EmailDeliveryException e) {
                 log.warn("Email for notification {} failed (attempt {}): {}", n.id(), n.emailAttempts() + 1, e.getMessage());
@@ -65,5 +70,14 @@ class EmailDispatchJob {
         if (n.body() != null && !n.body().isBlank()) text.append(n.body()).append("\n\n");
         if (n.link() != null) text.append("Open: ").append(publicUrl).append(n.link()).append("\n\n");
         return text.append("--\nChoose which emails you get: ").append(publicUrl).append("/settings\n").toString();
+    }
+
+    private String supportText(Notification n) {
+        StringBuilder text = new StringBuilder("Virtual Clubroom Support\n========================\n\n");
+        if (n.body() != null && !n.body().isBlank()) text.append(n.body()).append("\n\n");
+        if (n.link() != null) text.append("Your ticket: ").append(publicUrl).append(n.link()).append("\n\n");
+        return text.append("--\nYou get this email because you sent this ticket. Please answer on the ticket's page:\n")
+            .append("replies to this email don't reach the team.\n")
+            .append("Choose which emails you get: ").append(publicUrl).append("/settings\n").toString();
     }
 }

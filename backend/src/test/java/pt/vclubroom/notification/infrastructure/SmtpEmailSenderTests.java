@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.jayway.jsonpath.JsonPath;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -55,6 +57,18 @@ class SmtpEmailSenderTests {
         assertThat(JsonPath.<String>read(message, "$.To[0].Address")).isEqualTo("ada@example.test");
         assertThat(JsonPath.<String>read(message, "$.ReplyTo[0].Address")).isEqualTo("team@clubroom.test");
         assertThat(JsonPath.<String>read(message, "$.Text")).contains("Open: http://localhost/c/echecs");
+    }
+
+    @Test
+    void anEmailCanComeFromItsOwnAddress() throws Exception {
+        sender(mailpit.getMappedPort(1025), null).send(new OutgoingEmail("bob@example.test", "[Virtual Clubroom Support] T-17",
+            "Thanks", "Virtual Clubroom Support <support@clubroom.test>"));
+
+        String list = get("/api/v1/search?query=" + URLEncoder.encode("to:bob@example.test", StandardCharsets.UTF_8));
+        String id = JsonPath.read(list, "$.messages[0].ID");
+        String message = get("/api/v1/message/" + id);
+        assertThat(JsonPath.<String>read(message, "$.From.Address")).isEqualTo("support@clubroom.test");
+        assertThat(JsonPath.<String>read(message, "$.From.Name")).isEqualTo("Virtual Clubroom Support");
     }
 
     @Test

@@ -30,6 +30,21 @@ class TicketTests {
     }
 
     @Test
+    void theTrackerDecidesTheStatusOnceItHasTheTicket() {
+        Ticket t = ticket();
+        assertThat(t.changeStatus(TicketStatus.IN_PROGRESS, NOW)).isFalse();      // not in the tracker yet
+        t.sentToTracker(4, NOW);
+
+        assertThat(t.changeStatus(TicketStatus.WAITING_ON_REPORTER, NOW)).isTrue();
+        assertThat(t.changeStatus(TicketStatus.WAITING_ON_REPORTER, NOW)).isFalse();
+        t.reporterReplied(NOW);
+        assertThat(t.status()).isEqualTo(TicketStatus.OPEN);
+        assertThat(t.changeStatus(TicketStatus.DECLINED, NOW)).isTrue();
+        assertThat(t.status().closed()).isTrue();
+        assertThat(t.status().label()).isEqualTo("Won't do");
+    }
+
+    @Test
     void failuresWaitLongerEachTimeButNeverMoreThanAnHour() {
         Ticket t = ticket();
         long[] expected = {1, 2, 4, 8, 16, 32, 60, 60, 60};

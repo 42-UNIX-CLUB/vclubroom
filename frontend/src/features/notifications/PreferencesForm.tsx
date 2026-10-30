@@ -47,6 +47,15 @@ const GROUPS: { title: string; types: { type: Type; label: string; adminOnly?: b
       { type: "EVENT_REMINDER", label: "Reminders before events I'm going to" },
     ],
   },
+  {
+    title: "Support",
+    types: [
+      { type: "SUPPORT_TICKET_RECEIVED", label: "A ticket I sent is received" },
+      { type: "SUPPORT_TICKET_REPLIED", label: "The team answers one of my tickets" },
+      { type: "SUPPORT_TICKET_UPDATED", label: "One of my tickets changes status" },
+      { type: "SUPPORT_TICKET_CLOSED", label: "One of my tickets is closed" },
+    ],
+  },
 ];
 
 function defaults(p: Preference): string {
