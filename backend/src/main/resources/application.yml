@@ -22,7 +22,7 @@ spring:
     # One schema per module (no cross-schema FKs). Flyway creates them only on an empty database;
     # db/migration/shared creates them too, so databases migrated before this list existed get them as well.
     create-schemas: true
-    schemas: identity,club,membership,groups,space,forum,media,chat,calendar,notification,discovery,history
+    schemas: identity,club,membership,groups,space,forum,media,chat,calendar,notification,discovery,history,support
     default-schema: public   # flyway_schema_history and event_publication stay in public
 
   jpa:
@@ -183,3 +183,11 @@ app:
     from: ${MAIL_FROM:Virtual Clubroom <no-reply@localhost>}   # demo: Virtual Clubroom <no-reply@42clubroom.ensui.dev>
     reply-to: ${MAIL_REPLY_TO:}
     poll-interval: PT30S                # how often EmailDispatchJob looks for emails to send
+  support:
+    tracker: ${TICKETS_TRACKER:log}     # forgejo | log (log = print tickets instead of creating issues, for offline dev)
+    sync-interval: PT30S                # how often TrackerSyncJob sends new tickets to the tracker
+    daily-limit: 10                     # tickets per person per 24 h
+    forgejo:
+      url: ${TICKETS_FORGEJO_URL:http://localhost:3000}
+      token: ${TICKETS_FORGEJO_TOKEN:}
+      repository: vclubroom/support
