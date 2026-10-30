@@ -1,0 +1,21 @@
+name: Report content or behaviour
+about: "A post, comment, club or person that breaks the rules"
+labels: ["type/report"]
+body:
+  - type: input
+    id: link
+    attributes:
+      label: "Link to the content"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "What's wrong"
+    validations:
+      required: true
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.

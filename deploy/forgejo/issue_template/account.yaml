@@ -1,0 +1,21 @@
+name: Club or account problem
+about: "Joining, ownership, a club to restore, logging in"
+labels: ["type/account"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: "The problem"
+      description: "Which club or account, and what they need."
+    validations:
+      required: true
+  - type: input
+    id: club
+    attributes:
+      label: "Club"
+      description: "Name or link of the club, if any"
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.

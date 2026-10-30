@@ -1,0 +1,15 @@
+name: Question
+about: "How do I…? Something isn't clear"
+labels: ["type/question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: "The question"
+    validations:
+      required: true
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.

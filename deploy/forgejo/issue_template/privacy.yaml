@@ -1,0 +1,24 @@
+name: Privacy or data request
+about: "Access, correction or deletion of personal data"
+labels: ["type/privacy"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: "Request"
+      options:
+        - "A copy of their data"
+        - "Correct their data"
+        - "Delete their account and data"
+        - "Something else"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: "Details"
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.

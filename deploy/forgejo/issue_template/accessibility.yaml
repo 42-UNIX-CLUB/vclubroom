@@ -1,0 +1,21 @@
+name: Accessibility problem
+about: "Hard or impossible to use, for example with a screen reader or a keyboard"
+labels: ["type/accessibility"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: "What is hard to use"
+      description: "Which page, and what gets in the way."
+    validations:
+      required: true
+  - type: input
+    id: tools
+    attributes:
+      label: "Assistive technology"
+      description: "Screen reader, zoom, keyboard only…"
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.
