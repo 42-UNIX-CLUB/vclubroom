@@ -4,7 +4,6 @@ import { OwnershipInvitations } from "@/features/membership";
 import { NotificationBell } from "@/features/notifications";
 import { RealtimeProvider } from "@/shared/realtime/RealtimeProvider";
 import { buttonVariants } from "@/shared/ui/button";
-import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import { navLinkClass } from "./navLinkClass";
 
 /** Top bar + page area for every route; logged-in users also get the live connection. */
@@ -31,7 +30,6 @@ export function AppLayout() {
               {me?.admin && <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>}
             </nav>
             <div className="ml-auto flex items-center gap-1">
-              <ThemeToggle />
               {me ? (
                 <>
                   <NotificationBell />
