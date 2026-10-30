@@ -117,6 +117,24 @@ public class Ticket {
         this.updatedAt = now;
     }
 
+    /** What the tracker now says (E17-S03). Returns whether it changed, so only real changes notify the reporter. */
+    public boolean changeStatus(TicketStatus newStatus, Instant now) {
+        if (trackerIssue == null || newStatus == status) {
+            return false;
+        }
+        this.status = newStatus;
+        this.updatedAt = now;
+        return true;
+    }
+
+    /** The reporter answered: no longer waiting for them. The tracker loses its waiting label when it gets the reply. */
+    public void reporterReplied(Instant now) {
+        if (status == TicketStatus.WAITING_ON_REPORTER) {
+            this.status = TicketStatus.OPEN;
+        }
+        this.updatedAt = now;
+    }
+
     /** One more failed attempt; the next one waits 1, 2, 4… minutes, at most an hour. */
     public void trackerFailed(String error, Instant now) {
         this.trackerAttempts++;
