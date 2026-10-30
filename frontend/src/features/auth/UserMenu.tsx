@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOutIcon, SettingsIcon, ShieldIcon } from "lucide-react";
-import { useNavigate } from "react-router";
+import { LifeBuoyIcon, LogOutIcon, SettingsIcon, ShieldIcon } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
 import {
@@ -10,9 +10,10 @@ import {
 import { logout } from "./logout";
 import type { Me } from "./useMe";
 
-/** Avatar in the top bar: Settings, Admin console (admins only), Log out. */
+/** Avatar in the top bar: Settings, Help & feedback, Admin console (admins only), Log out. */
 export function UserMenu({ me }: { me: Me }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const name = me.displayName || me.login || "Me";
 
@@ -46,6 +47,9 @@ export function UserMenu({ me }: { me: Me }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/settings")}>
           <SettingsIcon /> Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/support/new?from=${encodeURIComponent(location.pathname + location.search)}`)}>
+          <LifeBuoyIcon /> Help & feedback
         </DropdownMenuItem>
         {me.admin && (
           <DropdownMenuItem onClick={() => navigate("/admin")}>

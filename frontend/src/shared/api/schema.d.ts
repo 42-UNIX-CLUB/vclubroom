@@ -132,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine_1"];
+        put?: never;
+        post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/spaces/{spaceId}/channels": {
         parameters: {
             query?: never;
@@ -299,7 +315,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["mine_1"];
+        get: operations["mine_2"];
         put?: never;
         post: operations["rotate"];
         delete: operations["revoke"];
@@ -932,6 +948,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/support/tickets/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reactions": {
         parameters: {
             query?: never;
@@ -1147,7 +1179,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1568,6 +1600,30 @@ export interface components {
         };
         MemberRolesRequest: {
             roleIds: string[];
+        };
+        CreateTicketRequest: {
+            /** @enum {string} */
+            type: "BUG" | "SUGGESTION" | "QUESTION" | "ACCOUNT" | "REPORT" | "ACCESSIBILITY" | "PRIVACY" | "OTHER";
+            title: string;
+            description: string;
+            pageUrl?: string;
+            userAgent?: string;
+        };
+        TicketView: {
+            /** Format: int64 */
+            number?: number;
+            ref?: string;
+            /** @enum {string} */
+            type?: "BUG" | "SUGGESTION" | "QUESTION" | "ACCOUNT" | "REPORT" | "ACCESSIBILITY" | "PRIVACY" | "OTHER";
+            title?: string;
+            description?: string;
+            pageUrl?: string;
+            /** @enum {string} */
+            status?: "RECEIVED" | "OPEN" | "IN_PROGRESS" | "WAITING_ON_REPORTER" | "RESOLVED" | "DECLINED" | "DUPLICATE";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
         };
         CreateChannelRequest: {
             /** @enum {string} */
@@ -2618,6 +2674,50 @@ export interface operations {
             };
         };
     };
+    mine_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TicketView"][];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TicketView"];
+                };
+            };
+        };
+    };
     addChannel: {
         parameters: {
             query?: never;
@@ -2879,7 +2979,7 @@ export interface operations {
             };
         };
     };
-    mine_1: {
+    mine_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4299,6 +4399,28 @@ export interface operations {
             };
         };
     };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TicketView"];
+                };
+            };
+        };
+    };
     options: {
         parameters: {
             query?: never;
@@ -4579,7 +4701,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;

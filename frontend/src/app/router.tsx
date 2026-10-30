@@ -59,6 +59,9 @@ export const routes: RouteObject[] = [
               { path: "calendar", lazy: () => import("@/features/calendar").then((m) => ({ Component: m.CampusCalendarPage })) },
               { path: "notifications", lazy: () => import("@/features/notifications").then((m) => ({ Component: m.NotificationsPage })) },
               { path: "settings", lazy: () => import("./SettingsPage").then((m) => ({ Component: m.SettingsPage })) },
+              { path: "support", lazy: () => import("@/features/support").then((m) => ({ Component: m.SupportPage })) },
+              { path: "support/new", lazy: () => import("@/features/support").then((m) => ({ Component: m.NewTicketPage })) },
+              { path: "support/:number", lazy: () => import("@/features/support").then((m) => ({ Component: m.TicketPage })) },
             ],
           },
 
