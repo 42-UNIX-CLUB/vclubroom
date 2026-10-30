@@ -43,6 +43,7 @@ services:
       TICKETS_TRACKER: forgejo                # E17: tickets become issues in the forgejo service below
       TICKETS_FORGEJO_URL: http://forgejo:3000
       TICKETS_FORGEJO_TOKEN: ${TICKETS_FORGEJO_TOKEN:-}
+      TICKETS_PUBLIC_URL: ${TICKETS_PUBLIC_URL:-}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

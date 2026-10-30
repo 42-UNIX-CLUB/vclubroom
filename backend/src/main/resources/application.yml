@@ -188,6 +188,7 @@ app:
     tracker: ${TICKETS_TRACKER:log}     # forgejo | log (log = print tickets instead of creating issues, for offline dev)
     sync-interval: PT30S                # how often TrackerSyncJob sends new tickets to the tracker
     daily-limit: 10                     # tickets per person per 24 h
+    public-url: ${TICKETS_PUBLIC_URL:}   # where the team opens the tracker: the ops card links there (E17-S04)
     forgejo:
       url: ${TICKETS_FORGEJO_URL:http://localhost:3000}
       token: ${TICKETS_FORGEJO_TOKEN:}

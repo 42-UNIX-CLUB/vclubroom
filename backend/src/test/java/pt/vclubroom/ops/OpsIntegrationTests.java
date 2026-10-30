@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.ops.application.OpsService;
 
-/** The operations report (E15-S04): the event outbox per listener and the email outbox, for admins only. */
+/** The operations report (E15-S04, E17-S04): the event outbox per listener, the email outbox and the tracker sync, for admins only. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -35,11 +35,13 @@ class OpsIntegrationTests {
     JdbcTemplate jdbc;
 
     private final UUID failedEmail = UUID.randomUUID();
+    private final UUID waitingTicket = UUID.randomUUID();
 
     @AfterEach
     void cleanUp() {
         jdbc.update("delete from public.event_publication where listener_id = ?", LISTENER);   // never retried by others
         jdbc.update("delete from notification.notifications where id = ?", failedEmail);
+        jdbc.update("delete from support.tickets where id = ?", waitingTicket);
     }
 
     @Test
@@ -61,6 +63,23 @@ class OpsIntegrationTests {
             .andExpect(jsonPath("$.emails.lastError").value("SMTP delivery failed: 550 no such user"))
             .andExpect(jsonPath("$.measuredAt").isNotEmpty());
         mvc.perform(get("/api/admin/ops").with(user(UUID.randomUUID(), false))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminsSeeTicketsTheTrackerDoesNotHaveYet() throws Exception {
+        jdbc.update("""
+            insert into support.tickets (id, number, reporter_id, type, title, description, status, tracker_attempts,
+              tracker_next_attempt_at, tracker_last_error, created_at, updated_at)
+            values (?, nextval('support.ticket_number_seq'), gen_random_uuid(), 'BUG', 'Broken', 'It is', 'RECEIVED', 3,
+              now() + interval '1 hour', 'Forgejo unreachable: Connection refused', now() - interval '20 minutes', now())""",
+            waitingTicket);
+
+        mvc.perform(get("/api/admin/ops").with(user(UUID.randomUUID(), true)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.tickets.unsentTickets").value(greaterThanOrEqualTo(1)))
+            .andExpect(jsonPath("$.tickets.oldestUnsent").isNotEmpty())
+            .andExpect(jsonPath("$.tickets.lastRead").isNotEmpty())
+            .andExpect(jsonPath("$.tickets.lastError").value("Forgejo unreachable: Connection refused"));
     }
 
     @Test

@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.vclubroom.notification.api.EmailOutbox;
+import pt.vclubroom.support.api.TrackerQueue;
 
 /**
  * The operations report (09-deployment §12, 06-messaging §8). Incomplete event publications are normal for a moment
@@ -17,11 +18,13 @@ public class OpsService {
 
     private final JdbcTemplate jdbc;
     private final EmailOutbox emails;
+    private final TrackerQueue tickets;
     private final Clock clock;
 
-    OpsService(JdbcTemplate jdbc, EmailOutbox emails, Clock clock) {
+    OpsService(JdbcTemplate jdbc, EmailOutbox emails, TrackerQueue tickets, Clock clock) {
         this.jdbc = jdbc;
         this.emails = emails;
+        this.tickets = tickets;
         this.clock = clock;
     }
 
@@ -33,7 +36,7 @@ public class OpsService {
             group by listener_id, event_type order by oldest
             """, (rs, row) -> new ListenerBacklog(shortName(rs.getString("listener_id")), shortName(rs.getString("event_type")),
             rs.getLong("pending"), rs.getTimestamp("oldest").toInstant()));
-        return new OpsReport(outbox, emails.backlog(), clock.instant());
+        return new OpsReport(outbox, emails.backlog(), tickets.backlog(), clock.instant());
     }
 
     /** "pt.vclubroom.notification.application.ForumNotificationListener.on(pt.vclubroom…PostPublished)" → "ForumNotificationListener.on". */
