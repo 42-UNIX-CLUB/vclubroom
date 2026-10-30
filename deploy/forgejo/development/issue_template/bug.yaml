@@ -1,0 +1,26 @@
+name: Bug
+about: "Something that worked as designed doesn't"
+labels: ["kind/bug"]
+body:
+  - type: input
+    id: support
+    attributes:
+      label: "Support tickets"
+      description: "If users reported it: vclubroom/support#5. Then add this issue as a dependency of the ticket, so they see its progress."
+  - type: textarea
+    id: what
+    attributes:
+      label: "What happens"
+      description: "Steps, what was expected, what happened instead."
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: "Where"
+      description: "Page, endpoint or module"
+  - type: input
+    id: part
+    attributes:
+      label: "Part of"
+      description: "The story or epic it belongs to, if any: #20"

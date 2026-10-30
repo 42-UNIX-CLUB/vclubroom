@@ -1,0 +1,40 @@
+name: Task
+about: "One step of a story, usually one branch and pull request"
+title: "E__-S__-T_ · "
+labels: ["kind/task"]
+body:
+  - type: input
+    id: story
+    attributes:
+      label: "Story"
+      description: "The story's issue, for example #20. Then list this task in the story, and add it as one of the story's dependencies."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "What to do"
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: "Layer"
+      multiple: true
+      options:
+        - "Backend"
+        - "Frontend"
+        - "Database"
+        - "Tests"
+        - "Ops"
+        - "Docs"
+  - type: input
+    id: estimate
+    attributes:
+      label: "Estimate"
+      description: "Ideal hours"
+  - type: input
+    id: depends
+    attributes:
+      label: "Depends on"
+      description: "Issues that must be done first: #31, #32"
