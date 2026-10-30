@@ -21,10 +21,13 @@ afterEach(() => {
 describe("OpsCard", () => {
   it("says all is well when nothing is late", async () => {
     renderCard({ outbox: [{ listener: "ForumNotificationListener.on", eventType: "PostPublished", count: 1, oldest: minutesAgo(0) }],
-      emails: { waiting: 1, retrying: 0, failed: 0, sentLastDay: 12 }, measuredAt: minutesAgo(0) });
+      emails: { waiting: 1, retrying: 0, failed: 0, sentLastDay: 12 },
+      tickets: { unsentTickets: 0, unsentReplies: 0, lastRead: minutesAgo(0), trackerUrl: "https://tickets.example/" }, measuredAt: minutesAgo(0) });
     expect(await screen.findByText("All caught up.", {}, { timeout: 3000 })).toBeTruthy();
     expect(screen.getByText("1 being handled.")).toBeTruthy();
     expect(screen.getByText("12 sent in the last day · 1 waiting · 0 retrying")).toBeTruthy();
+    expect(screen.getByText(/The tracker has every ticket\./)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open the tracker" }).getAttribute("href")).toBe("https://tickets.example/");
   });
 
   it("names stuck listeners and failed emails with the last error", async () => {
@@ -34,5 +37,16 @@ describe("OpsCard", () => {
     expect(within(screen.getByRole("list", { name: "Stuck listeners" })).getByText(/SpaceProvisioner.on \(ClubApproved\): 3/)).toBeTruthy();
     expect(screen.getByText("1 given up after 5 attempts.")).toBeTruthy();
     expect(screen.getByText("Last error: SMTP delivery failed: 535 auth")).toBeTruthy();
+  });
+
+  it("says when the tracker is out of reach", async () => {
+    renderCard({ outbox: [], emails: { waiting: 0, retrying: 0, failed: 0, sentLastDay: 3 },
+      tickets: { unsentTickets: 2, unsentReplies: 1, oldestUnsent: minutesAgo(25), lastRead: minutesAgo(25),
+        lastError: "Forgejo unreachable: Connection refused" }, measuredAt: minutesAgo(0) });
+    expect(await screen.findByText("Something is late: see below.", {}, { timeout: 3000 })).toBeTruthy();
+    expect(screen.getByText(/3 waiting for the tracker\./)).toBeTruthy();
+    expect(screen.getByText("The tracker hasn't answered for a while.")).toBeTruthy();
+    expect(screen.getByText("Last error: Forgejo unreachable: Connection refused")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Open the tracker" })).toBeNull();
   });
 });
