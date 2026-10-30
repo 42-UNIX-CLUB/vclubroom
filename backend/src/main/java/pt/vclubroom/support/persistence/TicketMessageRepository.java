@@ -2,6 +2,7 @@ package pt.vclubroom.support.persistence;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,8 @@ public interface TicketMessageRepository extends JpaRepository<TicketMessage, UU
     List<TicketMessage> findByTicketIdOrderByCreatedAt(UUID ticketId);
 
     boolean existsByTrackerCommentId(long trackerCommentId);
+
+    Optional<TicketMessage> findFirstByTicketIdOrderByCreatedAtDesc(UUID ticketId);
 
     /** Reporters' messages due for the tracker, once their ticket's issue exists. SKIP LOCKED: instances share the work. */
     @Query(value = """
