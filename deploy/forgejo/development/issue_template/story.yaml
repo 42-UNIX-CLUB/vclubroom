@@ -1,0 +1,42 @@
+name: Story
+about: "Something a user or the team can do once it's done"
+title: "E__-S__ · "
+labels: ["kind/story"]
+body:
+  - type: input
+    id: epic
+    attributes:
+      label: "Epic"
+      description: "The epic's issue, for example #12. Then list this story in the epic, and add it as one of the epic's dependencies."
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: "User story"
+      value: "As a **…**, I want **…** so that **…**."
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: "Acceptance criteria"
+      value: "- "
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: "Tasks"
+      description: "One line per task issue (- #34). Add each as a dependency too: the story then shows their state and can't close before them."
+      value: "- #"
+  - type: input
+    id: support
+    attributes:
+      label: "Support tickets"
+      description: "If users asked for it: vclubroom/support#5. Then add this issue as a dependency of the ticket."
+  - type: input
+    id: branch
+    attributes:
+      label: "Branch"
+      description: "dev/feat(E__-S__)/short-desc"

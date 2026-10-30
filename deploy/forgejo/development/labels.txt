@@ -1,0 +1,27 @@
+# Labels of the development repository (scripts/tickets-setup.sh creates the missing ones). Columns, separated by |:
+# name, colour, exclusive (one label per scope on an issue), description.
+# The backend relies on status/in-progress and status/in-review (support.infrastructure.ForgejoLabels): rename them in both places.
+kind/epic|#5319e7|true|A large piece of work: its stories are listed in its description
+kind/story|#1d76db|true|Something a user or the team can do once it's done: its tasks are listed in its description
+kind/task|#c5def5|true|One step of a story, usually one branch and pull request
+kind/bug|#d73a4a|true|Something that worked as designed doesn't
+kind/chore|#bfbfbf|true|Maintenance with no visible change: dependencies, tooling, clean-ups
+priority/must|#b60205|true|Must have
+priority/should|#fbca04|true|Should have
+priority/could|#0e8a16|true|Could have
+status/ready|#c2e0c6|true|Dependencies done, someone can start
+status/in-progress|#fbca04|true|Someone is on it. Reporters of linked support tickets see In progress
+status/in-review|#0052cc|true|A pull request is open. Reporters of linked support tickets see In progress
+status/blocked|#e11d21|true|Waiting on something else: say what in a comment
+resolution/wont-do|#e4e669|true|Closed without being done
+resolution/duplicate|#cfd3d7|true|Same as another issue: link it in a comment
+layer/backend|#006b75|false|Spring Boot
+layer/frontend|#0e8a16|false|React
+layer/database|#5319e7|false|Migrations and queries
+layer/tests|#d4c5f9|false|Tests only
+layer/ops|#bfd4f2|false|Deployment, infrastructure, scripts
+layer/docs|#ededed|false|Documentation
+track/a|#f9d0c4|false|Team track A
+track/b|#fef2c0|false|Team track B
+track/c|#c2e0c6|false|Team track C
+source/support|#ededed|false|Started from a support ticket: the ticket depends on this issue

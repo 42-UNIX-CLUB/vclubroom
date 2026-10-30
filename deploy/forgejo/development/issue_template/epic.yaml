@@ -1,0 +1,28 @@
+name: Epic
+about: "A large piece of work, made of stories"
+title: "E__ · "
+labels: ["kind/epic"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: "Goal"
+      description: "What is true once every story is done."
+    validations:
+      required: true
+  - type: textarea
+    id: stories
+    attributes:
+      label: "Stories"
+      description: "One line per story issue (- #12). Add each as a dependency too: the epic then shows their state and can't close before them."
+      value: "- #"
+  - type: textarea
+    id: design
+    attributes:
+      label: "Design"
+      description: "Documents, decisions (D-…, R-…), constraints."
+  - type: input
+    id: estimate
+    attributes:
+      label: "Estimate"
+      description: "Ideal hours, for example 10.5 h"

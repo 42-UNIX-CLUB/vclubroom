@@ -1,0 +1,6 @@
+# Milestones of the development repository: one per release (SemVer). scripts/tickets-setup.sh creates the missing ones.
+# Columns, separated by |: title, state (open or closed), description.
+v1.0.0|closed|The hackathon release: 52 stories, submitted on 2026-10-19
+v1.1.0|open|Support tickets, and development tracked in Forgejo
+v1.2.0|open|The developer portal: API documentation, service status, changelog
+v1.3.0|open|Apps on the API: personal access tokens, OAuth apps, rate limits
