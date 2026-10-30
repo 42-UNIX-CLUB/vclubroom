@@ -59,6 +59,37 @@ services:
       backend: { condition: service_healthy }
     restart: unless-stopped
 
+  forgejo:                                   # the ticket tracker (E17): the team on TICKETS_PUBLIC_URL, the backend on this network
+    image: codeberg.org/forgejo/forgejo:15.0.11-rootless
+    environment:
+      FORGEJO__database__DB_TYPE: sqlite3
+      FORGEJO__server__ROOT_URL: ${TICKETS_PUBLIC_URL:-http://localhost:3000/}
+      FORGEJO__server__HTTP_PORT: 3000
+      FORGEJO__server__DISABLE_SSH: "true"      # issues only: nobody pushes code here
+      FORGEJO__server__OFFLINE_MODE: "true"     # no CDN or Gravatar requests
+      FORGEJO__security__INSTALL_LOCK: "true"   # configured here, so no web installer
+      FORGEJO__service__DISABLE_REGISTRATION: "true"
+      FORGEJO__service__REQUIRE_SIGNIN_VIEW: "true"
+      FORGEJO__service__DEFAULT_KEEP_EMAIL_PRIVATE: "true"
+      FORGEJO__session__COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      FORGEJO__actions__ENABLED: "false"
+      FORGEJO__mailer__ENABLED: "false"
+    volumes:
+      - forgejo:/var/lib/gitea                # database, config with its generated secrets, attachments
+    ports:
+      # Private interface only, like the proxy: the tunnel and SSH port forwarding reach it, the internet doesn't.
+      - "${HTTP_BIND:-127.0.0.1}:${TICKETS_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 512m                         # about 120 MB in use
+    restart: unless-stopped
+
   cloudflared:                               # option B (§8.2): dedicated connector next to the app
     image: cloudflare/cloudflared:2026.10.0
     command: tunnel --no-autoupdate run
@@ -74,3 +105,6 @@ services:
     profiles: ["demo"]                       # local demo without real email
     ports: ["127.0.0.1:8025:8025"]
     restart: unless-stopped
+
+volumes:
+  forgejo:
