@@ -1,0 +1,21 @@
+name: Suggestion
+about: "An idea or an improvement"
+labels: ["type/suggestion"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: "The idea"
+      description: "What would change, and for whom."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "Why"
+      description: "The problem it solves."
+  - type: input
+    id: reporter
+    attributes:
+      label: Reported by
+      description: Their login, if they reported it outside the app (in person, by email). Tickets from the app say so themselves.
