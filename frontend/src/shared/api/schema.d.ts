@@ -2381,8 +2381,21 @@ export interface components {
         OpsReport: {
             outbox?: components["schemas"]["ListenerBacklog"][];
             emails?: components["schemas"]["EmailBacklog"];
+            tickets?: components["schemas"]["TrackerBacklog"];
             /** Format: date-time */
             measuredAt?: string;
+        };
+        TrackerBacklog: {
+            /** Format: int64 */
+            unsentTickets?: number;
+            /** Format: int64 */
+            unsentReplies?: number;
+            /** Format: date-time */
+            oldestUnsent?: string;
+            /** Format: date-time */
+            lastRead?: string;
+            lastError?: string;
+            trackerUrl?: string;
         };
         PageResponseClubResponse: {
             items?: components["schemas"]["ClubResponse"][];
