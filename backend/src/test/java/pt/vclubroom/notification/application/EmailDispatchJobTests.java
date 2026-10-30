@@ -33,7 +33,8 @@ import pt.vclubroom.space.api.SpaceAudience;
 /** The email outbox on its own (E12-S03): what is sent, retried with backoff (R-27), or given up. The sender is mocked. */
 @ApplicationModuleTest
 @Import(TestcontainersConfiguration.class)
-@TestPropertySource(properties = {"app.mail.poll-interval=PT1H", "app.public-url=https://clubroom.test/"})   // the test runs the job itself
+@TestPropertySource(properties = {"app.mail.poll-interval=PT1H", "app.public-url=https://clubroom.test/",   // the test runs the job itself
+    "app.mail.support-from=Virtual Clubroom Support <support@clubroom.test>"})
 class EmailDispatchJobTests {
 
     @MockitoBean
@@ -65,13 +66,17 @@ class EmailDispatchJobTests {
 
     /** A notification as the dispatcher writes it, for someone with an address. */
     private UUID notification(String email, boolean emailRequested) {
+        return notification(email, emailRequested, "CLUB_APPROVED", "Chess is approved", "Welcome aboard", "/c/chess");
+    }
+
+    private UUID notification(String email, boolean emailRequested, String type, String title, String body, String link) {
         UUID recipient = UUID.randomUUID();
         given(users.contactOf(recipient)).willReturn(Optional.ofNullable(email).map(e -> new UserContact(recipient, e, "Ada", true)));
         UUID id = UUID.randomUUID();
         jdbc.update("""
             insert into notification.notifications (id, recipient_id, type, title, body, link, dedup_key, in_app, email_requested, created_at)
-            values (?, ?, 'CLUB_APPROVED', 'Chess is approved', 'Welcome aboard', '/c/chess', ?, true, ?, now())""",
-            id, recipient, "TEST:" + id, emailRequested);
+            values (?, ?, ?, ?, ?, ?, ?, true, ?, now())""",
+            id, recipient, type, title, body, link, "TEST:" + id, emailRequested);
         return id;
     }
 
@@ -103,6 +108,27 @@ class EmailDispatchJobTests {
         verify(emailSender, never()).send(argThat(e -> e.to().equals("bob@example.test")));
         assertThat(row(id).get("email_sent_at")).isNotNull();
         assertThat(row(inAppOnly).get("email_sent_at")).isNull();
+    }
+
+    @Test
+    void supportEmailsComeFromTheSupportAddressAndSaySo() {
+        notification("ada@example.test", true, "SUPPORT_TICKET_REPLIED", "T-17: the team answered “Login”", "Which browser?", "/support/17");
+
+        job.sendPendingEmails();
+
+        verify(emailSender).send(new OutgoingEmail("ada@example.test", "[Virtual Clubroom Support] T-17: the team answered “Login”", """
+            Virtual Clubroom Support
+            ========================
+
+            Which browser?
+
+            Your ticket: https://clubroom.test/support/17
+
+            --
+            You get this email because you sent this ticket. Please answer on the ticket's page:
+            replies to this email don't reach the team.
+            Choose which emails you get: https://clubroom.test/settings
+            """, "Virtual Clubroom Support <support@clubroom.test>"));
     }
 
     @Test

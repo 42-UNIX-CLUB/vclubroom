@@ -18,7 +18,11 @@ public enum NotificationType {
     EVENT_SCHEDULED(true, false),
     EVENT_UPDATED(true, false),
     EVENT_CANCELLED(true, true),
-    EVENT_REMINDER(true, true);
+    EVENT_REMINDER(true, true),
+    SUPPORT_TICKET_RECEIVED(false, true),       // E17: about your own tickets, in support emails (EmailDispatchJob)
+    SUPPORT_TICKET_REPLIED(true, true),
+    SUPPORT_TICKET_UPDATED(true, false),
+    SUPPORT_TICKET_CLOSED(true, true);
 
     private final boolean defaultInApp;
     private final boolean defaultEmail;
@@ -30,4 +34,7 @@ public enum NotificationType {
 
     public boolean defaultInApp() { return defaultInApp; }
     public boolean defaultEmail() { return defaultEmail; }
+
+    /** About one of your support tickets: sent as a support email, from its own address (E17-S03). */
+    public boolean support() { return name().startsWith("SUPPORT_"); }
 }

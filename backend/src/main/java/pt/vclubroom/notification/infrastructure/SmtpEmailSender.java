@@ -30,7 +30,7 @@ class SmtpEmailSender implements EmailSender {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
-            helper.setFrom(properties.from());            // must be on the provider's verified domain (R-25)
+            helper.setFrom(email.from() != null ? email.from() : properties.from());   // on the provider's verified domain (R-25)
             if (properties.replyTo() != null && !properties.replyTo().isBlank()) {
                 helper.setReplyTo(properties.replyTo());
             }

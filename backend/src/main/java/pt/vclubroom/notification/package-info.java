@@ -1,3 +1,3 @@
-@ApplicationModule(displayName = "Notification", allowedDependencies = {"shared", "identity::api", "club::api", "club::events", "membership::api", "membership::events", "space::api", "forum::events", "calendar::api", "calendar::events", "realtime::api"})
+@ApplicationModule(displayName = "Notification", allowedDependencies = {"shared", "identity::api", "club::api", "club::events", "membership::api", "membership::events", "space::api", "forum::events", "calendar::api", "calendar::events", "realtime::api", "support::events"})
 package pt.vclubroom.notification;
 import org.springframework.modulith.ApplicationModule;
