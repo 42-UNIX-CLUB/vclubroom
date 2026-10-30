@@ -39,6 +39,9 @@ services:
       APP_ADMIN_BOOTSTRAP_LOGINS: ${APP_ADMIN_BOOTSTRAP_LOGINS:-}
       APP_BOOTSTRAP_ADMIN_USERNAME: ${APP_BOOTSTRAP_ADMIN_USERNAME:-}
       APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-}
+      TICKETS_TRACKER: forgejo                # E17: tickets become issues in the forgejo service below
+      TICKETS_FORGEJO_URL: http://forgejo:3000
+      TICKETS_FORGEJO_TOKEN: ${TICKETS_FORGEJO_TOKEN:-}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
