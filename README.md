@@ -28,9 +28,12 @@ co-ownership, ownership transfer, archival and history in eras.
 | Club archival (everything stays readable) | ✅ | Admin › **All clubs** |
 | Club history: eras, timeline, all past posts and comments | ✅ | Club › **History** |
 | Community spaces with read/write rules | ✅ | Club sidebar |
-| Extras in progress: custom club roles, RSVPs, real-time chat, notifications, revival | 🚧 | |
-
-✅ done · 🚧 in progress
+| Custom club roles and permissions | ✅ | Club › Settings › **Roles** |
+| Event RSVPs | ✅ | An event's page |
+| Real-time chat | ✅ | A club's chat channels |
+| Notifications, in the app and by email | ✅ | The bell, Settings › **Notifications** |
+| Reviving an archived club | ✅ | An archived club's page, Admin › **Revivals** |
+| Support tickets, answered by the team | ✅ | `/support` |
 
 ## Screenshots
 
@@ -48,7 +51,7 @@ co-ownership, ownership transfer, archival and history in eras.
 
 ## Architecture
 
-- **13 modules** (identity, club, membership, space, forum, media, calendar, discovery, history, …), each with its own database schema. Spring Modulith's test fails the build if one reaches into another's internals.
+- **15 modules** (identity, club, membership, space, forum, chat, media, calendar, discovery, history, support, …) and a shared kernel. The 13 that keep data each have their own database schema; `realtime` and `ops` keep none. Spring Modulith's test fails the build if one module reaches into another's internals.
 - **Events between modules** go through an outbox table in PostgreSQL: approving a club creates its owner, its spaces, its directory card and its first timeline entry, each in its own transaction, retried until it succeeds.
 - **Stateless backend instances:** sessions live in Redis, so the demo runs two backend replicas behind nginx.
 - **Media go straight to object storage:** the browser uploads with a presigned URL, and the backend only checks the result.
