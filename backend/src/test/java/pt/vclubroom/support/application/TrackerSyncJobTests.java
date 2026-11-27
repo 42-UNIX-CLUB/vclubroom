@@ -30,14 +30,16 @@ import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.identity.api.UserSummary;
 import pt.vclubroom.shared.security.Actor;
+import pt.vclubroom.support.domain.LinkedWork;
 import pt.vclubroom.support.domain.TicketStatus;
 import pt.vclubroom.support.domain.TicketType;
+import pt.vclubroom.support.domain.WorkState;
 import pt.vclubroom.support.events.TicketReplied;
 import pt.vclubroom.support.events.TicketStatusChanged;
 
 /**
- * The tracker sync on its own (E17-S02, E17-S03): tickets and replies sent once, retried with backoff, never given up;
- * the tracker's changes read once. The tracker is mocked.
+ * The tracker sync on its own (E17-S02, E17-S03, E18-S03): tickets and replies sent once, retried with backoff, never
+ * given up; the tracker's changes and linked work read once. The tracker is mocked.
  */
 @ApplicationModuleTest
 @Import(TestcontainersConfiguration.class)
@@ -63,7 +65,8 @@ class TrackerSyncJobTests {
 
     @BeforeEach
     void cleanUp() {
-        jdbc.update("delete from support.ticket_messages");               // each test sees only its own tickets
+        jdbc.update("delete from support.ticket_links");                  // each test sees only its own tickets
+        jdbc.update("delete from support.ticket_messages");
         jdbc.update("delete from support.tickets");
         jdbc.update("update support.tracker_cursor set read_until = now(), last_error = null");
         UserSummary summary = new UserSummary(ada, "alovelace", "Ada Lovelace", null);
@@ -193,11 +196,11 @@ class TrackerSyncJobTests {
         TicketView t = ticket("Login button does nothing");
         inTracker(t, 5);
         given(tracker.changesSince(any())).willReturn(new TrackerChanges(
-            List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER), new TrackerChanges.Issue(99, TicketStatus.RESOLVED)),
+            List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER, List.of()), new TrackerChanges.Issue(99, TicketStatus.RESOLVED, List.of())),
             List.of(new TrackerChanges.Comment(201, 5, false, "Reproduced on Firefox"),             // between the team
                 new TrackerChanges.Comment(202, 5, false, "/reply Which browser do you use?"),
                 new TrackerChanges.Comment(203, 5, true, "**Ada Lovelace** replied in the app: …"),  // the app's own copy
-                new TrackerChanges.Comment(204, 99, false, "/reply On an issue that isn't a ticket"))));
+                new TrackerChanges.Comment(204, 99, false, "/reply On an issue that isn't a ticket")), List.of()));
 
         Instant before = Instant.now();
         job.readTrackerChanges();
@@ -226,10 +229,10 @@ class TrackerSyncJobTests {
         jdbc.update("update support.tickets set status = 'WAITING_ON_REPORTER' where number = ?", t.number());
         support.reply(new Actor(ada, false), t.number(), "Firefox 140");     // open again, the label goes with the reply
         given(tracker.changesSince(any())).willReturn(
-            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER)), List.of()),
-            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.OPEN)), List.of()),
-            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER)),
-                List.of(new TrackerChanges.Comment(301, 5, false, "/reply And which version of Linux?"))));
+            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER, List.of())), List.of(), List.of()),
+            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.OPEN, List.of())), List.of(), List.of()),
+            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER, List.of())),
+                List.of(new TrackerChanges.Comment(301, 5, false, "/reply And which version of Linux?")), List.of()));
 
         job.readTrackerChanges();                                         // the reply hasn't reached the tracker yet
         assertThat(row(t.number())).containsEntry("status", "OPEN");
@@ -243,6 +246,31 @@ class TrackerSyncJobTests {
     }
 
     @Test
+    void linkedWorkFollowsTheTracker() {
+        TicketView t = ticket("Pinned posts disappear");
+        inTracker(t, 5);
+        LinkedWork planned = new LinkedWork(140, "E09-S04 · Edit, delete, pin and moderate", WorkState.PLANNED, "v1.2.0", false);
+        LinkedWork elsewhere = new LinkedWork(141, "E12-S01 · In-app notifications", WorkState.PLANNED, null, false);
+        given(tracker.changesSince(any())).willReturn(
+            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.OPEN, List.of(planned))), List.of(), List.of()),
+            new TrackerChanges(List.of(), List.of(), List.of(           // the development issue moved on, alone
+                new LinkedWork(140, "E09-S04 · Edit, delete, pin and moderate", WorkState.DONE, "v1.2.0", true), elsewhere)),
+            new TrackerChanges(List.of(new TrackerChanges.Issue(5, TicketStatus.OPEN, List.of())), List.of(), List.of()));   // unlinked
+
+        job.readTrackerChanges();
+        assertThat(links(t.number())).containsExactly(Map.of("issue", 140, "state", "PLANNED", "released", false));
+        job.readTrackerChanges();
+        assertThat(links(t.number())).containsExactly(Map.of("issue", 140, "state", "DONE", "released", true));
+        job.readTrackerChanges();
+        assertThat(links(t.number())).isEmpty();
+    }
+
+    private List<Map<String, Object>> links(long number) {
+        return jdbc.queryForList("select issue, state, released from support.ticket_links "
+            + "where ticket_id = (select id from support.tickets where number = ?) order by issue", number);
+    }
+
+    @Test
     void aFailedReadKeepsTheCursorAndSaysWhy() {
         Object start = cursor().get("read_until");
         given(tracker.changesSince(any())).willThrow(new TrackerException("Forgejo answered 502 Bad Gateway", null));
@@ -250,7 +278,7 @@ class TrackerSyncJobTests {
         job.readTrackerChanges();
 
         assertThat(cursor()).containsEntry("read_until", start).containsEntry("last_error", "Forgejo answered 502 Bad Gateway");
-        willReturn(new TrackerChanges(List.of(), List.of())).given(tracker).changesSince(any());
+        willReturn(new TrackerChanges(List.of(), List.of(), List.of())).given(tracker).changesSince(any());
         job.readTrackerChanges();
         assertThat(cursor()).containsEntry("last_error", null);
     }

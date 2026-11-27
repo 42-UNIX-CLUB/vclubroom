@@ -23,11 +23,13 @@ import pt.vclubroom.support.application.ReporterReply;
 import pt.vclubroom.support.application.TicketTracker;
 import pt.vclubroom.support.application.TrackerChanges;
 import pt.vclubroom.support.application.TrackerException;
+import pt.vclubroom.support.domain.LinkedWork;
 
 /**
  * Forgejo's REST API, as the bot account of scripts/tickets-setup.sh. Label IDs are looked up once and kept. Issues and
  * comments carry a hidden marker with their ticket's or message's ID: that is how a retry finds what was created after
  * all. The bot's own comments are flagged, so its copies of the reporters' replies are never read back as answers.
+ * Linked work (E18-S03) is what a support issue depends on in the development repository, which the bot may only read.
  */
 @Component
 @ConditionalOnProperty(name = "app.support.tracker", havingValue = "forgejo")
@@ -39,7 +41,18 @@ class ForgejoTicketTracker implements TicketTracker {
     private static final ParameterizedTypeReference<List<Label>> LABELS = new ParameterizedTypeReference<>() { };
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Issue(int number, String body, String state, List<Label> labels) { }
+    record Issue(int number, String title, String body, String state, List<Label> labels, Milestone milestone, Repository repository) {
+
+        List<String> labelNames() {
+            return labels == null ? List.of() : labels.stream().map(Label::name).toList();
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Milestone(String title, String state) { }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Repository(@JsonProperty("full_name") String fullName) { }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Comment(long id, String body, @JsonProperty("issue_url") String issueUrl, User user) { }
@@ -52,6 +65,7 @@ class ForgejoTicketTracker implements TicketTracker {
 
     private final RestClient http;
     private final String repo;                                        // "/repos/vclubroom/support"
+    private final String development;                                 // "vclubroom/vclubroom"
     private final Map<String, Long> labelIds = new ConcurrentHashMap<>();
     private volatile String botLogin;
 
@@ -65,6 +79,7 @@ class ForgejoTicketTracker implements TicketTracker {
             .requestFactory(requests)
             .build();
         this.repo = "/repos/" + properties.repository();
+        this.development = properties.development();
     }
 
     @Override
@@ -74,7 +89,7 @@ class ForgejoTicketTracker implements TicketTracker {
             if (issue.retry()) {
                 // The newest issues the bot created: a retry comes within the hour after its failed attempt.
                 for (Issue existing : http.get().uri(repo + "/issues?state=all&type=issues&created_by={bot}&limit=" + PAGE, bot())
-                    .retrieve().body(ISSUES)) {
+                        .retrieve().body(ISSUES)) {
                     if (existing.body() != null && existing.body().contains(marker)) {
                         return existing.number();
                     }
@@ -113,14 +128,29 @@ class ForgejoTicketTracker implements TicketTracker {
         return call(() -> {
             String bot = bot();
             List<TrackerChanges.Issue> issues = pages(repo + "/issues?state=all&type=issues&since=" + from + "&", ISSUES).stream()
-                .map(i -> new TrackerChanges.Issue(i.number(),
-                    ForgejoLabels.status("open".equals(i.state()), i.labels() == null ? List.of() : i.labels().stream().map(Label::name).toList())))
+                .map(i -> new TrackerChanges.Issue(i.number(), ForgejoLabels.status("open".equals(i.state()), i.labelNames()),
+                    linkedWork(i.number())))
                 .toList();
             List<TrackerChanges.Comment> comments = pages(repo + "/issues/comments?since=" + from + "&", COMMENTS).stream()
                 .map(c -> new TrackerChanges.Comment(c.id(), issueNumber(c.issueUrl()), c.user() != null && bot.equals(c.user().login()), c.body()))
                 .toList();
-            return new TrackerChanges(issues, comments);
+            List<LinkedWork> work = pages("/repos/" + development + "/issues?state=all&type=issues&since=" + from + "&", ISSUES)
+                .stream().map(ForgejoTicketTracker::work).toList();
+            return new TrackerChanges(issues, comments, work);
         });
+    }
+
+    /** The development issues a support issue depends on; dependencies elsewhere aren't shown to reporters. */
+    private List<LinkedWork> linkedWork(int issue) {
+        return http.get().uri(repo + "/issues/{issue}/dependencies", issue).retrieve().body(ISSUES).stream()
+            .filter(d -> d.repository() != null && development.equals(d.repository().fullName()))
+            .map(ForgejoTicketTracker::work).toList();
+    }
+
+    private static LinkedWork work(Issue i) {
+        boolean released = i.milestone() != null && "closed".equals(i.milestone().state());
+        return new LinkedWork(i.number(), i.title(), ForgejoLabels.work("open".equals(i.state()), i.labelNames()),
+            i.milestone() == null ? null : i.milestone().title(), released);
     }
 
     /** ".../repos/vclubroom/support/issues/12" → 12. */

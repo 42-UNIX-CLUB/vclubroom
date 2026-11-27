@@ -35,6 +35,6 @@ class LoggingTicketTracker implements TicketTracker {
 
     @Override
     public TrackerChanges changesSince(Instant since) {
-        return new TrackerChanges(List.of(), List.of());
+        return new TrackerChanges(List.of(), List.of(), List.of());
     }
 }
