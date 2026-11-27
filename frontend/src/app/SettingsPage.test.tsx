@@ -24,6 +24,7 @@ describe("SettingsPage", () => {
     renderPage("LOCAL");
     expect(await screen.findByRole("heading", { name: "Password" }, { timeout: 3000 })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Developer tokens" })).toBeTruthy();     // everyone (E20-S02)
+    expect(screen.getByRole("heading", { name: "Your apps" })).toBeTruthy();            // E20-S04
     cleanup();
 
     renderPage("FORTY_TWO");

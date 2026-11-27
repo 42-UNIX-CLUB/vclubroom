@@ -33,3 +33,51 @@ export function useRevokeToken() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tokenKeys.mine }),
   });
 }
+
+export type App = components["schemas"]["AppView"];
+export type RegisteredApp = components["schemas"]["RegisteredApp"];
+export type AppInput = { name: string; description: string; homepageUrl: string; redirectUris: string[]; confidential: boolean };
+
+/** The OAuth apps I registered (E20-S04). A confidential app's secret only comes in the answer that makes it. */
+const appKeys = { mine: ["apps"] as const };
+
+export function useApps() {
+  return useQuery({
+    queryKey: appKeys.mine,
+    queryFn: async () => (await api.GET("/api/me/apps")).data ?? [],
+  });
+}
+
+export function useRegisterApp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: AppInput) => (await api.POST("/api/me/apps", { body })).data as RegisteredApp,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: appKeys.mine }),
+  });
+}
+
+export function useUpdateApp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ appId, ...body }: AppInput & { appId: string }) =>
+      (await api.PATCH("/api/me/apps/{appId}", { params: { path: { appId } }, body })).data as App,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: appKeys.mine }),
+  });
+}
+
+export function useNewAppSecret() {
+  return useMutation({
+    mutationFn: async (appId: string) =>
+      (await api.POST("/api/me/apps/{appId}/secret", { params: { path: { appId } } })).data as RegisteredApp,
+  });
+}
+
+export function useDeleteApp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (appId: string) => {
+      await api.DELETE("/api/me/apps/{appId}", { params: { path: { appId } } });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: appKeys.mine }),
+  });
+}
