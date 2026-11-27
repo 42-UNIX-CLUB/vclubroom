@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
@@ -16,7 +17,8 @@ import pt.vclubroom.support.api.TrackerQueue;
 /**
  * The public status (E19-S02), from the health indicators (database, Redis), a storage probe and the outboxes (emails
  * being retried, a tracker out of reach for 10 minutes). The platform is down without its database or Redis, degraded
- * when anything else isn't operational. Checked at most every 10 s, whatever the number of visitors.
+ * when anything else isn't operational. Checked at most every 10 s, whatever the number of visitors: when the last
+ * check is stale, one visitor checks again while the others get the last status (a check can wait 2 s for storage).
  */
 @Service
 public class StatusService {
@@ -29,6 +31,7 @@ public class StatusService {
     private final EmailOutbox emails;
     private final TrackerQueue tickets;
     private final Clock clock;
+    private final ReentrantLock checking = new ReentrantLock();
     private volatile PublicStatus last;
 
     StatusService(HealthEndpoint health, StorageProbe storage, EmailOutbox emails, TrackerQueue tickets, Clock clock) {
@@ -40,11 +43,34 @@ public class StatusService {
     }
 
     public PublicStatus status() {
-        Instant now = clock.instant();
         PublicStatus cached = last;
-        if (cached != null && cached.checkedAt().plus(FRESH).isAfter(now)) {
+        if (fresh(cached)) {
             return cached;
         }
+        if (cached != null && !checking.tryLock()) {
+            return cached;                                                   // someone is checking right now
+        }
+        if (cached == null) {
+            checking.lock();                                                 // the very first check: wait for it
+        }
+        try {
+            cached = last;
+            if (fresh(cached)) {
+                return cached;                                               // checked while this one waited
+            }
+            PublicStatus status = check(clock.instant());
+            last = status;
+            return status;
+        } finally {
+            checking.unlock();
+        }
+    }
+
+    private boolean fresh(PublicStatus status) {
+        return status != null && status.checkedAt().plus(FRESH).isAfter(clock.instant());
+    }
+
+    private PublicStatus check(Instant now) {
         List<ServiceStatus> services = List.of(
             new ServiceStatus("app", "App", ServiceState.OPERATIONAL),             // it is answering
             new ServiceStatus("database", "Database", indicator("db")),
@@ -55,10 +81,8 @@ public class StatusService {
         boolean essentialDown = services.stream()
             .anyMatch(c -> (c.id().equals("database") || c.id().equals("sessions")) && c.status() == ServiceState.DOWN);
         boolean allFine = services.stream().allMatch(c -> c.status() == ServiceState.OPERATIONAL);
-        PublicStatus status = new PublicStatus(essentialDown ? ServiceState.DOWN : allFine ? ServiceState.OPERATIONAL : ServiceState.DEGRADED,
+        return new PublicStatus(essentialDown ? ServiceState.DOWN : allFine ? ServiceState.OPERATIONAL : ServiceState.DEGRADED,
             services, now);
-        last = status;
-        return status;
     }
 
     private ServiceState indicator(String name) {
