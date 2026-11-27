@@ -1,10 +1,12 @@
 package pt.vclubroom.calendar.persistence;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pt.vclubroom.calendar.api.RsvpStatus;
@@ -28,4 +30,12 @@ public interface RsvpRepository extends JpaRepository<Rsvp, Rsvp.Key> {
     /** The viewer's own answers among these events. */
     @Query("select r from Rsvp r where r.userId = :userId and r.eventId in :eventIds")
     List<Rsvp> mineByEvents(@Param("userId") UUID userId, @Param("eventIds") Collection<UUID> eventIds);
+
+    /** Someone's answers to a club's events that haven't started yet: they left the club (R-22's calendar side). */
+    @Modifying
+    @Query("""
+           delete from Rsvp r where r.userId = :userId and r.eventId in
+             (select e.id from ClubEvent e where e.clubId = :clubId and e.startsAt > :now)
+           """)
+    int deleteUpcomingInClub(@Param("clubId") UUID clubId, @Param("userId") UUID userId, @Param("now") Instant now);
 }
