@@ -1,11 +1,11 @@
-# Production / demo (compose.prod.yaml sets SPRING_PROFILES_ACTIVE=prod): JSON logs, no API docs.
+# Production / demo (compose.prod.yaml sets SPRING_PROFILES_ACTIVE=prod): JSON logs; the API documentation is public,
+# without the admin endpoints (E19-S01).
 logging:
   structured:
     format:
       console: ecs
 
 springdoc:
+  paths-to-exclude: /api/admin/**
   swagger-ui:
-    enabled: false
-  api-docs:
-    enabled: false
+    enabled: true
