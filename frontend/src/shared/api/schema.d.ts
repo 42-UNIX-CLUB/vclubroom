@@ -12,8 +12,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Token scope: `forum:write`. */
         put: operations["reactToPost"];
         post?: never;
+        /** @description Token scope: `forum:write`. */
         delete: operations["unreactToPost"];
         options?: never;
         head?: never;
@@ -43,7 +45,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `notifications:read`. */
         get: operations["mine"];
+        /** @description Token scope: `notifications:write`. */
         put: operations["save"];
         post?: never;
         delete?: never;
@@ -60,8 +64,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Token scope: `events:write`. */
         put: operations["answer"];
         post?: never;
+        /** @description Token scope: `events:write`. */
         delete: operations["withdraw"];
         options?: never;
         head?: never;
@@ -76,8 +82,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Token scope: `forum:write`. */
         put: operations["reactToComment"];
         post?: never;
+        /** @description Token scope: `forum:write`. */
         delete: operations["unreactToComment"];
         options?: never;
         head?: never;
@@ -92,6 +100,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Token scope: `clubs:write`. */
         put: operations["assign"];
         post?: never;
         delete?: never;
@@ -108,8 +117,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Token scope: `clubs:write`. */
         put: operations["addMember"];
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["removeMember"];
         options?: never;
         head?: never;
@@ -139,8 +150,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `support:read`. */
         get: operations["mine_1"];
         put?: never;
+        /** @description Token scope: `support:write`. */
         post: operations["submit"];
         delete?: never;
         options?: never;
@@ -157,6 +170,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `support:write`. */
         post: operations["reply"];
         delete?: never;
         options?: never;
@@ -173,6 +187,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["addChannel"];
         delete?: never;
         options?: never;
@@ -189,6 +204,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["archive"];
         delete?: never;
         options?: never;
@@ -205,7 +221,9 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `forum:write`. */
         post: operations["pin"];
+        /** @description Token scope: `forum:write`. */
         delete: operations["unpin"];
         options?: never;
         head?: never;
@@ -219,8 +237,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `forum:read`. */
         get: operations["list"];
         put?: never;
+        /** @description Token scope: `forum:write`. */
         post: operations["create"];
         delete?: never;
         options?: never;
@@ -237,6 +257,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["decline"];
         delete?: never;
         options?: never;
@@ -253,6 +274,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["accept"];
         delete?: never;
         options?: never;
@@ -269,6 +291,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `notifications:write`. */
         post: operations["markRead"];
         delete?: never;
         options?: never;
@@ -285,6 +308,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `notifications:write`. */
         post: operations["markAllRead"];
         delete?: never;
         options?: never;
@@ -301,6 +325,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `media:write`. */
         post: operations["complete"];
         delete?: never;
         options?: never;
@@ -317,7 +342,24 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `media:write`. */
         post: operations["createUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -331,9 +373,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `events:read`. */
         get: operations["mine_2"];
         put?: never;
+        /** @description Token scope: `events:write`. */
         post: operations["rotate"];
+        /** @description Token scope: `events:write`. */
         delete: operations["revoke"];
         options?: never;
         head?: never;
@@ -349,6 +394,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `events:write`. */
         post: operations["cancel"];
         delete?: never;
         options?: never;
@@ -365,6 +411,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["requestCreation"];
         delete?: never;
         options?: never;
@@ -379,9 +426,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["spaces"];
         put?: never;
-        post: operations["create_1"];
+        /** @description Token scope: `clubs:write`. */
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -395,9 +444,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        /** @description Token scope: `clubs:read`. */
+        get: operations["list_2"];
         put?: never;
-        post: operations["create_2"];
+        /** @description Token scope: `clubs:write`. */
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -413,6 +464,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["request"];
         delete?: never;
         options?: never;
@@ -427,8 +479,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["clubInvitations"];
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["invite"];
         delete?: never;
         options?: never;
@@ -445,6 +499,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["stepDown"];
         delete?: never;
         options?: never;
@@ -461,6 +516,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["join"];
         delete?: never;
         options?: never;
@@ -477,6 +533,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["reject"];
         delete?: never;
         options?: never;
@@ -493,6 +550,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["approve"];
         delete?: never;
         options?: never;
@@ -507,9 +565,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        /** @description Token scope: `clubs:read`. */
+        get: operations["list_3"];
         put?: never;
-        post: operations["create_3"];
+        /** @description Token scope: `clubs:write`. */
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -523,8 +583,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `events:read`. */
         get: operations["club"];
         put?: never;
+        /** @description Token scope: `events:write`. */
         post: operations["schedule"];
         delete?: never;
         options?: never;
@@ -539,9 +601,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        /** @description Token scope: `forum:read`. */
+        get: operations["list_4"];
         put?: never;
-        post: operations["create_4"];
+        /** @description Token scope: `forum:write`. */
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -555,8 +619,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `chat:read`. */
         get: operations["history"];
         put?: never;
+        /** @description Token scope: `chat:write`. */
         post: operations["send"];
         delete?: never;
         options?: never;
@@ -573,6 +639,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Token scope: `clubs:write`. */
         post: operations["archive_1"];
         delete?: never;
         options?: never;
@@ -603,9 +670,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -733,7 +800,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -747,12 +814,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["space"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** @description Token scope: `clubs:write`. */
         patch: operations["update"];
         trace?: never;
     };
@@ -763,12 +832,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `forum:read`. */
         get: operations["get"];
         put?: never;
         post?: never;
+        /** @description Token scope: `forum:write`. */
         delete: operations["delete"];
         options?: never;
         head?: never;
+        /** @description Token scope: `forum:write`. */
         patch: operations["edit"];
         trace?: never;
     };
@@ -782,9 +854,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `chat:write`. */
         delete: operations["delete_1"];
         options?: never;
         head?: never;
+        /** @description Token scope: `chat:write`. */
         patch: operations["edit_1"];
         trace?: never;
     };
@@ -795,12 +869,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `events:read`. */
         get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** @description Token scope: `events:write`. */
         patch: operations["edit_2"];
         trace?: never;
     };
@@ -814,9 +890,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `forum:write`. */
         delete: operations["delete_2"];
         options?: never;
         head?: never;
+        /** @description Token scope: `forum:write`. */
         patch: operations["edit_3"];
         trace?: never;
     };
@@ -833,6 +911,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** @description Token scope: `clubs:write`. */
         patch: operations["update_1"];
         trace?: never;
     };
@@ -846,9 +925,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["delete_3"];
         options?: never;
         head?: never;
+        /** @description Token scope: `clubs:write`. */
         patch: operations["update_2"];
         trace?: never;
     };
@@ -862,9 +943,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["delete_4"];
         options?: never;
         head?: never;
+        /** @description Token scope: `clubs:write`. */
         patch: operations["update_3"];
         trace?: never;
     };
@@ -875,12 +958,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["channel"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** @description Token scope: `clubs:write`. */
         patch: operations["update_4"];
         trace?: never;
     };
@@ -939,6 +1024,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `profile:read`. */
         get: operations["search"];
         put?: never;
         post?: never;
@@ -955,6 +1041,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `profile:read`. */
         get: operations["user"];
         put?: never;
         post?: never;
@@ -971,6 +1058,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `support:read`. */
         get: operations["get_2"];
         put?: never;
         post?: never;
@@ -987,6 +1075,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `forum:read`. */
         get: operations["options"];
         put?: never;
         post?: never;
@@ -1099,6 +1188,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["permissions"];
         put?: never;
         post?: never;
@@ -1115,6 +1205,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `notifications:read`. */
         get: operations["inbox"];
         put?: never;
         post?: never;
@@ -1131,6 +1222,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `notifications:read`. */
         get: operations["unreadCount"];
         put?: never;
         post?: never;
@@ -1147,6 +1239,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `profile:read`. */
         get: operations["me"];
         put?: never;
         post?: never;
@@ -1163,6 +1256,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["myInvitations"];
         put?: never;
         post?: never;
@@ -1179,6 +1273,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["myMemberships"];
         put?: never;
         post?: never;
@@ -1195,6 +1290,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["myRequests"];
         put?: never;
         post?: never;
@@ -1211,6 +1307,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `events:read`. */
         get: operations["attendees"];
         put?: never;
         post?: never;
@@ -1227,6 +1324,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["get_3"];
         put?: never;
         post?: never;
@@ -1243,6 +1341,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["eras"];
         put?: never;
         post?: never;
@@ -1259,6 +1358,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["timeline"];
         put?: never;
         post?: never;
@@ -1275,6 +1375,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["membership"];
         put?: never;
         post?: never;
@@ -1291,7 +1392,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        /** @description Token scope: `clubs:read`. */
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1307,6 +1409,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["summary"];
         put?: never;
         post?: never;
@@ -1323,7 +1426,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        /** @description Token scope: `clubs:read`. */
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1339,6 +1443,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `clubs:read`. */
         get: operations["members"];
         put?: never;
         post?: never;
@@ -1355,6 +1460,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `forum:read`. */
         get: operations["feed_1"];
         put?: never;
         post?: never;
@@ -1371,6 +1477,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `forum:read`. */
         get: operations["pinned"];
         put?: never;
         post?: never;
@@ -1387,7 +1494,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        /** @description Token scope: `clubs:read`. */
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1403,6 +1511,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Token scope: `events:read`. */
         get: operations["campus"];
         put?: never;
         post?: never;
@@ -1467,7 +1576,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1502,7 +1611,24 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["revoke_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/tokens/{tokenId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revoke_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1518,6 +1644,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["remove_1"];
         options?: never;
         head?: never;
@@ -1534,6 +1661,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["leave"];
         options?: never;
         head?: never;
@@ -1550,7 +1678,24 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** @description Token scope: `clubs:write`. */
         delete: operations["cancelMine"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{userId}/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revokeTokens"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1588,13 +1733,13 @@ export interface components {
         };
         PreferenceRequest: {
             /** @enum {string} */
-            type: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
+            type: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED" | "ACCESS_TOKEN_EXPIRING";
             inApp?: boolean;
             email?: boolean;
         };
         PreferenceView: {
             /** @enum {string} */
-            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
+            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED" | "ACCESS_TOKEN_EXPIRING";
             inApp?: boolean;
             email?: boolean;
             defaultInApp?: boolean;
@@ -1759,6 +1904,30 @@ export interface components {
             };
             /** Format: date-time */
             expiresAt?: string;
+        };
+        CreateTokenRequest: {
+            name: string;
+            scopes: string[];
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        CreatedToken: {
+            token?: string;
+            details?: components["schemas"]["TokenView"];
+        };
+        TokenView: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            scopes?: string[];
+            lastFour?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+            expired?: boolean;
         };
         CalendarFeedResponse: {
             url?: string;
@@ -2257,7 +2426,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED";
+            type?: "CLUB_CREATION_SUBMITTED" | "CLUB_APPROVED" | "CLUB_REJECTED" | "CLUB_ARCHIVED" | "CLUB_REVIVAL_REQUESTED" | "CLUB_REVIVED" | "JOIN_REQUEST_RECEIVED" | "JOIN_REQUEST_DECIDED" | "OWNERSHIP_INVITATION_RECEIVED" | "OWNERSHIP_CHANGED" | "NEW_POST" | "NEW_COMMENT" | "NEW_REPLY" | "EVENT_SCHEDULED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_REMINDER" | "SUPPORT_TICKET_RECEIVED" | "SUPPORT_TICKET_REPLIED" | "SUPPORT_TICKET_UPDATED" | "SUPPORT_TICKET_CLOSED" | "ACCESS_TOKEN_EXPIRING";
             title?: string;
             body?: string;
             link?: string;
@@ -3138,6 +3307,50 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedToken"];
+                };
+            };
+        };
+    };
     mine_2: {
         parameters: {
             query?: never;
@@ -3270,7 +3483,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3296,7 +3509,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3318,7 +3531,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3506,7 +3719,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3528,7 +3741,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3605,7 +3818,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 era?: number;
@@ -3631,7 +3844,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3753,7 +3966,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 query?: string;
@@ -3777,7 +3990,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3971,7 +4184,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -4991,7 +5204,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 query?: string;
@@ -5040,7 +5253,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -5135,7 +5348,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -5241,7 +5454,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
@@ -5307,6 +5520,26 @@ export interface operations {
             };
         };
     };
+    revoke_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tokenId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     remove_1: {
         parameters: {
             query?: never;
@@ -5354,6 +5587,26 @@ export interface operations {
             header?: never;
             path: {
                 clubId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revokeTokens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
             };
             cookie?: never;
         };

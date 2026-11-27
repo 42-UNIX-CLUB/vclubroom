@@ -130,6 +130,15 @@ export function useResetPassword() {
   });
 }
 
+/** Every personal access token of someone stops working (E20-S02). */
+export function useRevokeUserTokens() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      await api.DELETE("/api/admin/users/{userId}/tokens", { params: { path: { userId } } });
+    },
+  });
+}
+
 export type CampusGroup = components["schemas"]["CampusGroupView"];
 export type CampusGroupMember = components["schemas"]["GroupMemberView"];
 

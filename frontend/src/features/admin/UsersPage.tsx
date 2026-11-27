@@ -16,7 +16,7 @@ import { Input } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Switch } from "@/shared/ui/switch";
-import { type AdminUser, useAdminUsers, useCreateUser, useResetPassword, useUpdateUser } from "./api";
+import { type AdminUser, useAdminUsers, useCreateUser, useResetPassword, useRevokeUserTokens, useUpdateUser } from "./api";
 import { temporaryPassword } from "./temporaryPassword";
 
 type Confirm = { title: string; description: string; label: string; run: () => Promise<unknown> } | null;
@@ -31,6 +31,7 @@ export function UsersPage() {
   const [query, setQuery] = useState("");
   const { data, isPending } = useAdminUsers(useDeferredValue(query.trim()));
   const update = useUpdateUser();
+  const revokeTokens = useRevokeUserTokens();
   const [creating, setCreating] = useState(false);
   const [resetting, setResetting] = useState<AdminUser | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
@@ -87,6 +88,12 @@ export function UsersPage() {
                       {user.provider === "LOCAL" && (
                         <Button variant="ghost" size="sm" onClick={() => setResetting(user)}><KeyRoundIcon aria-hidden="true" /> Reset password</Button>
                       )}
+                      <Button variant="ghost" size="sm" onClick={() => setConfirm({
+                        title: `Revoke ${user.displayName ?? user.login}'s tokens?`,
+                        description: "Every personal access token they made stops working at once. Their scripts and apps need new ones.",
+                        label: "Revoke tokens",
+                        run: () => revokeTokens.mutateAsync(user.id ?? ""),
+                      })}>Revoke tokens</Button>
                     </div>
                   )}
                 </CardContent>

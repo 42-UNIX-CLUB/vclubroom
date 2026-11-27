@@ -56,6 +56,12 @@ const GROUPS: { title: string; types: { type: Type; label: string; adminOnly?: b
       { type: "SUPPORT_TICKET_CLOSED", label: "One of my tickets is closed" },
     ],
   },
+  {
+    title: "Developer",
+    types: [
+      { type: "ACCESS_TOKEN_EXPIRING", label: "One of my tokens expires within a week" },
+    ],
+  },
 ];
 
 function defaults(p: Preference): string {
