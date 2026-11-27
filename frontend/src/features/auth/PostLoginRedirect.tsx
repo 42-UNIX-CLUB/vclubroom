@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { takeReturnTo } from "./returnTo";
+import { loadPage } from "@/shared/lib/loadPage";
+import { resumesOnServer, takeReturnTo } from "./returnTo";
 import { useMe } from "./useMe";
 
 /** Mounted in AppLayout: after Login with 42 lands on "/", resume the page the user came from. */
@@ -10,7 +11,9 @@ export function PostLoginRedirect() {
   useEffect(() => {
     if (!me) return;
     const target = takeReturnTo();
-    if (target && target !== "/") navigate(target, { replace: true });
+    if (!target || target === "/") return;
+    if (resumesOnServer(target)) loadPage(target, { replace: true });
+    else navigate(target, { replace: true });
   }, [me, navigate]);
   return null;
 }
