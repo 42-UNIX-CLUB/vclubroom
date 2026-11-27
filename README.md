@@ -72,14 +72,33 @@ Open <http://localhost:8080> and log in with the admin account from `.env` (`APP
 
 ### For development
 
+You need JDK 21, Node.js 24 and Docker with Compose v2. The dev stack uses ports 5173, 8080, 5432, 6379, 8333, 1025 and 8025.
+
 ```bash
-cp .env.example .env
-docker compose -f compose.yaml -f compose.dev.yaml up -d      # PostgreSQL, Redis, SeaweedFS
-cd backend && ./run-dev.sh                                     # Spring Boot on :8080 (JDK 21)
-cd frontend && npm ci && npm run dev                           # Vite on :5173
+cp .env.example .env                                           # the defaults work for development
+docker compose -f compose.yaml -f compose.dev.yaml up -d      # PostgreSQL, Redis, SeaweedFS, Mailpit
 ```
 
+Then, in two terminals, from the repository root:
+
+```bash
+cd backend && ./run-dev.sh              # Spring Boot on :8080, dev profile, emails to Mailpit
+cd frontend && npm ci && npm run dev    # Vite on :5173, proxying the API, WebSocket and media to the backend
+```
+
+Open <http://localhost:5173> and log in with the password form: `admin` / `change-me-admin` (`APP_BOOTSTRAP_ADMIN_USERNAME` / `APP_BOOTSTRAP_ADMIN_PASSWORD` in `.env`).
+
+- **Login with 42** needs your own 42 OAuth application: set `FT_CLIENT_ID` and `FT_CLIENT_SECRET` in `.env`, with the redirect URI `http://localhost:5173/login/oauth2/code/fortytwo`.
+- **Emails** land in Mailpit: <http://localhost:8025>.
+- **Support tickets** are printed in the backend's log instead of going to a tracker (`TICKETS_TRACKER=log`).
+
 Tests: `./mvnw verify` in `backend/` (Testcontainers needs Docker), and `npm run lint && npm test && npm run build` in `frontend/`.
+
+## Contributing
+
+1. **Access:** ask the team for this repository, the design docs ([`42-UNIX-CLUB/vclubroom-docs`](https://github.com/42-UNIX-CLUB/vclubroom-docs), private) and an account on the team's Forgejo, [`tickets.ensui.dev`](https://tickets.ensui.dev/) (registration is closed).
+2. **Rules:** read [CONTRIBUTING.md](CONTRIBUTING.md) (branches, commits, pull requests), and enable the Git hooks once per clone: `git config core.hooksPath .githooks`.
+3. **Work:** pick an issue on the board of [`vclubroom/vclubroom`](https://tickets.ensui.dev/vclubroom/vclubroom) in Forgejo, branch from `main`, and open a pull request. The design docs explain each module (`docs/README.md` there), and most stories have a step-by-step guide (`implementation/guide/stories/`).
 
 ## Team
 
