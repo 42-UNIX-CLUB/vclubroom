@@ -80,14 +80,23 @@ class RateLimiter implements ApiThrottling {
             Decision decision = new Decision(((Number) r.get(0)).longValue() == 1, ((Number) r.get(1)).longValue(),
                 ((Number) r.get(2)).longValue(), ((Number) r.get(3)).longValue(), ((Number) r.get(4)).longValue());
             if (!decision.allowed()) {
-                String minute = refusedKey(currentMinute());
-                redis.opsForValue().increment(minute);
-                redis.expire(minute, 61, TimeUnit.MINUTES);
+                countRefusal();
             }
             return decision;
         } catch (DataAccessException e) {
             log.warn("Rate limits not checked, Redis failed: {}", e.getMessage());
             return new Decision(true, 0, 0, 0, 0);
+        }
+    }
+
+    /** For the health card only: Redis failing here must not turn the refusal into a pass. */
+    private void countRefusal() {
+        try {
+            String minute = refusedKey(currentMinute());
+            redis.opsForValue().increment(minute);
+            redis.expire(minute, 61, TimeUnit.MINUTES);
+        } catch (DataAccessException e) {
+            log.warn("Rate limit refusal not counted, Redis failed: {}", e.getMessage());
         }
     }
 
