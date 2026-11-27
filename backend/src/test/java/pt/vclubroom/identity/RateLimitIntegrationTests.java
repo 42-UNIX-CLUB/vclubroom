@@ -113,6 +113,14 @@ class RateLimitIntegrationTests {
         }
     }
 
+    /** A client-sent X-Forwarded-Prefix moves the request's path; the per-IP limit still applies. */
+    @Test
+    void aForwardedPrefixFromTheClientDoesntEscapeTheLimit() throws Exception {
+        int passed = passedBefore429(get("/api/public/categories").with(from("203.0.113.11")).header("X-Forwarded-Prefix", "/x"));
+
+        assertThat(passed).isBetween(limits.anonymous().burst(), limits.anonymous().burst() + REFILL_MARGIN);
+    }
+
     /** How many requests pass before the first 429 (at most a few hundred). */
     private int passedBefore429(MockHttpServletRequestBuilder request) throws Exception {
         for (int i = 0; i < 300; i++) {

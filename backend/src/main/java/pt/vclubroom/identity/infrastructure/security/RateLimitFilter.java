@@ -57,7 +57,8 @@ final class RateLimitFilter extends OncePerRequestFilter {
         return new RateLimitFilter(limiter, errors, request -> {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean anonymous = auth == null || auth instanceof AnonymousAuthenticationToken;
-            if (!anonymous || !request.getRequestURI().startsWith("/api/public/") || isLoopback(request.getRemoteAddr())) {
+            String path = request.getRequestURI().substring(request.getContextPath().length());   // without any forwarded prefix
+            if (!anonymous || !path.startsWith("/api/public/") || isLoopback(request.getRemoteAddr())) {
                 return List.of();
             }
             return List.of(new Bucket("ip:" + request.getRemoteAddr(), limits.anonymous()));
