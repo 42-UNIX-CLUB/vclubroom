@@ -4,7 +4,7 @@
 
 **Live demo:** <https://42clubroom.ensui.dev> · **Team:** UNIX_CLUB (see [Team](#team))
 
-![Join a club in 3 clicks](docs/media/join-flow.gif)
+![Join a club in 3 clicks](docs/assets/join-flow.gif)
 
 ## Why
 
@@ -39,9 +39,9 @@ co-ownership, ownership transfer, archival and history in eras.
 
 | | |
 |---|---|
-| ![Landing page](docs/media/landing.png) | ![A club page](docs/media/club.png) |
-| ![Posts with media](docs/media/posts.png) | ![Campus calendar](docs/media/calendar.png) |
-| ![Club history](docs/media/history.png) | ![Admin console](docs/media/admin.png) |
+| ![Landing page](docs/assets/landing.png) | ![A club page](docs/assets/club.png) |
+| ![A club's posts](docs/assets/posts.png) | ![Campus calendar](docs/assets/calendar.png) |
+| ![Club history](docs/assets/history.png) | ![Admin console](docs/assets/admin.png) |
 
 ## Tech stack
 
@@ -83,6 +83,8 @@ Tests: `./mvnw verify` in `backend/` (Testcontainers needs Docker), and `npm run
 
 ## Team
 
-| Member | Main work |
-|---|---|
-| … | … |
+| Member | GitHub | Role | Main work |
+|---|---|---|---|
+| Mario Ferreira | [@ensui-dev](https://github.com/ensui-dev) | Lead developer and architect | Design and architecture, most backend and frontend features, deployment and operations |
+| Rui Costa | [@RuiSlayer](https://github.com/RuiSlayer) | Frontend developer | The frontend skeleton, the campus calendar page |
+| Vasco Castro | [@vasco-castro](https://github.com/vasco-castro) | Backend developer | The backend skeleton, club events and the calendar backend |
