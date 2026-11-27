@@ -12,6 +12,7 @@ import { PageHeader } from "@/shared/ui/PageHeader";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 import { type Message, useReply, useSupportLive, useTicket } from "./api";
+import { LinkedWork } from "./LinkedWork";
 import { TicketStatusBadge } from "./TicketStatusBadge";
 import { typeLabel } from "./ticketTypes";
 
@@ -30,7 +31,7 @@ function MessageItem({ message }: { message: Message }) {
   );
 }
 
-/** /support/:number (E17-S02, E17-S03): one of my tickets and its conversation with the team. */
+/** /support/:number (E17-S02, E17-S03, E18-S03): one of my tickets, the work it led to, and its conversation with the team. */
 export function TicketPage() {
   const number = Number(useParams().number);
   const { data: ticket, isPending, isError } = useTicket(number);
@@ -65,6 +66,7 @@ export function TicketPage() {
           <p className="whitespace-pre-wrap rounded-lg border p-4 text-sm">{ticket.description}</p>
           {ticket.pageUrl && <p className="text-sm text-muted-foreground">Page: <Link to={ticket.pageUrl} className="underline">{ticket.pageUrl}</Link></p>}
         </div>
+        {!!ticket.linkedWork?.length && <LinkedWork items={ticket.linkedWork} />}
         {ticket.status === "WAITING_ON_REPORTER" && (
           <p role="status" className="rounded-lg border border-destructive/40 p-3 text-sm">The team is waiting for your answer.</p>
         )}

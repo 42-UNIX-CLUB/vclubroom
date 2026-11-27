@@ -22,6 +22,7 @@ import pt.vclubroom.support.domain.TicketMessage;
 import pt.vclubroom.support.domain.TicketStatus;
 import pt.vclubroom.support.events.TicketReplied;
 import pt.vclubroom.support.events.TicketStatusChanged;
+import pt.vclubroom.support.persistence.TicketLinks;
 import pt.vclubroom.support.persistence.TicketMessageRepository;
 import pt.vclubroom.support.persistence.TicketRepository;
 import pt.vclubroom.support.persistence.TrackerCursor;
@@ -43,17 +44,20 @@ class TrackerSyncJob {
     private final TicketRepository tickets;
     private final TicketMessageRepository messages;
     private final TrackerCursor cursor;
+    private final TicketLinks links;
     private final UserDirectory users;
     private final TicketTracker tracker;
     private final ApplicationEventPublisher events;
     private final Clock clock;
     private final String publicUrl;
 
-    TrackerSyncJob(TicketRepository tickets, TicketMessageRepository messages, TrackerCursor cursor, UserDirectory users,
-                   TicketTracker tracker, ApplicationEventPublisher events, Clock clock, @Value("${app.public-url}") String publicUrl) {
+    TrackerSyncJob(TicketRepository tickets, TicketMessageRepository messages, TrackerCursor cursor, TicketLinks links,
+                   UserDirectory users, TicketTracker tracker, ApplicationEventPublisher events, Clock clock,
+                   @Value("${app.public-url}") String publicUrl) {
         this.tickets = tickets;
         this.messages = messages;
         this.cursor = cursor;
+        this.links = links;
         this.users = users;
         this.tracker = tracker;
         this.events = events;
@@ -100,8 +104,9 @@ class TrackerSyncJob {
     }
 
     /**
-     * The team's answers, then status changes (E17-S03). Each is told to the reporter once: changes read again are skipped.
-     * Answers come first, so a question asked with the waiting label counts as the newest message.
+     * The team's answers, then status changes (E17-S03), then linked work (E18-S03). Each answer and status is told to the
+     * reporter once: changes read again are skipped. Answers come first, so a question asked with the waiting label
+     * counts as the newest message.
      */
     @Scheduled(fixedDelayString = "${app.support.sync-interval:PT30S}", initialDelayString = "${app.support.sync-interval:PT30S}")
     @Transactional
@@ -132,12 +137,14 @@ class TrackerSyncJob {
             }
         }
         for (TrackerChanges.Issue issue : changes.issues()) {
-            tickets.findByTrackerIssue(issue.number())
-                .filter(t -> issue.status() != TicketStatus.WAITING_ON_REPORTER || !reporterWroteLast(t))
+            Optional<Ticket> ticket = tickets.findByTrackerIssue(issue.number());
+            ticket.ifPresent(t -> links.replace(t.id(), issue.links(), now));
+            ticket.filter(t -> issue.status() != TicketStatus.WAITING_ON_REPORTER || !reporterWroteLast(t))
                 .filter(t -> t.changeStatus(issue.status(), now))
                 .ifPresent(t -> events.publishEvent(new TicketStatusChanged(t.id(), t.number(), t.ref(), t.reporterId(), t.title(),
                     t.status().name(), t.status().label(), t.status().closed(), now)));
         }
+        changes.work().forEach(work -> links.update(work, now));    // every ticket linked to it follows
         cursor.advance(now);
     }
 

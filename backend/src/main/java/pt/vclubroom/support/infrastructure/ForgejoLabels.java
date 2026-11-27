@@ -4,8 +4,9 @@ import java.util.Collection;
 import java.util.Locale;
 import pt.vclubroom.support.domain.TicketStatus;
 import pt.vclubroom.support.domain.TicketType;
+import pt.vclubroom.support.domain.WorkState;
 
-/** The labels of deploy/forgejo/labels.txt the backend relies on: rename them in both places. */
+/** The labels of deploy/forgejo/labels.txt and deploy/forgejo/development/labels.txt the backend relies on: rename them in both places. */
 final class ForgejoLabels {
 
     static final String FROM_APP = "source/app";
@@ -13,6 +14,7 @@ final class ForgejoLabels {
     static final String WAITING = "status/waiting-on-reporter";
     static final String WONT_FIX = "resolution/wont-fix";
     static final String DUPLICATE = "resolution/duplicate";
+    static final String IN_REVIEW = "status/in-review";             // development only
 
     private ForgejoLabels() {
     }
@@ -30,5 +32,13 @@ final class ForgejoLabels {
         }
         return labels.contains(WAITING) ? TicketStatus.WAITING_ON_REPORTER
             : labels.contains(IN_PROGRESS) ? TicketStatus.IN_PROGRESS : TicketStatus.OPEN;
+    }
+
+    /** How far a development issue is, for the reporters of linked tickets (E18-S03). */
+    static WorkState work(boolean open, Collection<String> labels) {
+        if (!open) {
+            return WorkState.DONE;
+        }
+        return labels.contains(IN_PROGRESS) || labels.contains(IN_REVIEW) ? WorkState.IN_PROGRESS : WorkState.PLANNED;
     }
 }

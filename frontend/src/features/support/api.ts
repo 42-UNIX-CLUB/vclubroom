@@ -6,6 +6,7 @@ import { useTopic } from "@/shared/realtime/RealtimeProvider";
 export type Ticket = components["schemas"]["TicketView"];
 export type TicketDetails = components["schemas"]["TicketDetails"];
 export type Message = components["schemas"]["MessageView"];
+export type LinkedWorkItem = components["schemas"]["LinkedWorkView"];
 export type TicketType = components["schemas"]["CreateTicketRequest"]["type"];
 export type TicketStatus = NonNullable<Ticket["status"]>;
 export type NewTicket = components["schemas"]["CreateTicketRequest"];

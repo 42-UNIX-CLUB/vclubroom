@@ -193,3 +193,4 @@ app:
       url: ${TICKETS_FORGEJO_URL:http://localhost:3000}
       token: ${TICKETS_FORGEJO_TOKEN:}
       repository: vclubroom/support
+      development: vclubroom/vclubroom   # tickets can be linked to its issues (E18-S03)

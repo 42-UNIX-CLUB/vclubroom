@@ -17,6 +17,9 @@ public interface TicketTracker {
      */
     long addReporterReply(int issue, ReporterReply reply);
 
-    /** What changed since then (E17-S03): the issues' statuses, and their comments, the tracker's own included. */
+    /**
+     * What changed since then: the support issues' statuses and the development issues they depend on (E17-S03, E18-S03),
+     * their comments, the tracker's own included, and the development issues that changed.
+     */
     TrackerChanges changesSince(Instant since);
 }
