@@ -2,6 +2,10 @@
 .env
 deploy/seaweedfs/s3.prod.json
 
+# Generated at deploy (E19-S03); the folder itself stays, owned by you rather than by Docker
+deploy/release-notes/*
+!deploy/release-notes/.gitkeep
+
 # Java / Maven
 backend/target/
 *.class
