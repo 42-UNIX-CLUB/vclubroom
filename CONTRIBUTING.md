@@ -7,6 +7,7 @@
 - **Repository:** [`42-UNIX-CLUB/vclubroom`](https://github.com/42-UNIX-CLUB/vclubroom), private. Until the hackathon ended (2026-10-19), this code lived in `UNIX_CLUB/` of the hackathon repository `megyant/Hackathon_SA_2026`. That copy stays as the submission; its history was kept here, with the paths moved to the root.
 - **Integration branch:** **`main`**. It must always build and be demo-able: the demo server deploys it (`deploy/deploy.sh`).
 - **`main` changes only through squash-merged PRs.** Never push to it directly; the `pre-push` hook enforces this.
+- **Backlog:** [`vclubroom/vclubroom`](https://tickets.ensui.dev/vclubroom/vclubroom) in our Forgejo (E18): epics, stories, tasks, bugs and chores, each an issue titled with its ID (`E04-S01 · …`). A story depends on its tasks and an epic on its stories, so they show their state and close after them. The GitHub Project is no longer updated.
 
 ```mermaid
 gitGraph
@@ -37,7 +38,7 @@ gitGraph
 | Part | Rule | Examples |
 |------|------|----------|
 | `<type>` | A Conventional Commits type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert` | `feat`, `fix` |
-| `<ID>` | The backlog item the branch delivers: **task** `E04-S01-T3`, **story** `E04-S01` or **epic** `E04` (see [backlog/README.md](backlog/README.md#1-id-scheme)) | `E04-S01` |
+| `<ID>` | The backlog item the branch delivers: **task** `E04-S01-T3`, **story** `E04-S01` or **epic** `E04`, as in its Forgejo issue's title. A bug or chore without one takes the ID of the story or epic it belongs to | `E04-S01` |
 | `<short-desc>` | kebab-case, lowercase `a-z0-9-`, ≤ 40 characters | `club-creation-request` |
 
 **Examples**
@@ -133,13 +134,13 @@ feat(club-module): add endpoint    ← scope must be a backlog ID (R-28)
 
 ```mermaid
 flowchart LR
-    A[Pick a Ready item<br/>set yourself as owner] --> B[Branch from<br/>main]
+    A[Pick a status/ready issue<br/>assign yourself, status/in-progress] --> B[Branch from<br/>main]
     B --> C[Commit with<br/>Conventional Commits]
     C --> D[Local checks green]
     D --> E[Open PR into<br/>main]
     E --> F[1 approval<br/>from a teammate]
     F --> G[Squash merge<br/>title = commit message]
-    G --> H[Delete branch,<br/>mark item Done]
+    G --> H[Delete branch,<br/>close the issue]
 ```
 
 1. **Target:** `main`.
@@ -148,7 +149,7 @@ flowchart LR
 3. **Description:** use the template below.
 4. **Review:** at least **one** approval from another team member. Reviews have priority over new work; aim for under 30 minutes.
 5. **Merge:** **Squash and merge** (D-38). Check that GitHub's proposed commit title is still your PR title.
-6. **After merge:** delete the branch and update the item status ([backlog/README.md §6](backlog/README.md#6-tracking-status)). If backend DTOs changed, the merger regenerates frontend types in a follow-up `build(<ID>): regenerate api types` commit (§6.3).
+6. **After merge:** delete the branch, then close the Forgejo issue with a comment linking the PR. Its story or epic can close once all it depends on is closed. If backend DTOs changed, the merger regenerates frontend types in a follow-up `build(<ID>): regenerate api types` commit (§6.3).
 
 > **No branch protection:** GitHub Free has no protected branches or rulesets for private repositories, so the rules above are conventions, backed by the local hooks (§5). The repository only allows squash merging (Settings → General → Pull Requests). To squash locally instead:
 > ```bash
@@ -162,8 +163,9 @@ flowchart LR
 
 ```markdown
 ## What
-<!-- One or two sentences. Link the backlog item(s). -->
+<!-- One or two sentences. Link the Forgejo issue(s). -->
 Implements E04-S01 (tasks T1–T6): students can request the creation of a club.
+Forgejo: vclubroom/vclubroom#59
 
 ## How
 <!-- Key design points, module(s) touched, anything reviewers should look at first. -->
@@ -175,7 +177,7 @@ Implements E04-S01 (tasks T1–T6): students can request the creation of a club.
 
 ## Checklist (Definition of Done)
 - [ ] Acceptance criteria of the story are met
-- [ ] Backend: `mvn verify` green (includes ModularityTests)
+- [ ] Backend: `./mvnw verify` green (includes ModularityTests)
 - [ ] Frontend: `npm run lint && npm test && npm run build` green
 - [ ] New/changed endpoints visible in Swagger; `schema.d.ts` regenerated if DTOs changed
 - [ ] Flyway migration added (timestamp version) if the schema changed; no edits to applied migrations
@@ -272,7 +274,7 @@ done
 
 ### 6.1 Definition of Ready (before picking an item)
 
-- [ ] The item has an ID, an owner and acceptance criteria in the backlog.
+- [ ] The item is a Forgejo issue with an ID, an assignee and acceptance criteria.
 - [ ] Its dependencies are merged, or a stub or contract exists (§6.2).
 - [ ] The design reference (module doc section) is known.
 
@@ -293,7 +295,7 @@ done
 
 ### 6.5 Module ownership and boundaries
 
-- Each module has a primary owner (see [backlog/README.md §5](backlog/README.md#5-suggested-assignment)). Others may contribute, but ping the owner.
+- Each module has a primary owner (the `track/…` labels follow the hackathon's split). Others may contribute, but ping the owner.
 - Never import another module's internal packages. Spring Modulith's `ModularityTests` fails the build if you do (frontend: ESLint feature boundaries).
 
 ### 6.6 Secrets
@@ -304,21 +306,23 @@ done
 ### 6.7 Definition of Done (per story)
 
 - [ ] Acceptance criteria demonstrably met (manual test steps in the PR).
-- [ ] Tests from the story's test task pass; `mvn verify` and the frontend checks are green.
+- [ ] Tests from the story's test task pass; `./mvnw verify` and the frontend checks are green.
 - [ ] Squash-merged into `main`; the integration branch still starts with `docker compose` and the app runs.
-- [ ] Status updated in the backlog.
+- [ ] Its Forgejo issue is closed, with the PR linked; its tasks were closed before it.
 
 ### 6.8 Communication rhythm
 
+Work is planned in **release milestones** in Forgejo (`v1.1.0`, `v1.2.0`, …): each issue belongs to the release it ships in.
+
 | When | What |
 |------|------|
-| Start of each milestone (M0–M5) | 10-minute sync: pick items, check blockers, confirm contracts |
+| Starting work on a release | Short sync: pick issues from its milestone, check blockers, confirm API contracts |
 | Every merge to `main` | Short message in the team chat: "merged feat(E04-S01), regenerate types" |
 | Blocked > 20 minutes | Ask immediately; pair if needed |
-| End of each milestone | Merge freeze → everyone pulls `main` → 5-minute demo of the milestone checklist |
+| Before tagging a release | Everyone pulls `main` and checks the release's issues work together; then the release is tagged and deployed |
 
 ---
 
 ## 7. Deploying
 
-The demo server keeps its own clone and deploys the latest `main` with `deploy/deploy.sh` (09-deployment §11.2). Merge to `main` first, then run it there.
+The demo server keeps its own clone and deploys the latest `main` with `deploy/deploy.sh`, as described in [09-deployment §11.2](https://github.com/42-UNIX-CLUB/vclubroom-docs/blob/main/docs/09-deployment.md) in the docs repository. Merge to `main` first, then run it there.
