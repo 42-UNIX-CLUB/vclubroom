@@ -12,6 +12,9 @@ git fetch origin
 git switch main
 git pull --ff-only origin main
 deploy/seaweedfs/render-s3-config.sh
+# The changelog page's data (E19-S03): releases and what's unreleased, from the history. Not worth stopping a deploy for.
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/app -w /app orhunp/git-cliff:2.14.2 --context \
+  -o deploy/release-notes/changelog.json 2>/dev/null || echo "Changelog not updated (git-cliff failed): the page keeps the last one."
 # Own project name: compose.yaml says "vclubroom", which is also the dev stack on the same machine.
 compose() { docker compose -p vclubroom-demo -f compose.yaml -f compose.prod.yaml "$@"; }
 compose up -d --build --remove-orphans
