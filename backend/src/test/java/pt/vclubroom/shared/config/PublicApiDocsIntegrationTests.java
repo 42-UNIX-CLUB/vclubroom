@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,9 @@ class PublicApiDocsIntegrationTests {
         assertThat(paths).containsKeys("/api/clubs", "/api/support/tickets", "/api/public/landing");
         assertThat(paths.keySet()).noneMatch(path -> path.startsWith("/api/admin"));
         assertThat(JsonPath.<String>read(docs, "$.info.title")).isEqualTo("Virtual Clubroom API");
-        assertThat(JsonPath.<Map<String, Object>>read(docs, "$.components.securitySchemes")).containsKeys("session", "csrf");
+        assertThat(JsonPath.<Map<String, Object>>read(docs, "$.components.securitySchemes")).containsKeys("session", "csrf", "bearer");
+        assertThat(JsonPath.<List<String>>read(docs, "$.paths['/api/me'].get.security[1].bearer")).containsExactly("profile:read");
+        assertThat(JsonPath.<String>read(docs, "$.paths['/api/clubs'].post.description")).contains("Token scope: `clubs:write`.");
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
     }
 }
