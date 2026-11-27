@@ -11,17 +11,17 @@
 ```mermaid
 gitGraph
     commit id: "chore(E01-S01): bootstrap"
-    branch "dev/feat(E04-S01)/club-request"
-    checkout "dev/feat(E04-S01)/club-request"
+    branch "feat/E04-S01-club-request"
+    checkout "feat/E04-S01-club-request"
     commit id: "feat(E04-S01-T2): club domain"
     commit id: "feat(E04-S01-T4): endpoints"
     checkout main
-    merge "dev/feat(E04-S01)/club-request" id: "squash: feat(E04-S01)"
-    branch "dev/fix(E09-S03-T1)/reaction-count"
-    checkout "dev/fix(E09-S03-T1)/reaction-count"
+    merge "feat/E04-S01-club-request" id: "squash: feat(E04-S01)"
+    branch "fix/E09-S03-T1-reaction-count"
+    checkout "fix/E09-S03-T1-reaction-count"
     commit id: "fix(E09-S03-T1): count"
     checkout main
-    merge "dev/fix(E09-S03-T1)/reaction-count" id: "squash: fix(E09-S03-T1)"
+    merge "fix/E09-S03-T1-reaction-count" id: "squash: fix(E09-S03-T1)"
 ```
 
 ---
@@ -31,7 +31,7 @@ gitGraph
 ### 2.1 Format
 
 ```text
-dev/<type>(<ID>)/<short-desc>
+<type>/<ID>-<short-desc>
 ```
 
 | Part | Rule | Examples |
@@ -43,23 +43,21 @@ dev/<type>(<ID>)/<short-desc>
 **Examples**
 
 ```text
-dev/feat(E04-S01)/club-creation-request
-dev/feat(E10-S02-T4)/chat-room-ui
-dev/fix(E09-S03-T1)/reaction-count
-dev/docs(E16-S05)/readme-screenshots
-dev/chore(E01-S01)/compose-files
+feat/E04-S01-club-creation-request
+feat/E10-S02-T4-chat-room-ui
+fix/E09-S03-T1-reaction-count
+docs/E16-S05-readme-screenshots
+chore/E01-S01-compose-files
 ```
 
 **Granularity.** One branch per **story** by default, which gives PRs that are big enough to be useful and small enough to review. Use a **task** branch when a story is split between people (e.g. BE and FE). Use an **epic** branch only for docs or chores that span a whole epic.
 
 ### 2.2 Commands
 
-Parentheses are special in shells, so **always quote branch names**:
-
 ```bash
 git fetch origin
-git switch -c 'dev/feat(E04-S01)/club-creation-request' origin/main
-git push -u origin 'dev/feat(E04-S01)/club-creation-request'
+git switch -c feat/E04-S01-club-creation-request origin/main
+git push -u origin feat/E04-S01-club-creation-request
 ```
 
 ### 2.3 Lifetime
@@ -155,7 +153,7 @@ flowchart LR
 > **No branch protection:** GitHub Free has no protected branches or rulesets for private repositories, so the rules above are conventions, backed by the local hooks (§5). The repository only allows squash merging (Settings → General → Pull Requests). To squash locally instead:
 > ```bash
 > git switch main && git pull
-> git merge --squash 'dev/feat(E04-S01)/club-creation-request'
+> git merge --squash feat/E04-S01-club-creation-request
 > git commit -m "feat(E04-S01): request club creation"
 > ALLOW_MAIN_PUSH=1 git push
 > ```
@@ -248,7 +246,7 @@ set -euo pipefail
 zero='0000000000000000000000000000000000000000'
 types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
 id='E[0-9]{2}(-S[0-9]{2}(-T[0-9]+)?)?'
-feature="^dev/(${types})\((${id})\)/[a-z0-9]+(-[a-z0-9]+)*$"
+feature="^(${types})/(${id})-[a-z0-9]+(-[a-z0-9]+)*$"
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   [[ "$remote_ref" == refs/heads/* ]] || continue
@@ -261,8 +259,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
   if [[ "$branch" != "main" && ! "$branch" =~ $feature ]]; then
-    echo "✖ Branch name '$branch' does not match dev/<type>(<ID>)/<short-desc>"
-    echo "  e.g. dev/feat(E04-S01)/club-creation-request"
+    echo "✖ Branch name '$branch' does not match <type>/<ID>-<short-desc>"
+    echo "  e.g. feat/E04-S01-club-creation-request"
     exit 1
   fi
 done
