@@ -1,7 +1,12 @@
 package pt.vclubroom.identity.infrastructure.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -10,16 +15,23 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import pt.vclubroom.identity.application.AccessTokenService;
 
 @Configuration
 @EnableWebSecurity
@@ -32,7 +44,63 @@ class SecurityConfig {
         return uri.startsWith("/api/") || uri.equals("/ws") || uri.startsWith("/ws/");
     };
 
+    /**
+     * API calls made with a token (E20): Authorization: Bearer, or a browser app's CORS preflight for one. Tokens are
+     * never sent by the browser on its own, so these need neither a session nor CSRF, and any origin may call.
+     */
+    private static final RequestMatcher TOKEN_API = request -> {
+        if (!request.getRequestURI().startsWith("/api/")) {
+            return false;
+        }
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization != null) {
+            return authorization.regionMatches(true, 0, "Bearer ", 0, 7);
+        }
+        String preflightHeaders = request.getHeader(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
+        return HttpMethod.OPTIONS.matches(request.getMethod()) && preflightHeaders != null
+            && preflightHeaders.toLowerCase().contains("authorization");
+    };
+
+    /** Token requests, before the session chain: each needs the scope of its path (shared.security.ApiScopes). */
     @Bean
+    @Order(1)
+    SecurityFilterChain tokenFilterChain(HttpSecurity http, AccessTokenService tokens, ObjectMapper json) throws Exception {
+        TokenErrors errors = new TokenErrors(json);
+        http
+            .securityMatcher(TOKEN_API)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .anyRequest().access(new ScopeAuthorizationManager()))
+            .addFilterBefore(new BearerTokenFilter(tokens, errors), AuthorizationFilter.class)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .securityContext(ctx -> ctx.securityContextRepository(new RequestAttributeSecurityContextRepository()))
+            .requestCache(cache -> cache.requestCache(new NullRequestCache()))
+            .cors(cors -> cors.configurationSource(tokenCors()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .logout(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(errors::unauthenticated)
+                .accessDeniedHandler(errors::forbidden));
+        return http.build();
+    }
+
+    private static CorsConfigurationSource tokenCors() {
+        CorsConfiguration cors = new CorsConfiguration();
+        cors.setAllowedOriginPatterns(List.of("*"));
+        cors.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"));
+        cors.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        cors.setExposedHeaders(List.of(HttpHeaders.LOCATION, HttpHeaders.WWW_AUTHENTICATE));
+        cors.setAllowCredentials(false);
+        cors.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", cors);
+        return source;
+    }
+
+    @Bean
+    @Order(2)
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             FortyTwoOAuth2UserService fortyTwoUserService,
                                             SecurityContextRepository securityContextRepository) throws Exception {
