@@ -44,6 +44,7 @@ import pt.vclubroom.club.application.CreateClubCommand;
 import pt.vclubroom.forum.application.CreatePostCommand;
 import pt.vclubroom.forum.application.PostService;
 import pt.vclubroom.identity.api.PlatformRole;
+import pt.vclubroom.identity.application.SessionRevocationService;
 import pt.vclubroom.identity.domain.User;
 import pt.vclubroom.identity.persistence.UserRepository;
 import pt.vclubroom.membership.api.ClubAuthorization;
@@ -97,6 +98,9 @@ class RealtimeIntegrationTests {
 
     @Autowired
     TransactionTemplate tx;
+
+    @Autowired
+    SessionRevocationService revocation;
 
     private User founder;
     private User stranger;
@@ -259,6 +263,19 @@ class RealtimeIntegrationTests {
             """.formatted(topic));
 
         assertThat(tab.next()).containsEntry("type", "post.created");
+    }
+
+    @Test
+    void revokedSessionsStopReceivingPushes() throws Exception {
+        String topic = "/topic/channels/" + minutesId + "/posts";                       // members only
+        Tab tab = connect(sessionOf(founder), ORIGIN).subscribe(topic);
+        awaitSubscribed(tab, topic);
+
+        revocation.revokeAll(founder.id());                                              // what disabling does (BR-24)
+        await().pollDelay(Duration.ofSeconds(1)).until(() -> true);                      // the session deletion reaches the sockets
+        realtime.toTopic(topic, "post.created", Map.of("postId", "secret"));
+
+        assertThat(tab.next()).isNull();
     }
 
     @Test
