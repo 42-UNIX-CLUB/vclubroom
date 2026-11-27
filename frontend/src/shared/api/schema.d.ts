@@ -2039,6 +2039,14 @@ export interface components {
             /** @enum {string} */
             status?: "ACTIVE" | "DISABLED";
         };
+        LinkedWorkView: {
+            ref?: string;
+            title?: string;
+            /** @enum {string} */
+            state?: "PLANNED" | "IN_PROGRESS" | "DONE";
+            milestone?: string;
+            released?: boolean;
+        };
         TicketDetails: {
             /** Format: int64 */
             number?: number;
@@ -2056,6 +2064,7 @@ export interface components {
             updatedAt?: string;
             messages?: components["schemas"]["MessageView"][];
             canReply?: boolean;
+            linkedWork?: components["schemas"]["LinkedWorkView"][];
         };
         ChannelView: {
             /** Format: uuid */
