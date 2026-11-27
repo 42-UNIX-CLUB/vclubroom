@@ -177,6 +177,11 @@ app:
   realtime:
     allowed-origins: ${app.public-url}
     redis-channel: vclubroom:rt
+  rate-limits:                         # E20-S03 (R-44): a bucket of `burst` requests, refilled `per-hour` an hour
+    token: { burst: 60, per-hour: 1000 }          # each token
+    token-writes: { burst: 10, per-hour: 60 }     # each token's POST, PUT, PATCH and DELETE
+    user: { burst: 120, per-hour: 2000 }          # all the tokens of one person together
+    anonymous: { burst: 60, per-hour: 3600 }      # /api/public without logging in, per IP: 60 a minute
   calendar:
     reminder-interval: PT1M            # how often ReminderScheduler sends due reminders (24 h and 1 h before: ReminderKind)
     display-zone: Europe/Lisbon
