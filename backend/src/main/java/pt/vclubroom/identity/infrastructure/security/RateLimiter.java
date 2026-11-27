@@ -1,21 +1,27 @@
 package pt.vclubroom.identity.infrastructure.security;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
+import pt.vclubroom.identity.api.ApiThrottling;
 import pt.vclubroom.shared.security.RateLimitProperties.Limit;
 
 /**
  * Token buckets in Redis (E20-S03), so every backend instance shares them: each request takes one token from every
  * bucket it falls in, or from none when one of them is empty. Buckets refill continuously, and expire once full.
+ * Refusals are counted per minute for the health card.
  */
 @Component
-class RateLimiter {
+class RateLimiter implements ApiThrottling {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimiter.class);
 
@@ -47,9 +53,11 @@ class RateLimiter {
         """, List.class);
 
     private final StringRedisTemplate redis;
+    private final Clock clock;
 
-    RateLimiter(StringRedisTemplate redis) {
+    RateLimiter(StringRedisTemplate redis, Clock clock) {
         this.redis = redis;
+        this.clock = clock;
     }
 
     record Bucket(String key, Limit limit) {
@@ -69,11 +77,37 @@ class RateLimiter {
         });
         try {
             List<?> r = redis.execute(TAKE, keys, args.toArray());
-            return new Decision(((Number) r.get(0)).longValue() == 1, ((Number) r.get(1)).longValue(),
+            Decision decision = new Decision(((Number) r.get(0)).longValue() == 1, ((Number) r.get(1)).longValue(),
                 ((Number) r.get(2)).longValue(), ((Number) r.get(3)).longValue(), ((Number) r.get(4)).longValue());
+            if (!decision.allowed()) {
+                String minute = refusedKey(currentMinute());
+                redis.opsForValue().increment(minute);
+                redis.expire(minute, 61, TimeUnit.MINUTES);
+            }
+            return decision;
         } catch (DataAccessException e) {
             log.warn("Rate limits not checked, Redis failed: {}", e.getMessage());
             return new Decision(true, 0, 0, 0, 0);
         }
+    }
+
+    @Override
+    public long refusedLastHour() {
+        long now = currentMinute();
+        List<String> keys = LongStream.range(0, 60).mapToObj(m -> refusedKey(now - m)).toList();
+        try {
+            List<String> counts = redis.opsForValue().multiGet(keys);
+            return counts == null ? 0 : counts.stream().filter(Objects::nonNull).mapToLong(Long::parseLong).sum();
+        } catch (DataAccessException e) {
+            return 0;
+        }
+    }
+
+    private long currentMinute() {
+        return clock.millis() / 60_000;
+    }
+
+    private static String refusedKey(long minute) {
+        return "ratelimit:refused:" + minute;
     }
 }

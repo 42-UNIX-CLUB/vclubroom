@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import pt.vclubroom.TestcontainersConfiguration;
+import pt.vclubroom.identity.api.ApiThrottling;
 import pt.vclubroom.identity.api.PlatformRole;
 import pt.vclubroom.identity.domain.PersonalAccessToken;
 import pt.vclubroom.identity.domain.User;
@@ -51,6 +52,9 @@ class RateLimitIntegrationTests {
     @Autowired
     RateLimitProperties limits;
 
+    @Autowired
+    ApiThrottling throttling;
+
     @Test
     void aTokenHasItsBurstThenGetsA429WithRetryAfter() throws Exception {
         String token = token(account(), "profile:read");
@@ -68,6 +72,7 @@ class RateLimitIntegrationTests {
             .andExpect(jsonPath("$.code").value("RATE_LIMITED"))
             .andExpect(header().exists("Retry-After"))
             .andExpect(header().string("RateLimit-Remaining", "0"));
+        assertThat(throttling.refusedLastHour()).isPositive();                  // for the health card
     }
 
     @Test

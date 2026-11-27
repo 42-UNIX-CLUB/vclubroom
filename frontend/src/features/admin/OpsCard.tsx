@@ -78,6 +78,14 @@ export function OpsCard() {
               )}
             </div>
           )}
+          <div>
+            <p className="font-medium">API</p>
+            <p className="text-muted-foreground">
+              {data?.refusedApiRequests
+                ? `${data.refusedApiRequests} request${data.refusedApiRequests === 1 ? "" : "s"} refused by the rate limits in the last hour.`
+                : "No request refused by the rate limits in the last hour."}
+            </p>
+          </div>
         </CardContent>
       )}
     </Card>

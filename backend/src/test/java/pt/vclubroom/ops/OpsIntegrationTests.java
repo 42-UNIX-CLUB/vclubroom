@@ -61,6 +61,7 @@ class OpsIntegrationTests {
             .andExpect(jsonPath("$.outbox[?(@.listener == 'StuckListener.on')].count").value(hasItem(1)))
             .andExpect(jsonPath("$.emails.failed").value(greaterThanOrEqualTo(1)))
             .andExpect(jsonPath("$.emails.lastError").value("SMTP delivery failed: 550 no such user"))
+            .andExpect(jsonPath("$.refusedApiRequests").value(greaterThanOrEqualTo(0)))   // E20-S03
             .andExpect(jsonPath("$.measuredAt").isNotEmpty());
         mvc.perform(get("/api/admin/ops").with(user(UUID.randomUUID(), false))).andExpect(status().isForbidden());
     }
