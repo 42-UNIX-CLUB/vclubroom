@@ -32,7 +32,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import pt.vclubroom.identity.application.AccessTokenService;
+import pt.vclubroom.identity.application.BearerTokens;
 import pt.vclubroom.shared.security.RateLimitProperties;
 
 @Configuration
@@ -66,7 +66,7 @@ class SecurityConfig {
     /** Token requests, before the session chain: each needs the scope of its path (shared.security.ApiScopes). */
     @Bean
     @Order(1)
-    SecurityFilterChain tokenFilterChain(HttpSecurity http, AccessTokenService tokens, RateLimiter limiter,
+    SecurityFilterChain tokenFilterChain(HttpSecurity http, List<BearerTokens> tokens, RateLimiter limiter,
                                          RateLimitProperties limits, ObjectMapper json) throws Exception {
         TokenErrors errors = new TokenErrors(json);
         http

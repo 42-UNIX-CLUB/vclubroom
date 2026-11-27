@@ -29,7 +29,13 @@ class OpenApiConfig {
 
         Scripts and apps use a token instead (E20): `Authorization: Bearer vcr_pat_…`, created in Settings › Developer
         tokens, with neither cookie nor CSRF. Each endpoint names the scope a token needs: its area, `:read` for GET,
-        `:write` for changes.""";
+        `:write` for changes.
+
+        Apps that people sign in to are registered in Settings › Your apps, and use OAuth 2's authorization code with
+        PKCE (`S256`): send people to `/oauth2/authorize` with the scopes the app needs; they log in and consent; the
+        app exchanges the code at `/oauth2/token`. Their access tokens last an hour and are sent like personal ones.
+        Confidential apps also get a refresh token, valid 30 days and replaced at each use, and can revoke tokens at
+        `/oauth2/revoke`. The server describes itself at `/.well-known/oauth-authorization-server`.""";
 
     @Bean
     OpenAPI clubroomOpenApi(RateLimitProperties limits) {
@@ -41,7 +47,7 @@ class OpenApiConfig {
                 .addSecuritySchemes("csrf", new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.HEADER)
                     .name("X-XSRF-TOKEN").description("The XSRF-TOKEN cookie's value, on POST, PUT, PATCH and DELETE"))
                 .addSecuritySchemes("bearer", new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer")
-                    .bearerFormat("vcr_pat_…").description("A personal access token. Its scopes, one read and one write per area:\n\n"
+                    .bearerFormat("vcr_pat_…").description("A personal access token, or an app's access token. The scopes, one read and one write per area:\n\n"
                         + Arrays.stream(ApiArea.values())
                             .map(a -> "- `" + a.read() + "`, `" + a.write() + "`: " + a.description())
                             .collect(Collectors.joining("\n")))));

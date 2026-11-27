@@ -5,24 +5,26 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-import pt.vclubroom.identity.application.AccessTokenService;
 import pt.vclubroom.identity.application.AuthenticatedToken;
+import pt.vclubroom.identity.application.BearerTokens;
 
 /**
- * Authenticates a request from its Authorization: Bearer header (E20-S01). An unknown, revoked or expired token gets
+ * Authenticates a request from its Authorization: Bearer header (E20-S01): a personal access token, or an app's access
+ * token (E20-S05). An unknown, revoked or expired token gets
  * its 401 here. Not a bean: Spring Boot would also register it for every request, outside the token chain.
  */
 final class BearerTokenFilter extends OncePerRequestFilter {
 
-    private final AccessTokenService tokens;
+    private final List<BearerTokens> tokens;
     private final TokenErrors errors;
 
-    BearerTokenFilter(AccessTokenService tokens, TokenErrors errors) {
+    BearerTokenFilter(List<BearerTokens> tokens, TokenErrors errors) {
         this.tokens = tokens;
         this.errors = errors;
     }
@@ -35,7 +37,8 @@ final class BearerTokenFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
-        Optional<AuthenticatedToken> token = tokens.authenticate(header.substring("Bearer ".length()).trim());
+        String raw = header.substring("Bearer ".length()).trim();
+        Optional<AuthenticatedToken> token = tokens.stream().flatMap(t -> t.authenticate(raw).stream()).findFirst();
         if (token.isEmpty()) {
             errors.invalidToken(response);
             return;

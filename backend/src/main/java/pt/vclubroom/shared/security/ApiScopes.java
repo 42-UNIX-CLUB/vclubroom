@@ -19,7 +19,7 @@ public final class ApiScopes {
     /** Never with a token, whatever its scopes. */
     private static final List<PathPattern> NOT_FOR_TOKENS = patterns(
         "/api/admin/**", "/api/auth/**", "/api/me/password", "/api/me/tokens/**", "/api/me/apps/**",
-        "/api/me/authorized-apps/**");
+        "/api/me/authorized-apps/**", "/api/oauth/**");
 
     /** The first match wins: specific paths before the general ones. */
     private static final List<Map.Entry<PathPattern, ApiArea>> AREAS = Stream.of(
