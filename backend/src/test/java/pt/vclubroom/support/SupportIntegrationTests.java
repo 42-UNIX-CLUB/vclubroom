@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import pt.vclubroom.TestcontainersConfiguration;
 
-/** Sending, reading and answering your own tickets over HTTP (E17-S02, E17-S03). */
+/** Sending, reading and answering your own tickets over HTTP, with their linked work (E17-S02, E17-S03, E18-S03). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -129,6 +129,25 @@ class SupportIntegrationTests {
         mvc.perform(get("/api/support/tickets/{n}", ticket).with(user(ada, false))).andExpect(jsonPath("$.canReply").value(false));
         reply(ada, ticket, "One more thing").andExpect(status().isUnprocessableEntity())
             .andExpect(jsonPath("$.code").value("TICKET_CLOSED"));
+    }
+
+    @Test
+    void aTicketShowsTheDevelopmentWorkItIsLinkedTo() throws Exception {
+        UUID ada = UUID.randomUUID();
+        long ticket = number(ada, "SUGGESTION", "Pin posts in the feed");
+        UUID id = jdbc.queryForObject("select id from support.tickets where number = ?", UUID.class, ticket);
+        jdbc.update("""
+            insert into support.ticket_links (ticket_id, issue, title, state, milestone, released, updated_at) values
+            (?, 140, 'E09-S04 · Edit, delete, pin and moderate', 'IN_PROGRESS', 'v1.2.0', false, now()),
+            (?, 301, 'Pinned posts disappear after a reload', 'DONE', null, false, now())""", id, id);
+
+        mvc.perform(get("/api/support/tickets/{n}", ticket).with(user(ada, false)))
+            .andExpect(jsonPath("$.linkedWork[0].ref").value("E09-S04"))
+            .andExpect(jsonPath("$.linkedWork[0].title").value("Edit, delete, pin and moderate"))
+            .andExpect(jsonPath("$.linkedWork[0].state").value("IN_PROGRESS"))
+            .andExpect(jsonPath("$.linkedWork[0].milestone").value("v1.2.0"))
+            .andExpect(jsonPath("$.linkedWork[1].ref").value("#301"))               // not a backlog item: its number
+            .andExpect(jsonPath("$.linkedWork[1].state").value("DONE"));
     }
 
     @Test

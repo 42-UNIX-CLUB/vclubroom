@@ -16,6 +16,7 @@ import pt.vclubroom.support.domain.Ticket;
 import pt.vclubroom.support.domain.TicketMessage;
 import pt.vclubroom.support.domain.TicketType;
 import pt.vclubroom.support.events.TicketSubmitted;
+import pt.vclubroom.support.persistence.TicketLinks;
 import pt.vclubroom.support.persistence.TicketMessageRepository;
 import pt.vclubroom.support.persistence.TicketRepository;
 
@@ -31,14 +32,16 @@ public class SupportService {
 
     private final TicketRepository tickets;
     private final TicketMessageRepository messages;
+    private final TicketLinks links;
     private final ApplicationEventPublisher events;
     private final Clock clock;
     private final int dailyLimit;
 
-    SupportService(TicketRepository tickets, TicketMessageRepository messages, ApplicationEventPublisher events, Clock clock,
-                   @Value("${app.support.daily-limit:10}") int dailyLimit) {
+    SupportService(TicketRepository tickets, TicketMessageRepository messages, TicketLinks links, ApplicationEventPublisher events,
+                   Clock clock, @Value("${app.support.daily-limit:10}") int dailyLimit) {
         this.tickets = tickets;
         this.messages = messages;
+        this.links = links;
         this.events = events;
         this.clock = clock;
         this.dailyLimit = dailyLimit;
@@ -66,7 +69,8 @@ public class SupportService {
     @Transactional(readOnly = true)
     public TicketDetails get(Actor actor, long number) {
         Ticket ticket = mine(actor, number);
-        return TicketDetails.of(ticket, messages.findByTicketIdOrderByCreatedAt(ticket.id()).stream().map(MessageView::of).toList());
+        return TicketDetails.of(ticket, messages.findByTicketIdOrderByCreatedAt(ticket.id()).stream().map(MessageView::of).toList(),
+            links.of(ticket.id()).stream().map(LinkedWorkView::of).toList());
     }
 
     /** A reply on my ticket, while it is open (E17-S03). */
