@@ -37,12 +37,15 @@ public class LocalAccountService {
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final SessionRevocationService sessions;
+    private final AccessTokenService tokens;
     private final Clock clock;
 
-    LocalAccountService(UserRepository users, PasswordEncoder passwordEncoder, SessionRevocationService sessions, Clock clock) {
+    LocalAccountService(UserRepository users, PasswordEncoder passwordEncoder, SessionRevocationService sessions,
+                        AccessTokenService tokens, Clock clock) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;
+        this.tokens = tokens;
         this.clock = clock;
     }
 
@@ -89,6 +92,9 @@ public class LocalAccountService {
         }
         if (changed) {
             sessions.revokeAll(userId);                     // the session holds the old role: log in again (BR-24)
+        }
+        if (status == UserStatus.DISABLED) {
+            tokens.revokeAll(userId);                       // and their scripts stop too (E20-S02)
         }
         return view(user);
     }

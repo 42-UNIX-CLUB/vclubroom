@@ -98,6 +98,23 @@ public class PersonalAccessToken implements Persistable<UUID> {
         return revokedAt == null && (expiresAt == null || expiresAt.isAfter(now));
     }
 
+    public boolean expiredAt(Instant now) {
+        return expiresAt != null && !expiresAt.isAfter(now);
+    }
+
+    /** Remembers when it was last used, at most once a minute: true when that changed. */
+    public boolean markUsed(Instant now) {
+        if (lastUsedAt != null && lastUsedAt.plusSeconds(60).isAfter(now)) {
+            return false;
+        }
+        lastUsedAt = now;
+        return true;
+    }
+
+    public void markReminded(Instant now) {
+        remindedAt = now;
+    }
+
     public void revoke(Instant now) {
         if (revokedAt == null) {
             revokedAt = now;

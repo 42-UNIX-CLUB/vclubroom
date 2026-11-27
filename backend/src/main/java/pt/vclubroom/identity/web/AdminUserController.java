@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import pt.vclubroom.identity.application.AdminUserView;
+import pt.vclubroom.identity.application.AccessTokenService;
 import pt.vclubroom.identity.application.LocalAccountService;
 import pt.vclubroom.identity.web.dto.CreateLocalAccountRequest;
 import pt.vclubroom.identity.web.dto.PasswordRequest;
@@ -27,9 +29,11 @@ import pt.vclubroom.shared.web.PageResponse;
 class AdminUserController {
 
     private final LocalAccountService accounts;
+    private final AccessTokenService tokens;
 
-    AdminUserController(LocalAccountService accounts) {
+    AdminUserController(LocalAccountService accounts, AccessTokenService tokens) {
         this.accounts = accounts;
+        this.tokens = tokens;
     }
 
     @GetMapping
@@ -55,5 +59,12 @@ class AdminUserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void resetPassword(@PathVariable("userId") UUID userId, @Valid @RequestBody PasswordRequest request) {
         accounts.resetPassword(userId, request.temporaryPassword());
+    }
+
+    /** Every personal access token of this person stops working (E20-S02). */
+    @DeleteMapping("/{userId}/tokens")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void revokeTokens(@PathVariable("userId") UUID userId) {
+        tokens.revokeAll(userId);
     }
 }
