@@ -17,6 +17,8 @@ export default defineConfig({
      "/oauth2": { target: backend },
      "/login/oauth2": { target: backend },
      "/ical": { target: backend },
+     "/v3/api-docs": { target: backend },
+     "/swagger-ui": { target: backend },
      "/ws": { target: backend, ws: true },
      "/media-public": { target: storage },
      "/media-private": { target: storage },
