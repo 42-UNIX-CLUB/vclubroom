@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 const FEATURES = [
   "auth", "discovery", "clubs", "membership", "groups", "spaces", "forum",
-  "chat", "media", "calendar", "notifications", "history", "admin",
+  "chat", "media", "calendar", "notifications", "history", "admin", "support",
 ];
 
 export default [
