@@ -178,8 +178,8 @@ deploy() {
 
 main() {
   cd "$(dirname "$0")/.."                      # → the repository root
-  local cmd=${1:-main} major_ok="" json="" target from_major
-  [ $# -gt 0 ] && shift
+  local cmd=main major_ok="" json="" target from_major
+  if [ $# -gt 0 ] && [[ $1 != --* ]]; then cmd=$1; shift; fi   # options alone mean main: deploy.sh --by x
   while [ $# -gt 0 ]; do
     case $1 in
       --major) major_ok=1 ;;
