@@ -34,6 +34,14 @@ public final class TestRequests {
         };
     }
 
+    /** A request made with a token (E20) instead of a session: no cookie, no CSRF. */
+    public static RequestPostProcessor bearer(String token) {
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + token);
+            return request;
+        };
+    }
+
     /** A short random suffix for names, because the integration tests share one database. */
     public static String suffix() {
         return UUID.randomUUID().toString().substring(0, 6);
