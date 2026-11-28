@@ -1,5 +1,6 @@
-# Production / demo on top of compose.yaml (09-deployment §4.3):
-#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build                    (demo behind the Cloudflare tunnel)
+# Production / demo on top of compose.yaml (09-deployment §4.3). On the server, deploy with deploy/deploy.sh, which
+# sets APP_VERSION and pulls that release's images (E22-S02). By hand:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build                    (builds from this checkout)
 #   docker compose -f compose.yaml -f compose.prod.yaml --profile demo up -d --build     (local prod-like run with Mailpit)
 services:
   seaweedfs:
@@ -9,6 +10,9 @@ services:
       - ./deploy/seaweedfs/s3.prod.json:/etc/seaweedfs/s3.json:ro
 
   backend:
+    # A release (APP_VERSION=v1.2.0) runs the image CI built for its tag (.github/workflows/release.yml); without one,
+    # `--build` builds this checkout and tags it :local.
+    image: ${IMAGE_REPO:-ghcr.io/42-unix-club/vclubroom}-backend:${APP_VERSION:-local}
     build: ./backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -56,6 +60,7 @@ services:
     restart: unless-stopped
 
   proxy:
+    image: ${IMAGE_REPO:-ghcr.io/42-unix-club/vclubroom}-proxy:${APP_VERSION:-local}
     build: ./frontend
     ports:
       # Private interface only (R-26): 127.0.0.1 if cloudflared runs on this host, the LAN IP if it runs on another machine.

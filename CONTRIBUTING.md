@@ -5,7 +5,7 @@
 ## 1. Repository layout and golden rules
 
 - **Repository:** [`42-UNIX-CLUB/vclubroom`](https://github.com/42-UNIX-CLUB/vclubroom), private. Until the hackathon ended (2026-10-19), this code lived in `UNIX_CLUB/` of the hackathon repository `megyant/Hackathon_SA_2026`. That copy stays as the submission; its history was kept here, with the paths moved to the root.
-- **Integration branch:** **`main`**. It must always build and be demo-able: the demo server deploys it (`deploy/deploy.sh`).
+- **Integration branch:** **`main`**. It must always build and be demo-able: releases are tagged from it, and the demo server can still build and deploy it directly (`deploy/deploy.sh`).
 - **`main` changes only through squash-merged PRs.** Never push to it directly; the `pre-push` hook enforces this.
 - **Backlog:** [`vclubroom/vclubroom`](https://tickets.ensui.dev/vclubroom/vclubroom) in our Forgejo (E18): epics, stories, tasks, bugs and chores, each an issue titled with its ID (`E04-S01 · …`). A story depends on its tasks and an epic on its stories, so they show their state and close after them. The GitHub Project is no longer updated.
 
@@ -325,4 +325,9 @@ Work is planned in **release milestones** in Forgejo (`v1.1.0`, `v1.2.0`, …): 
 
 ## 7. Deploying
 
-The demo server keeps its own clone and deploys the latest `main` with `deploy/deploy.sh`, as described in [09-deployment §11.2](https://github.com/42-UNIX-CLUB/vclubroom-docs/blob/main/docs/09-deployment.md) in the docs repository. Merge to `main` first, then run it there.
+The demo server keeps its own clone and deploys with `deploy/deploy.sh`, as described in [09-deployment §11.2](https://github.com/42-UNIX-CLUB/vclubroom-docs/blob/main/docs/09-deployment.md) in the docs repository.
+
+- **A release:** push its tag (`git tag v1.2.0 && git push origin v1.2.0`). The *Release images* workflow builds the backend and proxy images for that tag and pushes them to GitHub's container registry (`ghcr.io/42-unix-club/vclubroom-backend:v1.2.0`, `…-proxy:v1.2.0`). A version's images are built once: to change a release, tag a new version.
+- **On the server:** `deploy/deploy.sh v1.2.0` backs up the data, pulls that version's images, and waits for the backends to report healthy; if they don't, it puts the previous version back by itself. `deploy/deploy.sh rollback` returns to the previous version, and `deploy/deploy.sh status` shows what's live and the last deploys. A new major version needs `--major`, after its review.
+- **Going back must stay possible:** a release only adds to the database (new tables, new nullable columns). Removing or renaming waits for a later release, once no deployed version uses the old shape. Flyway never undoes a migration, so the previous version has to run on the newer schema.
+- **Without a release:** `deploy/deploy.sh` alone still builds and deploys the latest `main` on the server. Merge to `main` first, then run it there.
