@@ -24,7 +24,8 @@ export function MessageComposer({ onSend }: { onSend: (body: string) => void }) 
         value={body}
         onChange={(event) => setBody(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
+          // Not while an input method is composing: there Enter confirms a character (Safari reports keyCode 229).
+          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) {
             event.preventDefault();
             send();
           }
