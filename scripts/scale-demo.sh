@@ -5,11 +5,17 @@
 # log below shows their live connections held by different instances (Redis relays between them, no sticky sessions).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-compose() { docker compose -f compose.yaml -f compose.prod.yaml "$@"; }
+# The same project and images as deploy/deploy.sh: without -p this would scale the dev stack ("vclubroom"), and
+# without APP_VERSION it would look for :local images while a release is live.
+PROJECT=${DEPLOY_PROJECT:-vclubroom-demo}
+live=$(cat "${DEPLOY_STATE_DIR:-$HOME/vclubroom-deploys}/live" 2>/dev/null || true)
+if [[ $live =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then export APP_VERSION=$live; else unset APP_VERSION; fi
+compose() { docker compose -p "$PROJECT" -f compose.yaml -f compose.prod.yaml "$@"; }
 instances=${1:-3}
+[[ $instances =~ ^[1-9][0-9]?$ ]] || { echo "Usage: scripts/scale-demo.sh [instances, 1-99]" >&2; exit 2; }
 
 echo "Scaling the backend to $instances instances..."
-compose up -d --no-recreate --scale backend="$instances" backend
+compose up -d --no-build --no-recreate --scale backend="$instances" backend
 echo "Waiting for them to be healthy..."
 until [ "$(compose ps backend --format '{{.Health}}' | grep -c '^healthy$')" -ge "$instances" ]; do sleep 2; done
 echo "Restarting the proxy: nginx resolves the instances when it starts..."
