@@ -1,9 +1,11 @@
 package pt.vclubroom.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -111,6 +113,54 @@ class NotificationIntegrationTests {
             .andExpect(jsonPath("$.channelId").value(channel.toString()));
         mvc.perform(get("/api/posts/{id}", UUID.randomUUID()).with(user(member, false)))
             .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+    }
+
+    @Autowired
+    pt.vclubroom.space.persistence.SpaceRepository spaces;
+
+    private String create(String path, UUID id, UUID as, String json) throws Exception {
+        return JsonPath.read(mvc.perform(post(path, id).with(user(as, false)).with(xsrf(mvc)).contentType(MediaType.APPLICATION_JSON)
+            .content(json)).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.id");
+    }
+
+    private List<String> types(UUID who) throws Exception {
+        return JsonPath.read(mvc.perform(get("/api/notifications").with(user(who, false))).andReturn().getResponse().getContentAsString(),
+            "$.items[*].type");
+    }
+
+    @Test
+    void someoneRemovedFromTheClubHearsNoMoreAboutItsMembersOnlyThreads() throws Exception {
+        UUID founder = person("Bob", PlatformRole.USER).id();
+        UUID carol = person("Carol", PlatformRole.USER).id();
+        UUID dave = person("Dave", PlatformRole.USER).id();
+        var club = clubs.requestCreation(new Actor(founder, false), new CreateClubCommand("Go " + TestRequests.suffix(), null, null, "Games", List.of()));
+        clubs.approve(new Actor(UUID.randomUUID(), true), club.id());
+        await().atMost(Duration.ofSeconds(10)).until(() -> authorization.isOwner(club.id(), founder)
+            && !spaceAccess.readableForumChannels(club.id(), new Actor(founder, false)).isEmpty());
+        tx.executeWithoutResult(s -> clubRepository.findById(club.id()).orElseThrow().changeJoinPolicy(JoinPolicy.OPEN, Instant.now()));
+        UUID channel = spaceAccess.readableForumChannels(club.id(), new Actor(founder, false)).iterator().next();
+        UUID spaceId = spaceAccess.forChannel(channel, new Actor(founder, false)).spaceId();
+        tx.executeWithoutResult(s -> {                                                         // members only
+            var space = spaces.findById(spaceId).orElseThrow();
+            space.changeAccess(pt.vclubroom.space.domain.AccessRule.clubMembers(), space.writeRule());
+        });
+        for (UUID who : List.of(carol, dave)) {
+            mvc.perform(post("/api/clubs/{id}/join", club.id()).with(user(who, false)).with(xsrf(mvc))).andExpect(status().isCreated());
+        }
+        String foundersPost = create("/api/channels/{id}/posts", channel, founder, "{\"title\":\"Plans\",\"body\":\"Secret plans\"}");
+        String carolsPost = create("/api/channels/{id}/posts", channel, carol, "{\"title\":\"Mine\",\"body\":\"Hello\"}");
+        String carolsComment = create("/api/posts/{id}/comments", UUID.fromString(foundersPost), carol, "{\"body\":\"Count me in\"}");
+        mvc.perform(delete("/api/clubs/{id}/members/{userId}", club.id(), carol).with(user(founder, false)).with(xsrf(mvc)))
+            .andExpect(status().isNoContent());
+
+        create("/api/posts/{id}/comments", UUID.fromString(carolsPost), founder, "{\"body\":\"The meeting moved to the secret room\"}");
+        create("/api/posts/{id}/comments", UUID.fromString(foundersPost), founder,
+            "{\"body\":\"Details in the secret room\",\"parentId\":\"" + carolsComment + "\"}");
+        create("/api/posts/{id}/comments", UUID.fromString(foundersPost), dave, "{\"body\":\"Me too\"}");
+        await().atMost(Duration.ofSeconds(10)).until(() -> types(founder).contains("NEW_COMMENT"));      // dave's: still a member
+        await().pollDelay(Duration.ofSeconds(1)).until(() -> true);
+
+        assertThat(types(carol)).as("notices to someone removed from the club").doesNotContain("NEW_COMMENT", "NEW_REPLY");
     }
 
     @Test
