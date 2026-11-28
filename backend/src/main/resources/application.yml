@@ -129,6 +129,8 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+    csrf:
+      enabled: true      # Try it out sends X-XSRF-TOKEN from the XSRF-TOKEN cookie, like the app (E19-S01)
 
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}

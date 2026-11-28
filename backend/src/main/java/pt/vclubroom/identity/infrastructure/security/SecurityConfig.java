@@ -42,7 +42,7 @@ class SecurityConfig {
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/ical/**").permitAll()                         // token is the credential
                 .requestMatchers("/error", "/actuator/health/**", "/actuator/info").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // disabled in prod
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // public docs (E19-S01)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**", "/ws", "/ws/**").authenticated()
                 .anyRequest().denyAll())
