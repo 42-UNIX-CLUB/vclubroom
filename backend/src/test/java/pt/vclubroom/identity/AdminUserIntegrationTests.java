@@ -159,6 +159,23 @@ class AdminUserIntegrationTests {
             .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("NOT_LOCAL_ACCOUNT"));
     }
 
+    /** bcrypt reads at most 72 bytes: longer passwords are refused clearly, not with a 500 (accents count double). */
+    @Test
+    void passwordsLongerThanBcryptReadsAreRefused() throws Exception {
+        String accented = "ção-á-é-í-ó-ú-".repeat(4);                            // 56 characters, 84 bytes
+        create("{\"username\":\"long-%s\",\"displayName\":\"Long\",\"temporaryPassword\":\"%s\"}".formatted(TestRequests.suffix(), accented))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("PASSWORD_TOO_LONG"));
+
+        String login = "olga-" + TestRequests.suffix();
+        String id = account(login, "a".repeat(72));                                     // exactly the limit: fine
+        Cookie session = session(login, "a".repeat(72));
+        changeOwnPassword(session, "a".repeat(72), "b".repeat(80)).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("PASSWORD_TOO_LONG"));
+        mvc.perform(post("/api/admin/users/{id}/password", id).with(user(ADMIN, true)).with(xsrf(mvc))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"temporaryPassword\":\"%s\"}".formatted("c".repeat(73))))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("PASSWORD_TOO_LONG"));
+    }
+
     @Test
     void theListFindsEveryAccountWhateverItsStatus() throws Exception {
         String prefix = "list" + TestRequests.suffix();

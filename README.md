@@ -4,7 +4,7 @@
 
 **Live demo:** <https://42clubroom.ensui.dev> · **Team:** UNIX_CLUB (see [Team](#team))
 
-![Join a club in 3 clicks](docs/media/join-flow.gif)
+![Join a club in 3 clicks](docs/assets/join-flow.gif)
 
 ## Why
 
@@ -28,17 +28,20 @@ co-ownership, ownership transfer, archival and history in eras.
 | Club archival (everything stays readable) | ✅ | Admin › **All clubs** |
 | Club history: eras, timeline, all past posts and comments | ✅ | Club › **History** |
 | Community spaces with read/write rules | ✅ | Club sidebar |
-| Extras in progress: custom club roles, RSVPs, real-time chat, notifications, revival | 🚧 | |
-
-✅ done · 🚧 in progress
+| Custom club roles and permissions | ✅ | Club › Settings › **Roles** |
+| Event RSVPs | ✅ | An event's page |
+| Real-time chat | ✅ | A club's chat channels |
+| Notifications, in the app and by email | ✅ | The bell, Settings › **Notifications** |
+| Reviving an archived club | ✅ | An archived club's page, Admin › **Revivals** |
+| Support tickets, answered by the team | ✅ | `/support` |
 
 ## Screenshots
 
 | | |
 |---|---|
-| ![Landing page](docs/media/landing.png) | ![A club page](docs/media/club.png) |
-| ![Posts with media](docs/media/posts.png) | ![Campus calendar](docs/media/calendar.png) |
-| ![Club history](docs/media/history.png) | ![Admin console](docs/media/admin.png) |
+| ![Landing page](docs/assets/landing.png) | ![A club page](docs/assets/club.png) |
+| ![A club's posts](docs/assets/posts.png) | ![Campus calendar](docs/assets/calendar.png) |
+| ![Club history](docs/assets/history.png) | ![Admin console](docs/assets/admin.png) |
 
 ## Tech stack
 
@@ -48,7 +51,7 @@ co-ownership, ownership transfer, archival and history in eras.
 
 ## Architecture
 
-- **13 modules** (identity, club, membership, space, forum, media, calendar, discovery, history, …), each with its own database schema. Spring Modulith's test fails the build if one reaches into another's internals.
+- **15 modules** (identity, club, membership, space, forum, chat, media, calendar, discovery, history, support, …) and a shared kernel. The 13 that keep data each have their own database schema; `realtime` and `ops` keep none. Spring Modulith's test fails the build if one module reaches into another's internals.
 - **Events between modules** go through an outbox table in PostgreSQL: approving a club creates its owner, its spaces, its directory card and its first timeline entry, each in its own transaction, retried until it succeeds.
 - **Stateless backend instances:** sessions live in Redis, so the demo runs two backend replicas behind nginx.
 - **Media go straight to object storage:** the browser uploads with a presigned URL, and the backend only checks the result.
@@ -69,17 +72,38 @@ Open <http://localhost:8080> and log in with the admin account from `.env` (`APP
 
 ### For development
 
+You need JDK 21, Node.js 24 and Docker with Compose v2. The dev stack uses ports 5173, 8080, 5432, 6379, 8333, 1025 and 8025.
+
 ```bash
-cp .env.example .env
-docker compose -f compose.yaml -f compose.dev.yaml up -d      # PostgreSQL, Redis, SeaweedFS
-cd backend && ./run-dev.sh                                     # Spring Boot on :8080 (JDK 21)
-cd frontend && npm ci && npm run dev                           # Vite on :5173
+cp .env.example .env                                           # the defaults work for development
+docker compose -f compose.yaml -f compose.dev.yaml up -d      # PostgreSQL, Redis, SeaweedFS, Mailpit
 ```
+
+Then, in two terminals, from the repository root:
+
+```bash
+cd backend && ./run-dev.sh              # Spring Boot on :8080, dev profile, emails to Mailpit
+cd frontend && npm ci && npm run dev    # Vite on :5173, proxying the API, WebSocket and media to the backend
+```
+
+Open <http://localhost:5173> and log in with the password form: `admin` / `change-me-admin` (`APP_BOOTSTRAP_ADMIN_USERNAME` / `APP_BOOTSTRAP_ADMIN_PASSWORD` in `.env`).
+
+- **Login with 42** needs your own 42 OAuth application: set `FT_CLIENT_ID` and `FT_CLIENT_SECRET` in `.env`, with the redirect URI `http://localhost:5173/login/oauth2/code/fortytwo`.
+- **Emails** land in Mailpit: <http://localhost:8025>.
+- **Support tickets** are printed in the backend's log instead of going to a tracker (`TICKETS_TRACKER=log`).
 
 Tests: `./mvnw verify` in `backend/` (Testcontainers needs Docker), and `npm run lint && npm test && npm run build` in `frontend/`.
 
+## Contributing
+
+1. **Access:** ask the team for this repository, the design docs ([`42-UNIX-CLUB/vclubroom-docs`](https://github.com/42-UNIX-CLUB/vclubroom-docs), private) and an account on the team's Forgejo, [`tickets.ensui.dev`](https://tickets.ensui.dev/) (registration is closed).
+2. **Rules:** read [CONTRIBUTING.md](CONTRIBUTING.md) (branches, commits, pull requests), and enable the Git hooks once per clone: `git config core.hooksPath .githooks`.
+3. **Work:** pick an issue on the board of [`vclubroom/vclubroom`](https://tickets.ensui.dev/vclubroom/vclubroom) in Forgejo, branch from `main`, and open a pull request. The design docs explain each module (`docs/README.md` there), and most stories have a step-by-step guide (`implementation/guide/stories/`).
+
 ## Team
 
-| Member | Main work |
-|---|---|
-| … | … |
+| Member | GitHub | Role | Main work |
+|---|---|---|---|
+| Mario Ferreira | [@ensui-dev](https://github.com/ensui-dev) | Lead developer and architect | Design and architecture, most backend and frontend features, deployment and operations |
+| Rui Costa | [@RuiSlayer](https://github.com/RuiSlayer) | Frontend developer | The frontend skeleton, the campus calendar page |
+| Vasco Castro | [@vasco-castro](https://github.com/vasco-castro) | Backend developer | The backend skeleton, club events and the calendar backend |

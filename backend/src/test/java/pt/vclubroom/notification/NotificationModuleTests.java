@@ -25,6 +25,7 @@ import pt.vclubroom.identity.events.AccessTokenExpiring;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.realtime.api.RealtimePublisher;
+import pt.vclubroom.space.api.SpaceAccessPolicy;
 import pt.vclubroom.space.api.SpaceAudience;
 import pt.vclubroom.support.events.TicketStatusChanged;
 import pt.vclubroom.support.events.TicketSubmitted;
@@ -36,6 +37,9 @@ class NotificationModuleTests {
 
     @MockitoBean
     SpaceAudience audience;
+
+    @MockitoBean
+    SpaceAccessPolicy spaceAccess;
 
     @MockitoBean
     UserDirectory users;
