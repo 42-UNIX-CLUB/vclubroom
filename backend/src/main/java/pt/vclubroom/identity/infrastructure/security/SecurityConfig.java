@@ -45,6 +45,15 @@ class SecurityConfig {
     };
 
     /**
+     * A request whose credential is an Authorization: Bearer header. A browser never adds that header by itself, so a
+     * forged cross-site request can't carry one: these are the only requests exempt from CSRF.
+     */
+    private static final RequestMatcher BEARER = request -> {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        return authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7);
+    };
+
+    /**
      * API calls made with a token (E20): Authorization: Bearer, or a browser app's CORS preflight for one. Tokens are
      * never sent by the browser on its own, so these need neither a session nor CSRF, and any origin may call.
      */
@@ -52,9 +61,8 @@ class SecurityConfig {
         if (!request.getRequestURI().startsWith("/api/")) {
             return false;
         }
-        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authorization != null) {
-            return authorization.regionMatches(true, 0, "Bearer ", 0, 7);
+        if (request.getHeader(HttpHeaders.AUTHORIZATION) != null) {
+            return BEARER.matches(request);
         }
         String preflightHeaders = request.getHeader(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
         return HttpMethod.OPTIONS.matches(request.getMethod()) && preflightHeaders != null
@@ -76,7 +84,10 @@ class SecurityConfig {
             .securityContext(ctx -> ctx.securityContextRepository(new RequestAttributeSecurityContextRepository()))
             .requestCache(cache -> cache.requestCache(new NullRequestCache()))
             .cors(cors -> cors.configurationSource(tokenCors()))
-            .csrf(AbstractHttpConfigurer::disable)
+            // CSRF stays on, exempting only requests authenticated by their Bearer header (all of this chain's
+            // changes today; preflights are OPTIONS, which CSRF never checks). If the chain ever accepted another
+            // credential, such as a cookie, its requests would need a CSRF token again without anyone remembering.
+            .csrf(csrf -> csrf.ignoringRequestMatchers(BEARER))
             .logout(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
