@@ -34,7 +34,7 @@ class ClubArchivedListener {
         Instant now = clock.instant();
         events.findFutureScheduled(archived.clubId(), now).forEach(event -> {
             event.cancel(REASON, now);
-            publisher.publishEvent(new EventCancelled(event.id(), event.clubId(), event.title(), event.startsAt(), REASON, now));
+            publisher.publishEvent(new EventCancelled(event.id(), event.clubId(), event.spaceId(), event.title(), event.startsAt(), REASON, now));
         });
     }
 }

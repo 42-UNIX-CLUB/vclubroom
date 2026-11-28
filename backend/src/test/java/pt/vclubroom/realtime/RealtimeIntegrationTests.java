@@ -47,7 +47,11 @@ import pt.vclubroom.identity.api.PlatformRole;
 import pt.vclubroom.identity.application.SessionRevocationService;
 import pt.vclubroom.identity.domain.User;
 import pt.vclubroom.identity.persistence.UserRepository;
+import pt.vclubroom.club.api.JoinPolicy;
+import pt.vclubroom.club.persistence.ClubRepository;
 import pt.vclubroom.membership.api.ClubAuthorization;
+import pt.vclubroom.membership.application.JoinService;
+import pt.vclubroom.membership.application.MemberService;
 import pt.vclubroom.realtime.api.RealtimePublisher;
 import pt.vclubroom.shared.security.Actor;
 import pt.vclubroom.space.api.ChannelType;
@@ -60,7 +64,8 @@ import pt.vclubroom.space.persistence.SpaceRepository;
  * /ws end to end (E10-S01): a real server, the real login, a real STOMP client. The "other instance" is played by
  * writing straight to the Redis channel, which is all a second instance does.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = "app.realtime.access-recheck-interval=PT0S")              // every push checks access again
 @Import(TestcontainersConfiguration.class)
 class RealtimeIntegrationTests {
 
@@ -106,6 +111,7 @@ class RealtimeIntegrationTests {
     private User stranger;
     private UUID channelId;          // the club's public Posts channel
     private UUID minutesId;          // a forum channel in a members-only space
+    private UUID clubId;
 
     private User localUser(String name) {
         String login = name + "-" + TestRequests.suffix();
@@ -116,7 +122,7 @@ class RealtimeIntegrationTests {
     void aClubWithAPublicAndAMembersOnlyChannel() {
         founder = localUser("ada");
         stranger = localUser("sam");
-        UUID clubId = clubs.requestCreation(new Actor(founder.id(), false),
+        clubId = clubs.requestCreation(new Actor(founder.id(), false),
             new CreateClubCommand("Chess " + TestRequests.suffix(), null, null, "Games", List.of())).id();
         clubs.approve(new Actor(UUID.randomUUID(), true), clubId);
         await().atMost(Duration.ofSeconds(10)).until(() -> authorization.isOwner(clubId, founder.id())
@@ -250,6 +256,45 @@ class RealtimeIntegrationTests {
         Tab sender = connect(session, ORIGIN);
         sender.session.send("/app/anything", new byte[0]);                                 // push-only (R-03)
         assertThat(sender.errors.poll(5, TimeUnit.SECONDS)).isNotNull();
+    }
+
+    @Autowired
+    JoinService joins;
+
+    @Autowired
+    MemberService members;
+
+    @Autowired
+    ClubRepository clubRepository;
+
+    @Test
+    void someoneRemovedFromTheClubStopsReceivingItsMembersOnlyPushes() throws Exception {
+        tx.executeWithoutResult(s -> clubRepository.findById(clubId).orElseThrow().changeJoinPolicy(JoinPolicy.OPEN, Instant.now()));
+        joins.join(new Actor(stranger.id(), false), clubId, null);
+        String topic = "/topic/channels/" + minutesId + "/posts";                       // members only
+        Tab tab = connect(sessionOf(stranger), ORIGIN).subscribe(topic);
+        awaitSubscribed(tab, topic);
+
+        members.remove(new Actor(founder.id(), false), clubId, stranger.id());
+        realtime.toTopic(topic, "post.created", Map.of("postId", "after-removal"));
+
+        assertThat(tab.next()).as("a push after being removed from the club").isNull();
+    }
+
+    @Test
+    void aSpaceMadeMembersOnlyStopsPushingToNonMembers() throws Exception {
+        String topic = "/topic/channels/" + channelId + "/posts";                       // a PUBLIC space for now
+        Tab tab = connect(sessionOf(stranger), ORIGIN).subscribe(topic);
+        awaitSubscribed(tab, topic);
+
+        UUID spaceId = spaceAccess.forChannel(channelId, new Actor(founder.id(), false)).spaceId();
+        tx.executeWithoutResult(s -> {
+            Space space = spaces.findById(spaceId).orElseThrow();
+            space.changeAccess(AccessRule.clubMembers(), space.writeRule());
+        });
+        realtime.toTopic(topic, "post.created", Map.of("postId", "after-rule-change"));
+
+        assertThat(tab.next()).as("a push after the space became members-only").isNull();
     }
 
     @Test
