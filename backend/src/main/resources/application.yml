@@ -177,6 +177,7 @@ app:
   realtime:
     allowed-origins: ${app.public-url}
     redis-channel: vclubroom:rt
+    access-recheck-interval: PT10S     # pushes stop at most this long after someone loses access
   calendar:
     reminder-interval: PT1M            # how often ReminderScheduler sends due reminders (24 h and 1 h before: ReminderKind)
     display-zone: Europe/Lisbon

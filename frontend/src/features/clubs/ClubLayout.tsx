@@ -5,6 +5,7 @@ import { useMe } from "@/features/auth";
 import { JoinButton, type MembershipView, useMyMembership } from "@/features/membership";
 import { SpaceSidebar } from "@/features/spaces";
 import { ApiError } from "@/shared/api/errors";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
@@ -45,6 +46,8 @@ export function ClubLayout() {
   const [channelsOpen, setChannelsOpen] = useState(false);
   const { pathname } = useLocation();
   useEffect(() => setChannelsOpen(false), [pathname]);
+  const section = SECTIONS.find(({ path }) => path && pathname.startsWith(`/c/${slug}/${path}`))?.label;
+  usePageTitle(section, club?.name);
 
   if (isPending) return <FullPageSpinner />;
   if (error) {

@@ -5,6 +5,7 @@
 # Each run writes BACKUP_DIR/<date-time>/ (removed again if the run fails) and deletes runs older than BACKUP_KEEP_DAYS. Copy BACKUP_DIR off the server
 # too: a backup on the same disk doesn't survive losing the server.
 set -euo pipefail
+umask 077                                                  # the dump holds every account's email and password hash
 cd "$(dirname "$0")/.."                                    # → the repository root
 PROJECT=${BACKUP_PROJECT:-vclubroom-demo}                  # deploy.sh's project name
 BACKUP_DIR=${BACKUP_DIR:-$HOME/vclubroom-backups}          # outside the clone: deploy.sh refuses a dirty one
@@ -21,7 +22,8 @@ compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' 
 [ -s "$out/database.dump" ] || { echo "✖ The database dump is empty." >&2; exit 1; }
 
 # Volumes. `docker volume inspect` fails on a wrong name: `docker run -v` would create an empty volume and archive it.
-# They're archived while the services run, so the copy is crash-consistent (like after a power cut), not quiesced.
+# They're archived while the services run, so the copy isn't a snapshot: tar reads Forgejo's SQLite file over time.
+# For a copy that's certainly clean, stop seaweedfs and forgejo around the run (09-deployment §12.1).
 for volume in seaweed forgejo; do
   name="${PROJECT}_${volume}"
   docker volume inspect "$name" >/dev/null || { echo "✖ No volume $name: is $PROJECT running?" >&2; exit 1; }
