@@ -28,6 +28,7 @@ import pt.vclubroom.identity.api.UserContact;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.realtime.api.RealtimePublisher;
+import pt.vclubroom.space.api.SpaceAccessPolicy;
 import pt.vclubroom.space.api.SpaceAudience;
 
 /** The email outbox on its own (E12-S03): what is sent, retried with backoff (R-27), or given up. The sender is mocked. */
@@ -45,6 +46,9 @@ class EmailDispatchJobTests {
 
     @MockitoBean
     SpaceAudience audience;
+
+    @MockitoBean
+    SpaceAccessPolicy spaceAccess;
 
     @MockitoBean
     ClubAuthorization authorization;

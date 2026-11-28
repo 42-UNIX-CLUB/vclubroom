@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -155,6 +156,28 @@ class ReminderIntegrationTests {
             .andExpect(jsonPath("$.items[*].title", not(hasItem("Tomorrow: Go night"))));
         assertThat(reminders.findByEventIdOrderByRemindAtAsc(UUID.fromString(id))).extracting(EventReminder::sentAt)
             .satisfiesExactly(sent -> assertThat(sent).isNotNull(), unsent -> assertThat(unsent).isNull());
+    }
+
+    @Test
+    void someoneWhoLostAccessHearsNothingMoreAboutTheEvent() throws Exception {
+        tx.executeWithoutResult(s -> {                                                 // a members-only space
+            var space = spaces.findById(general).orElseThrow();
+            space.changeAccess(pt.vclubroom.space.domain.AccessRule.clubMembers(), space.writeRule());
+        });
+        String id = schedule(inHours(30));
+        send(put("/api/events/{id}/rsvp", id), ada, "{\"status\":\"GOING\"}").andExpect(status().isOk());
+        send(delete("/api/clubs/{id}/members/{userId}", clubId, ada), founder, "").andExpect(status().isNoContent());
+
+        send(patch("/api/events/{id}", id), founder, json(inHours(31))).andExpect(status().isOk());
+        jdbc.update("update calendar.event_reminders set remind_at = now() - interval '1 minute' where event_id = ?::uuid and kind = 'DAY_BEFORE'", id);
+        scheduler.sendDueReminders();
+        send(put("/api/events/{id}/rsvp", id), bob, "{\"status\":\"GOING\"}").andExpect(status().isOk());
+        send(patch("/api/events/{id}", id), founder, json(inHours(32))).andExpect(status().isOk());   // bob still hears of this
+        await().atMost(Duration.ofSeconds(10)).until(() -> jdbc.queryForObject(
+            "select count(*) from notification.notifications where recipient_id = ? and type = 'EVENT_UPDATED'", Integer.class, bob) > 0);
+
+        assertThat(jdbc.queryForList("select type from notification.notifications where recipient_id = ? and type in ('EVENT_UPDATED', 'EVENT_REMINDER')",
+            String.class, ada)).as("notices to someone removed from the club").isEmpty();
     }
 
     @Test

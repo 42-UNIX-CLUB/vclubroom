@@ -1,7 +1,6 @@
 package pt.vclubroom.realtime.infrastructure;
 
 import java.security.Principal;
-import java.util.List;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
@@ -11,7 +10,6 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import pt.vclubroom.realtime.spi.SubscriptionAuthorizer;
 import pt.vclubroom.shared.security.AuthenticatedUser;
 
 /**
@@ -21,10 +19,10 @@ import pt.vclubroom.shared.security.AuthenticatedUser;
 @Component
 class SubscriptionAuthorizationInterceptor implements ChannelInterceptor {
 
-    private final List<SubscriptionAuthorizer> authorizers;
+    private final TopicAccess access;
 
-    SubscriptionAuthorizationInterceptor(List<SubscriptionAuthorizer> authorizers) {
-        this.authorizers = authorizers;
+    SubscriptionAuthorizationInterceptor(TopicAccess access) {
+        this.access = access;
     }
 
     @Override
@@ -50,11 +48,7 @@ class SubscriptionAuthorizationInterceptor implements ChannelInterceptor {
             if (destination.startsWith("/user/queue/")) {
                 return message;                         // resolved per session by Spring: private by construction
             }
-            boolean allowed = authorizers.stream()
-                .filter(a -> a.supports(destination))
-                .findFirst()
-                .map(a -> a.canSubscribe(user.actor(), destination))
-                .orElse(false);
+            boolean allowed = access.canRead(user.actor(), destination);
             if (!allowed) {
                 throw new MessageDeliveryException("Forbidden");
             }
