@@ -35,7 +35,8 @@ class GlobalExceptionHandlerTests {
         "conflict,        409, ALREADY_MEMBER",
         "business-rule,   422, LAST_OWNER",
         "invalid-request, 400, INVALID_CURSOR",
-        "duplicate,       409, DUPLICATE"
+        "duplicate,       409, DUPLICATE",
+        "integrity,       500, INTERNAL_ERROR"
     })
     void mapsExceptionsToProblemDetailsWithStableCode(String kind, int httpStatus, String code) throws Exception {
         mvc.perform(get("/throw/{kind}", kind))
@@ -64,7 +65,10 @@ class GlobalExceptionHandlerTests {
                 case "conflict" -> new ConflictException("ALREADY_MEMBER", "You are already a member.");
                 case "business-rule" -> new BusinessRuleException("LAST_OWNER", "A club keeps at least one owner.");
                 case "invalid-request" -> new InvalidRequestException("INVALID_CURSOR", "The cursor is invalid.");
-                case "duplicate" -> new DataIntegrityViolationException("ux_memberships_active");
+                case "duplicate" -> new DataIntegrityViolationException("ux_memberships_active",       // unique_violation
+                    new java.sql.SQLException("duplicate key value violates unique constraint", "23505"));
+                case "integrity" -> new DataIntegrityViolationException("not null",                     // not_null_violation: a bug
+                    new java.sql.SQLException("null value in column violates not-null constraint", "23502"));
                 default -> new IllegalArgumentException(kind);
             };
         }

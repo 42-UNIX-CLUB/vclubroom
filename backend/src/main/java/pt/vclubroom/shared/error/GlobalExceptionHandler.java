@@ -1,7 +1,10 @@
 package pt.vclubroom.shared.error;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(NotFoundException.class)
     ProblemDetail notFound(NotFoundException ex) {
@@ -55,8 +60,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail integrityViolation(DataIntegrityViolationException ex) {
-        // Unique-index races (double join, double reaction) end up here.
-        return problem(HttpStatus.CONFLICT, "DUPLICATE", "This action was already performed.");
+        if (ex.getMostSpecificCause() instanceof SQLException sql && "23505".equals(sql.getSQLState())) {
+            // A unique-index race (double join, double reaction): the action was already done.
+            return problem(HttpStatus.CONFLICT, "DUPLICATE", "This action was already performed.");
+        }
+        log.error("Unexpected data integrity violation", ex);      // not-null, foreign key, check or a bad value: a bug
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Something went wrong on our side.");
     }
 
     @Override

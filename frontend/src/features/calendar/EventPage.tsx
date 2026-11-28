@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { MediaView } from "@/features/media";
 import { ApiError } from "@/shared/api/errors";
 import { formatDate, formatDateTime, formatTime } from "@/shared/lib/dates";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -32,6 +33,7 @@ function when(event: ClubEvent): string {
 export function EventPage() {
   const { eventId = "" } = useParams();
   const { data: event, error, isPending } = useEvent(eventId);
+  usePageTitle(event?.title);
   const [editing, setEditing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 

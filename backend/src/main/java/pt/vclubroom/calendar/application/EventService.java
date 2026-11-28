@@ -100,7 +100,7 @@ public class EventService {
         Instant now = clock.instant();
         event.cancel(reason, now);                                                     // EVENT_CANCELLED if already
         reminders.deleteUnsent(event.id());
-        publisher.publishEvent(new EventCancelled(event.id(), event.clubId(), event.title(), event.startsAt(),
+        publisher.publishEvent(new EventCancelled(event.id(), event.clubId(), event.spaceId(), event.title(), event.startsAt(),
             event.cancelReason(), now));
         return view(event, actor);
     }

@@ -5,11 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static pt.vclubroom.TestRequests.bearer;
 
+import jakarta.servlet.http.Cookie;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
@@ -129,6 +131,51 @@ class TokenAccessIntegrationTests {
             .andExpect(status().isOk())
             .andExpect(header().string("Access-Control-Allow-Origin", "https://app.example"))
             .andExpect(header().doesNotExist("Access-Control-Allow-Credentials"));
+    }
+
+    @Test
+    void aSessionNeverStandsInForAToken() throws Exception {
+        User signedIn = user(PlatformRole.USER);
+        Cookie session = sessionOf(signedIn);                                   // a real password login, not a mock
+        User tokenOwner = user(PlatformRole.USER);
+        String token = token(tokenOwner, null, "profile:read");
+
+        mvc.perform(get("/api/me").cookie(session))                            // the session works on its own chain
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(signedIn.id().toString()));
+        mvc.perform(get("/api/me").cookie(session).with(bearer("not-a-token")))  // a bad token isn't rescued by it
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("TOKEN_INVALID"));
+        mvc.perform(get("/api/me").cookie(session).with(bearer(token)))        // a token acts as its owner only
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(tokenOwner.id().toString()));
+        mvc.perform(post("/api/notifications/read-all").cookie(session))       // what a forged request carries
+            .andExpect(status().isForbidden());                                 // still needs the CSRF token
+    }
+
+    @Test
+    void tokenRequestsLeaveNoSessionNorCsrfCookie() throws Exception {
+        String token = token(user(PlatformRole.USER), null, "profile:read", "notifications:write");
+
+        mvc.perform(get("/api/me").with(bearer(token)))
+            .andExpect(status().isOk())
+            .andExpect(cookie().doesNotExist("SESSION"))
+            .andExpect(cookie().doesNotExist("XSRF-TOKEN"));
+        mvc.perform(post("/api/notifications/read-all").with(bearer(token)))
+            .andExpect(status().isNoContent())
+            .andExpect(cookie().doesNotExist("SESSION"))
+            .andExpect(cookie().doesNotExist("XSRF-TOKEN"));
+    }
+
+    private Cookie sessionOf(User user) throws Exception {
+        String xsrf = mvc.perform(get("/api/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN").getValue();
+        return mvc.perform(post("/api/auth/login")
+                .cookie(new Cookie("XSRF-TOKEN", xsrf))
+                .header("X-XSRF-TOKEN", xsrf)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"%s\",\"password\":\"secret\"}".formatted(user.login())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getCookie("SESSION");
     }
 
     private User user(PlatformRole role) {

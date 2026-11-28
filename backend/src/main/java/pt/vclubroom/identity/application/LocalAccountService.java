@@ -1,5 +1,6 @@
 package pt.vclubroom.identity.application;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ public class LocalAccountService {
     /** Like 42 logins: lowercase letters, digits, dots, dashes and underscores, 3 to 30 characters. */
     private static final Pattern LOGIN = Pattern.compile("[a-z0-9][a-z0-9._-]{2,29}");
     static final int MIN_PASSWORD = 10;
+    static final int MAX_PASSWORD_BYTES = 72;                                  // all bcrypt reads; it refuses more
 
     public record NewLocalAccount(String login, String displayName, String email, String temporaryPassword, boolean admin) { }
 
@@ -135,6 +137,10 @@ public class LocalAccountService {
     private String encode(String password) {
         if (password == null || password.length() < MIN_PASSWORD) {
             throw new InvalidRequestException("WEAK_PASSWORD", "Passwords need at least " + MIN_PASSWORD + " characters.");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+            throw new InvalidRequestException("PASSWORD_TOO_LONG",
+                "Passwords can be at most " + MAX_PASSWORD_BYTES + " bytes: about 72 letters, fewer with accents or emoji.");
         }
         return passwordEncoder.encode(password);
     }

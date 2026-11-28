@@ -4,6 +4,7 @@ import { useMe } from "@/features/auth";
 import { useMyMembership } from "@/features/membership";
 import { ApiError } from "@/shared/api/errors";
 import { formatDate } from "@/shared/lib/dates";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { ClubAvatar } from "@/shared/ui/ClubAvatar";
@@ -17,6 +18,7 @@ import { type PublicClub, usePublicClub } from "./api";
 export function PublicClubProfilePage() {
   const { slug = "" } = useParams();
   const { data: club, error, isPending } = usePublicClub(slug);
+  usePageTitle(club?.name);
 
   if (isPending) return <FullPageSpinner />;
   if (error) {
