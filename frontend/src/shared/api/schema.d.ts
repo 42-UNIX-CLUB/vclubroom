@@ -385,6 +385,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine_3"];
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/apps/{appId}/secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["newSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/{eventId}/cancel": {
         parameters: {
             query?: never;
@@ -862,6 +894,22 @@ export interface paths {
         patch: operations["edit_1"];
         trace?: never;
     };
+    "/api/me/apps/{appId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch: operations["update_1"];
+        trace?: never;
+    };
     "/api/events/{eventId}": {
         parameters: {
             query?: never;
@@ -891,7 +939,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** @description Token scope: `forum:write`. */
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         /** @description Token scope: `forum:write`. */
@@ -912,28 +960,10 @@ export interface paths {
         options?: never;
         head?: never;
         /** @description Token scope: `clubs:write`. */
-        patch: operations["update_1"];
-        trace?: never;
-    };
-    "/api/clubs/{clubId}/roles/{roleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** @description Token scope: `clubs:write`. */
-        delete: operations["delete_3"];
-        options?: never;
-        head?: never;
-        /** @description Token scope: `clubs:write`. */
         patch: operations["update_2"];
         trace?: never;
     };
-    "/api/clubs/{clubId}/groups/{groupId}": {
+    "/api/clubs/{clubId}/roles/{roleId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -951,6 +981,24 @@ export interface paths {
         patch: operations["update_3"];
         trace?: never;
     };
+    "/api/clubs/{clubId}/groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Token scope: `clubs:write`. */
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        /** @description Token scope: `clubs:write`. */
+        patch: operations["update_4"];
+        trace?: never;
+    };
     "/api/channels/{channelId}": {
         parameters: {
             query?: never;
@@ -966,7 +1014,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** @description Token scope: `clubs:write`. */
-        patch: operations["update_4"];
+        patch: operations["update_5"];
         trace?: never;
     };
     "/api/admin/users/{userId}": {
@@ -982,7 +1030,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_5"];
+        patch: operations["update_6"];
         trace?: never;
     };
     "/api/admin/campus-groups/{groupId}": {
@@ -995,10 +1043,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
-        patch: operations["update_6"];
+        patch: operations["update_7"];
         trace?: never;
     };
     "/ical/feeds/{token}.ics": {
@@ -1933,6 +1981,28 @@ export interface components {
             url?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        AppRequest: {
+            name?: string;
+            description?: string;
+            homepageUrl?: string;
+            redirectUris?: string[];
+            confidential?: boolean;
+        };
+        AppView: {
+            id?: string;
+            clientId?: string;
+            name?: string;
+            description?: string;
+            homepageUrl?: string;
+            redirectUris?: string[];
+            confidential?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        RegisteredApp: {
+            app?: components["schemas"]["AppView"];
+            clientSecret?: string;
         };
         CancelEventRequest: {
             reason?: string;
@@ -3411,6 +3481,72 @@ export interface operations {
             };
         };
     };
+    mine_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppView"][];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegisteredApp"];
+                };
+            };
+        };
+    };
+    newSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegisteredApp"];
+                };
+            };
+        };
+    };
     cancel: {
         parameters: {
             query?: never;
@@ -4372,6 +4508,52 @@ export interface operations {
             };
         };
     };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppView"];
+                };
+            };
+        };
+    };
     get_1: {
         parameters: {
             query?: never;
@@ -4420,7 +4602,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4466,7 +4648,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4492,7 +4674,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4513,7 +4695,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4540,7 +4722,7 @@ export interface operations {
             };
         };
     };
-    delete_4: {
+    delete_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4561,7 +4743,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4610,7 +4792,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4634,7 +4816,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4660,7 +4842,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4680,7 +4862,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;

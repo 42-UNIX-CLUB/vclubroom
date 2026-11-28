@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { PasswordForm, useMe } from "@/features/auth";
 import { CalendarFeedPanel } from "@/features/calendar";
-import { TokensPanel } from "@/features/developer";
+import { AppsPanel, TokensPanel } from "@/features/developer";
 import { PreferencesForm } from "@/features/notifications";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
@@ -34,6 +34,10 @@ export function SettingsPage() {
         <section id="tokens" aria-labelledby="tokens-heading" className="space-y-3">
           <h2 id="tokens-heading" className="text-lg font-semibold">Developer tokens</h2>
           <TokensPanel />
+        </section>
+        <section id="apps" aria-labelledby="apps-heading" className="space-y-3">
+          <h2 id="apps-heading" className="text-lg font-semibold">Your apps</h2>
+          <AppsPanel />
         </section>
         {me?.provider === "LOCAL" && (
           <section aria-labelledby="password-heading" className="space-y-3">
