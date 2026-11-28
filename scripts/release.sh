@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Tags the next release (E19-S03). The version follows SemVer from the Conventional Commits since the last release
 # (cliff.toml): feat → minor, fix or perf → patch, ! or BREAKING CHANGE → major; other types alone release nothing.
-# Afterwards: deploy (the changelog page shows the release), then close its milestone in Forgejo, so linked tickets
-# say "Released in …".
+# Pushing the tag starts the Release images workflow (E22-S02). Once it's finished, deploy that version on the server
+# with deploy/deploy.sh <version> (the changelog page then shows the release), and close its milestone in Forgejo, so
+# linked tickets say "Released in …". A bare deploy/deploy.sh would build main instead of the release.
 # Run in your clone, on main as it is on GitHub:   scripts/release.sh   (it shows what's in it and asks first)
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -21,4 +22,8 @@ read -rp "Tag $next on $(git rev-parse --short HEAD) and push it? [y/N] " answer
 [ "$answer" = y ] || { echo "Nothing done."; exit 0; }
 git tag -a "$next" -m "Virtual Clubroom $next"
 git push origin "$next"
-echo "Tagged $next. Now deploy (deploy/deploy.sh on the server), then close the $next milestone in Forgejo."
+major_note=""
+[ "${next%%.*}" = "${last%%.*}" ] || major_note=" --major (a new major version: only after its review)"
+echo "Tagged $next: the Release images workflow is building it (GitHub › Actions)."
+echo "Once it's finished, on the server: deploy/deploy.sh $next$major_note"
+echo "Then close the $next milestone in Forgejo."
