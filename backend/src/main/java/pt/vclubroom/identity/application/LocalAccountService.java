@@ -40,14 +40,16 @@ public class LocalAccountService {
     private final PasswordEncoder passwordEncoder;
     private final SessionRevocationService sessions;
     private final AccessTokenService tokens;
+    private final AuthorizedAppService authorizedApps;
     private final Clock clock;
 
     LocalAccountService(UserRepository users, PasswordEncoder passwordEncoder, SessionRevocationService sessions,
-                        AccessTokenService tokens, Clock clock) {
+                        AccessTokenService tokens, AuthorizedAppService authorizedApps, Clock clock) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;
         this.tokens = tokens;
+        this.authorizedApps = authorizedApps;
         this.clock = clock;
     }
 
@@ -97,6 +99,7 @@ public class LocalAccountService {
         }
         if (status == UserStatus.DISABLED) {
             tokens.revokeAll(userId);                       // and their scripts stop too (E20-S02)
+            authorizedApps.revokeAll(userId);               // and the apps they let in (E20-S05)
         }
         return view(user);
     }

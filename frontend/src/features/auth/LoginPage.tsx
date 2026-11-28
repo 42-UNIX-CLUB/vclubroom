@@ -6,6 +6,7 @@ import { Navigate, useSearchParams } from "react-router";
 import { z } from "zod";
 import { api } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
+import { loadPage } from "@/shared/lib/loadPage";
 import { safeReturnTo } from "@/shared/lib/safeReturnTo";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -13,13 +14,19 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
 import { FullPageSpinner } from "@/shared/ui/FullPageSpinner";
 import { Input } from "@/shared/ui/input";
 import { Separator } from "@/shared/ui/separator";
-import { rememberReturnTo, takeReturnTo } from "./returnTo";
+import { rememberReturnTo, resumesOnServer, takeReturnTo } from "./returnTo";
 import { useMe } from "./useMe";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, "Enter your username."),
   password: z.string().min(1, "Enter your password."),
 });
+
+/** Back to signing in to an app (E20-S05): the backend's page. */
+function ResumeOnServer({ to }: { to: string }) {
+  useEffect(() => loadPage(to, { replace: true }), [to]);
+  return <FullPageSpinner />;
+}
 
 export function LoginPage() {
   const { data: me, isPending } = useMe();
@@ -33,7 +40,7 @@ export function LoginPage() {
 
   if (isPending) return <FullPageSpinner />;
   // Logged in already, or just now through the form below (it puts the user in the ["me"] cache).
-  if (me) return <Navigate to={returnTo} replace />;
+  if (me) return resumesOnServer(returnTo) ? <ResumeOnServer to={returnTo} /> : <Navigate to={returnTo} replace />;
 
   function loginWith42() {
     rememberReturnTo(returnTo);   // the backend always returns to "/", PostLoginRedirect resumes from there

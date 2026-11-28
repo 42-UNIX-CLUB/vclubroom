@@ -4,18 +4,20 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
+import { loadPage } from "@/shared/lib/loadPage";
 import { LoginPage } from "./LoginPage";
 
 vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), POST: vi.fn() } }));
+vi.mock("@/shared/lib/loadPage", () => ({ loadPage: vi.fn() }));
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-function renderLogin(path = "/login") {
+function renderLogin(path = "/login", me: object | null = null) {
   const queryClient = new QueryClient();
-  queryClient.setQueryData(["me"], null);   // logged out
+  queryClient.setQueryData(["me"], me);     // null: logged out
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
@@ -35,6 +37,13 @@ function submit(username: string, password: string) {
 }
 
 describe("LoginPage", () => {
+  it("sends someone signing in to an app back to it with a full page load (E20-S05)", () => {
+    const authorize = "/oauth2/authorize?response_type=code&client_id=vcr_app_x&scope=forum%3Aread";
+    renderLogin(`/login?returnTo=${encodeURIComponent(authorize)}`, { id: "u-1", login: "ada" });
+
+    expect(loadPage).toHaveBeenCalledWith(authorize, { replace: true });
+  });
+
   it("validates the form before calling the API", async () => {
     renderLogin();
     fireEvent.click(screen.getByRole("button", { name: "Log in with password" }));

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { PasswordForm, useMe } from "@/features/auth";
 import { CalendarFeedPanel } from "@/features/calendar";
-import { AppsPanel, TokensPanel } from "@/features/developer";
+import { AppsPanel, AuthorizedAppsPanel, TokensPanel } from "@/features/developer";
 import { PreferencesForm } from "@/features/notifications";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
@@ -30,6 +30,10 @@ export function SettingsPage() {
         <section aria-labelledby="calendar-heading" className="space-y-3">
           <h2 id="calendar-heading" className="text-lg font-semibold">Calendar app</h2>
           <CalendarFeedPanel />
+        </section>
+        <section id="authorized-apps" aria-labelledby="authorized-apps-heading" className="space-y-3">
+          <h2 id="authorized-apps-heading" className="text-lg font-semibold">Authorized apps</h2>
+          <AuthorizedAppsPanel />
         </section>
         <section id="tokens" aria-labelledby="tokens-heading" className="space-y-3">
           <h2 id="tokens-heading" className="text-lg font-semibold">Developer tokens</h2>

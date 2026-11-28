@@ -39,3 +39,11 @@ export function describeScopes(scopes: readonly string[]): string {
     return kinds.length ? [`${area.label}: ${kinds.join(", ")}`] : [];
   }).join(" · ");
 }
+
+/** "forum:write" → its area and what it allows, for the consent page and authorized apps (E20-S05). */
+export function describeScope(scope: string): { area: string; description: string; access: string } | null {
+  const [id, kind] = scope.split(":");
+  const area = AREAS.find((a) => a.id === id);
+  if (!area || (kind !== "read" && kind !== "write")) return null;
+  return { area: area.label, description: area.description, access: kind === "read" ? "read" : "create, change and delete" };
+}

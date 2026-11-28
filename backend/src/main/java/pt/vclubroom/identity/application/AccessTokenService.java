@@ -25,7 +25,7 @@ import pt.vclubroom.shared.security.ApiScopes;
 
 /** Personal access tokens (E20): who a token belongs to and what it may do; creating, listing and revoking them. */
 @Service
-public class AccessTokenService {
+public class AccessTokenService implements BearerTokens {
 
     /** Active (neither revoked nor expired) tokens per person, like 42's intra keeps its apps few (D-51). */
     public static final int MAX_ACTIVE = 5;
@@ -46,6 +46,7 @@ public class AccessTokenService {
     }
 
     /** The token's owner and scopes, when it is valid now: neither revoked nor expired, and its owner active. */
+    @Override
     @Transactional
     public Optional<AuthenticatedToken> authenticate(String rawToken) {
         if (rawToken == null || !rawToken.startsWith(PersonalAccessToken.PREFIX)) {

@@ -81,3 +81,55 @@ export function useDeleteApp() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: appKeys.mine }),
   });
 }
+
+export type ConsentRequest = components["schemas"]["ConsentRequestView"];
+export type AuthorizedApp = components["schemas"]["AuthorizedAppView"];
+
+/** What the consent page shows about an app asking to be let in (E20-S05). */
+export function useConsentRequest(clientId: string, scope: string) {
+  return useQuery({
+    queryKey: ["oauth-consent", clientId, scope],
+    queryFn: async () =>
+      (await api.GET("/api/oauth/consent", { params: { query: { client_id: clientId, scope } } })).data as ConsentRequest,
+    enabled: clientId !== "",
+    retry: false,
+  });
+}
+
+/**
+ * Answers the authorization server as a consent form would, but with fetch: a form couldn't follow its redirect to the
+ * app (the CSP's form-action). It answers {redirectUri}: back to the app with a code, or access_denied when nothing
+ * is allowed.
+ */
+export async function answerConsent(clientId: string, state: string, scopes: string[]): Promise<string> {
+  const body = new URLSearchParams({ client_id: clientId, state });
+  for (const scope of scopes) body.append("scope", scope);
+  const response = await fetch("/oauth2/authorize", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { Accept: "application/json" },
+    body,
+  });
+  if (!response.ok) throw new Error("This request has expired: go back to the app and sign in again.");
+  return ((await response.json()) as { redirectUri: string }).redirectUri;
+}
+
+/** The apps I let in (E20-S05). */
+const authorizedKeys = { mine: ["authorized-apps"] as const };
+
+export function useAuthorizedApps() {
+  return useQuery({
+    queryKey: authorizedKeys.mine,
+    queryFn: async () => (await api.GET("/api/me/authorized-apps")).data ?? [],
+  });
+}
+
+export function useRevokeAuthorizedApp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (appId: string) => {
+      await api.DELETE("/api/me/authorized-apps/{appId}", { params: { path: { appId } } });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authorizedKeys.mine }),
+  });
+}

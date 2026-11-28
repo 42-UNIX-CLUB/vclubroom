@@ -26,7 +26,7 @@ class EveryEndpointHasAScopeIntegrationTests {
 
     /** The endpoints tokens must not reach. */
     private static final Set<String> NOT_FOR_TOKENS_PREFIXES = Set.of("/api/admin/", "/api/auth/", "/api/me/password",
-        "/api/me/tokens", "/api/me/apps", "/api/me/authorized-apps");
+        "/api/me/tokens", "/api/me/apps", "/api/me/authorized-apps", "/api/oauth/");
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")

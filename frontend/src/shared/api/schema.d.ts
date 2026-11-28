@@ -1246,6 +1246,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/oauth/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications": {
         parameters: {
             query?: never;
@@ -1348,6 +1364,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/authorized-apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/{eventId}/attendees": {
         parameters: {
             query?: never;
@@ -1441,7 +1473,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Token scope: `clubs:read`. */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1475,7 +1507,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Token scope: `clubs:read`. */
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1543,7 +1575,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Token scope: `clubs:read`. */
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1624,7 +1656,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1677,6 +1709,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revoke_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/authorized-apps/{appId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revoke_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2488,6 +2536,15 @@ export interface components {
             label?: string;
             description?: string;
         };
+        ConsentRequestView: {
+            clientId?: string;
+            name?: string;
+            description?: string;
+            homepageUrl?: string;
+            ownerName?: string;
+            scopes?: string[];
+            granted?: string[];
+        };
         CursorPageNotificationView: {
             items?: components["schemas"]["NotificationView"][];
             nextCursor?: string;
@@ -2535,6 +2592,12 @@ export interface components {
             name?: string;
             color?: string;
             system?: boolean;
+        };
+        AuthorizedAppView: {
+            appId?: string;
+            name?: string;
+            homepageUrl?: string;
+            scopes?: string[];
         };
         AttendeeView: {
             user?: components["schemas"]["UserSummary"];
@@ -5147,6 +5210,29 @@ export interface operations {
             };
         };
     };
+    consent: {
+        parameters: {
+            query: {
+                client_id: string;
+                scope?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConsentRequestView"];
+                };
+            };
+        };
+    };
     inbox: {
         parameters: {
             query?: {
@@ -5273,6 +5359,26 @@ export interface operations {
             };
         };
     };
+    list_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthorizedAppView"][];
+                };
+            };
+        };
+    };
     attendees: {
         parameters: {
             query?: {
@@ -5388,7 +5494,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 query?: string;
@@ -5437,7 +5543,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -5532,7 +5638,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -5638,7 +5744,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 status?: "PENDING_APPROVAL" | "ACTIVE" | "REJECTED" | "ARCHIVED";
@@ -5710,6 +5816,26 @@ export interface operations {
             header?: never;
             path: {
                 tokenId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revoke_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
             };
             cookie?: never;
         };
