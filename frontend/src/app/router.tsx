@@ -24,6 +24,7 @@ export const routes: RouteObject[] = [
           { path: "clubs", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.ClubDirectoryPage })) },
           { path: "clubs/:slug/about", lazy: () => import("@/features/discovery").then((m) => ({ Component: m.PublicClubProfilePage })) },
           { path: "login", element: <LoginPage /> },
+          { path: "status", lazy: () => import("@/features/platform").then((m) => ({ Component: m.StatusPage })) },
 
           // Logged-in users
           {

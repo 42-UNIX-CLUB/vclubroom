@@ -996,6 +996,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/landing": {
         parameters: {
             query?: never;
@@ -2107,6 +2123,19 @@ export interface components {
         ReactionOption: {
             code?: string;
             emoji?: string;
+        };
+        PublicStatus: {
+            /** @enum {string} */
+            status?: "OPERATIONAL" | "DEGRADED" | "DOWN";
+            services?: components["schemas"]["ServiceStatus"][];
+            /** Format: date-time */
+            checkedAt?: string;
+        };
+        ServiceStatus: {
+            id?: string;
+            name?: string;
+            /** @enum {string} */
+            status?: "OPERATIONAL" | "DEGRADED" | "DOWN";
         };
         CategoryCount: {
             name?: string;
@@ -4532,6 +4561,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReactionOption"][];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicStatus"];
                 };
             };
         };
