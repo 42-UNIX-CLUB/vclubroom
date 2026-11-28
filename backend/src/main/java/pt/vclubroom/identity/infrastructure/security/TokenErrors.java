@@ -11,7 +11,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 
-/** The errors of token requests: problem details like the rest of the API, with RFC 6750's WWW-Authenticate. */
+/** The errors of token and rate-limited requests: problem details like the rest of the API, with RFC 6750's WWW-Authenticate. */
 final class TokenErrors {
 
     private final ObjectMapper json;
@@ -40,6 +40,11 @@ final class TokenErrors {
         ProblemDetail problem = problem(HttpStatus.FORBIDDEN, "INSUFFICIENT_SCOPE", "This token lacks the scope " + scope + ".");
         problem.setProperty("scope", scope);
         write(response, problem);
+    }
+
+    void tooManyRequests(HttpServletResponse response, long retryAfterSeconds) throws IOException {
+        write(response, problem(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
+            "Too many requests. Try again in " + retryAfterSeconds + " s."));
     }
 
     private static ProblemDetail problem(HttpStatus status, String code, String detail) {

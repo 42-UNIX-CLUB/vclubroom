@@ -2624,6 +2624,8 @@ export interface components {
             outbox?: components["schemas"]["ListenerBacklog"][];
             emails?: components["schemas"]["EmailBacklog"];
             tickets?: components["schemas"]["TrackerBacklog"];
+            /** Format: int64 */
+            refusedApiRequests?: number;
             /** Format: date-time */
             measuredAt?: string;
         };

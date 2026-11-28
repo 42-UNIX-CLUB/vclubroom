@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pt.vclubroom.shared.security.ApiArea;
 import pt.vclubroom.shared.security.ApiScopes;
+import pt.vclubroom.shared.security.RateLimitProperties;
+import pt.vclubroom.shared.security.RateLimitProperties.Limit;
 
 /** The API's documentation (/v3/api-docs, /swagger-ui.html): public in production, without the admin endpoints (E19-S01). */
 @Configuration
@@ -30,9 +32,9 @@ class OpenApiConfig {
         `:write` for changes.""";
 
     @Bean
-    OpenAPI clubroomOpenApi() {
+    OpenAPI clubroomOpenApi(RateLimitProperties limits) {
         return new OpenAPI()
-            .info(new Info().title("Virtual Clubroom API").description(DESCRIPTION).version("v1"))
+            .info(new Info().title("Virtual Clubroom API").description(DESCRIPTION + "\n\n" + rateLimits(limits)).version("v1"))
             .components(new Components()
                 .addSecuritySchemes("session", new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE)
                     .name("SESSION").description("Set by logging in to the app"))
@@ -43,6 +45,19 @@ class OpenApiConfig {
                         + Arrays.stream(ApiArea.values())
                             .map(a -> "- `" + a.read() + "`, `" + a.write() + "`: " + a.description())
                             .collect(Collectors.joining("\n")))));
+    }
+
+    /** The limits of E20-S03, from the configuration they are applied with. */
+    private static String rateLimits(RateLimitProperties limits) {
+        return "**Rate limits.** Each token may make " + bucket(limits.token()) + "; its changes (POST, PUT, PATCH, DELETE) "
+            + bucket(limits.tokenWrites()) + "; all the tokens of one person together " + bucket(limits.user())
+            + ". Without logging in, `/api/public` allows " + bucket(limits.anonymous()) + " per IP. Limited responses say "
+            + "where you stand: `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` (seconds until full). Past a "
+            + "limit: `429`, code `RATE_LIMITED`, and `Retry-After` in seconds. Browser sessions aren't limited this way.";
+    }
+
+    private static String bucket(Limit limit) {
+        return limit.burst() + " requests at once, refilled at " + limit.perHour() + " an hour";
     }
 
     /** Each operation: the session (and CSRF for changes), or a token with the scope its path needs (E20-S01). */

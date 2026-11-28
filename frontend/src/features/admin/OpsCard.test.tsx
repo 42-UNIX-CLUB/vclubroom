@@ -28,15 +28,17 @@ describe("OpsCard", () => {
     expect(screen.getByText("12 sent in the last day · 1 waiting · 0 retrying")).toBeTruthy();
     expect(screen.getByText(/The tracker has every ticket\./)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Open the tracker" }).getAttribute("href")).toBe("https://tickets.example/");
+    expect(screen.getByText("No request refused by the rate limits in the last hour.")).toBeTruthy();
   });
 
   it("names stuck listeners and failed emails with the last error", async () => {
     renderCard({ outbox: [{ listener: "SpaceProvisioner.on", eventType: "ClubApproved", count: 3, oldest: minutesAgo(30) }],
-      emails: { waiting: 0, retrying: 2, failed: 1, sentLastDay: 0, lastError: "SMTP delivery failed: 535 auth" }, measuredAt: minutesAgo(0) });
+      emails: { waiting: 0, retrying: 2, failed: 1, sentLastDay: 0, lastError: "SMTP delivery failed: 535 auth" }, refusedApiRequests: 42, measuredAt: minutesAgo(0) });
     expect(await screen.findByText("Something is late: see below.", {}, { timeout: 3000 })).toBeTruthy();
     expect(within(screen.getByRole("list", { name: "Stuck listeners" })).getByText(/SpaceProvisioner.on \(ClubApproved\): 3/)).toBeTruthy();
     expect(screen.getByText("1 given up after 5 attempts.")).toBeTruthy();
     expect(screen.getByText("Last error: SMTP delivery failed: 535 auth")).toBeTruthy();
+    expect(screen.getByText("42 requests refused by the rate limits in the last hour.")).toBeTruthy();
   });
 
   it("says when the tracker is out of reach", async () => {

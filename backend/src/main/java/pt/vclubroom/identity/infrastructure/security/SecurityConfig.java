@@ -20,6 +20,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -32,6 +33,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import pt.vclubroom.identity.application.AccessTokenService;
+import pt.vclubroom.shared.security.RateLimitProperties;
 
 @Configuration
 @EnableWebSecurity
@@ -72,7 +74,8 @@ class SecurityConfig {
     /** Token requests, before the session chain: each needs the scope of its path (shared.security.ApiScopes). */
     @Bean
     @Order(1)
-    SecurityFilterChain tokenFilterChain(HttpSecurity http, AccessTokenService tokens, ObjectMapper json) throws Exception {
+    SecurityFilterChain tokenFilterChain(HttpSecurity http, AccessTokenService tokens, RateLimiter limiter,
+                                         RateLimitProperties limits, ObjectMapper json) throws Exception {
         TokenErrors errors = new TokenErrors(json);
         http
             .securityMatcher(TOKEN_API)
@@ -80,6 +83,7 @@ class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .anyRequest().access(new ScopeAuthorizationManager()))
             .addFilterBefore(new BearerTokenFilter(tokens, errors), AuthorizationFilter.class)
+            .addFilterAfter(RateLimitFilter.forTokens(limiter, errors, limits), BearerTokenFilter.class)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .securityContext(ctx -> ctx.securityContextRepository(new RequestAttributeSecurityContextRepository()))
             .requestCache(cache -> cache.requestCache(new NullRequestCache()))
@@ -102,7 +106,8 @@ class SecurityConfig {
         cors.setAllowedOriginPatterns(List.of("*"));
         cors.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"));
         cors.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
-        cors.setExposedHeaders(List.of(HttpHeaders.LOCATION, HttpHeaders.WWW_AUTHENTICATE));
+        cors.setExposedHeaders(List.of(HttpHeaders.LOCATION, HttpHeaders.WWW_AUTHENTICATE, HttpHeaders.RETRY_AFTER,
+            "RateLimit-Limit", "RateLimit-Remaining", "RateLimit-Reset"));
         cors.setAllowCredentials(false);
         cors.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -114,8 +119,10 @@ class SecurityConfig {
     @Order(2)
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             FortyTwoOAuth2UserService fortyTwoUserService,
-                                            SecurityContextRepository securityContextRepository) throws Exception {
+                                            SecurityContextRepository securityContextRepository,
+                                            RateLimiter limiter, RateLimitProperties limits, ObjectMapper json) throws Exception {
         http
+            .addFilterAfter(RateLimitFilter.forAnonymous(limiter, new TokenErrors(json), limits), AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**", "/api/auth/login", "/api/auth/csrf").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()

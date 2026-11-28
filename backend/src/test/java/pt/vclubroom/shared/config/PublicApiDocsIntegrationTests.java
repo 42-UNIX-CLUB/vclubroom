@@ -37,6 +37,7 @@ class PublicApiDocsIntegrationTests {
         assertThat(JsonPath.<Map<String, Object>>read(docs, "$.components.securitySchemes")).containsKeys("session", "csrf", "bearer");
         assertThat(JsonPath.<List<String>>read(docs, "$.paths['/api/me'].get.security[1].bearer")).containsExactly("profile:read");
         assertThat(JsonPath.<String>read(docs, "$.paths['/api/clubs'].post.description")).contains("Token scope: `clubs:write`.");
+        assertThat(JsonPath.<String>read(docs, "$.info.description")).contains("60 requests at once, refilled at 1000 an hour", "RATE_LIMITED");
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pt.vclubroom.identity.api.ApiThrottling;
 import pt.vclubroom.notification.api.EmailOutbox;
 import pt.vclubroom.support.api.TrackerQueue;
 
@@ -19,12 +20,14 @@ public class OpsService {
     private final JdbcTemplate jdbc;
     private final EmailOutbox emails;
     private final TrackerQueue tickets;
+    private final ApiThrottling throttling;
     private final Clock clock;
 
-    OpsService(JdbcTemplate jdbc, EmailOutbox emails, TrackerQueue tickets, Clock clock) {
+    OpsService(JdbcTemplate jdbc, EmailOutbox emails, TrackerQueue tickets, ApiThrottling throttling, Clock clock) {
         this.jdbc = jdbc;
         this.emails = emails;
         this.tickets = tickets;
+        this.throttling = throttling;
         this.clock = clock;
     }
 
@@ -36,7 +39,7 @@ public class OpsService {
             group by listener_id, event_type order by oldest
             """, (rs, row) -> new ListenerBacklog(shortName(rs.getString("listener_id")), shortName(rs.getString("event_type")),
             rs.getLong("pending"), rs.getTimestamp("oldest").toInstant()));
-        return new OpsReport(outbox, emails.backlog(), tickets.backlog(), clock.instant());
+        return new OpsReport(outbox, emails.backlog(), tickets.backlog(), throttling.refusedLastHour(), clock.instant());
     }
 
     /** "pt.vclubroom.notification.application.ForumNotificationListener.on(pt.vclubroom…PostPublished)" → "ForumNotificationListener.on". */
