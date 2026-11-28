@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { PostLoginRedirect, UserMenu, useMe } from "@/features/auth";
 import { OwnershipInvitations } from "@/features/membership";
@@ -13,6 +14,7 @@ export function AppLayout() {
   const loginLink = location.pathname === "/login"
     ? "/login"
     : `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+  const announcement = useRouteAnnouncement(location.pathname);
 
   return (
     <RealtimeProvider enabled={!!me}>
@@ -41,6 +43,8 @@ export function AppLayout() {
             </div>
           </div>
         </header>
+        {/* A single-page app doesn't load pages: screen readers hear the new page's title instead (WCAG 4.1.3). */}
+        <p aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</p>
         <main className="mx-auto max-w-6xl px-4 py-8">
           {me && <OwnershipInvitations />}
           <Outlet />
@@ -48,4 +52,19 @@ export function AppLayout() {
       </div>
     </RealtimeProvider>
   );
+}
+
+/** The page title after each navigation (not the first page): pages set it as they render (usePageTitle). */
+function useRouteAnnouncement(pathname: string) {
+  const [announcement, setAnnouncement] = useState("");
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const id = setTimeout(() => setAnnouncement(document.title), 300);   // after a page's data names it
+    return () => clearTimeout(id);
+  }, [pathname]);
+  return announcement;
 }
