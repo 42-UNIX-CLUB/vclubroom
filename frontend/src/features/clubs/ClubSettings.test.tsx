@@ -51,6 +51,7 @@ describe("club settings", () => {
 
     expect(await screen.findByRole("heading", { name: "Profile tab" }, { timeout: 3000 })).toBeTruthy();   // cold workers are slow
     expect(router.state.location.pathname).toBe("/c/debate/settings/profile");
+    expect(screen.getByRole("heading", { name: "Club settings", level: 2 })).toBeTruthy();  // under the club's h1
     const tabs = screen.getByRole("navigation", { name: "Club settings" });
     expect(within(tabs).getAllByRole("link").map((link) => link.textContent)).toEqual(["Profile", "Join requests2", "Ownership"]);
     expect(await within(tabs).findByLabelText("2 pending")).toBeTruthy();

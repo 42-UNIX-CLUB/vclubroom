@@ -3,6 +3,10 @@ package pt.vclubroom.notification.application;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import pt.vclubroom.shared.error.NotFoundException;
+import pt.vclubroom.shared.security.Actor;
+import pt.vclubroom.space.api.SpaceAccessPolicy;
 import java.util.UUID;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
@@ -25,11 +29,13 @@ class CalendarNotificationListener {
     private static final Set<RsvpStatus> ANSWERED = Set.of(RsvpStatus.GOING, RsvpStatus.INTERESTED);
 
     private final SpaceAudience audience;
+    private final SpaceAccessPolicy spaceAccess;
     private final RsvpQuery rsvps;
     private final NotificationDispatcher dispatcher;
 
-    CalendarNotificationListener(SpaceAudience audience, RsvpQuery rsvps, NotificationDispatcher dispatcher) {
+    CalendarNotificationListener(SpaceAudience audience, SpaceAccessPolicy spaceAccess, RsvpQuery rsvps, NotificationDispatcher dispatcher) {
         this.audience = audience;
+        this.spaceAccess = spaceAccess;
         this.rsvps = rsvps;
         this.dispatcher = dispatcher;
     }
@@ -48,7 +54,7 @@ class CalendarNotificationListener {
     void on(EventUpdated e) {
         dispatcher.dispatch(new NotificationDraft(NotificationType.EVENT_UPDATED, e.title() + " changed",
             "Check the new time and place.", "/events/" + e.eventId(), Map.of("eventId", e.eventId(), "startsAt", e.startsAt().toString()),
-            "EVENT_UPDATED:" + e.eventId() + ":" + e.occurredAt()), rsvps.attendees(e.eventId(), ANSWERED));
+            "EVENT_UPDATED:" + e.eventId() + ":" + e.occurredAt()), answeredReaders(e.eventId(), e.spaceId()));
     }
 
     /** One per reminder and start time: an event moved after a reminder can remind again for its new time. */
@@ -57,13 +63,24 @@ class CalendarNotificationListener {
         String title = ("DAY_BEFORE".equals(e.kind()) ? "Tomorrow: " : "In an hour: ") + e.title();
         dispatcher.dispatch(new NotificationDraft(NotificationType.EVENT_REMINDER, title, null, "/events/" + e.eventId(),
             Map.of("eventId", e.eventId(), "startsAt", e.startsAt().toString()),
-            "EVENT_REMINDER:" + e.eventId() + ":" + e.kind() + ":" + e.startsAt()), rsvps.attendees(e.eventId(), ANSWERED));
+            "EVENT_REMINDER:" + e.eventId() + ":" + e.kind() + ":" + e.startsAt()), answeredReaders(e.eventId(), e.spaceId()));
     }
 
     @ApplicationModuleListener
     void on(EventCancelled e) {
         dispatcher.dispatch(new NotificationDraft(NotificationType.EVENT_CANCELLED, e.title() + " is cancelled",
                 e.reason(), "/events/" + e.eventId(), Map.of("eventId", e.eventId()), "EVENT_CANCELLED:" + e.eventId()),
-            rsvps.attendees(e.eventId(), ANSWERED));
+            e.spaceId() == null ? rsvps.attendees(e.eventId(), ANSWERED) : answeredReaders(e.eventId(), e.spaceId()));
+    }
+
+    /** Those who answered and can still read the event's space: someone who left or lost access hears no more. */
+    private Set<UUID> answeredReaders(UUID eventId, UUID spaceId) {
+        try {
+            return rsvps.attendees(eventId, ANSWERED).stream()
+                .filter(userId -> spaceAccess.forSpace(spaceId, new Actor(userId, false)).canRead())
+                .collect(Collectors.toSet());
+        } catch (NotFoundException e) {
+            return Set.of();                                                    // the space is gone
+        }
     }
 }

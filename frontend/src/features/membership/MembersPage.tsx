@@ -42,7 +42,7 @@ export function MembersPage() {
   }
   return (
     <>
-      <PageHeader title="Members" description={data ? `${total} ${total === 1 ? "member" : "members"}${query.trim() ? " found" : ""}` : undefined} />
+      <PageHeader level={2} title="Members" description={data ? `${total} ${total === 1 ? "member" : "members"}${query.trim() ? " found" : ""}` : undefined} />
       <Input type="search" aria-label="Search members" placeholder="Name or login…" className="mb-4 max-w-sm"
              value={text} onChange={(event) => setText(event.target.value)} />
       {isPending ? (
