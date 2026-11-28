@@ -1060,6 +1060,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/changelog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["changelog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/categories": {
         parameters: {
             query?: never;
@@ -2203,6 +2219,25 @@ export interface components {
             foundedAt?: string;
             /** Format: date-time */
             lastActivityAt?: string;
+        };
+        Change: {
+            scope?: string;
+            description?: string;
+            breaking?: boolean;
+        };
+        Changelog: {
+            current?: string;
+            releases?: components["schemas"]["Release"][];
+        };
+        Release: {
+            version?: string;
+            /** Format: date-time */
+            date?: string;
+            sections?: components["schemas"]["Section"][];
+        };
+        Section: {
+            title?: string;
+            changes?: components["schemas"]["Change"][];
         };
         CursorPageCommentResponse: {
             items?: components["schemas"]["CommentResponse"][];
@@ -4651,6 +4686,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubProfileResponse"];
+                };
+            };
+        };
+    };
+    changelog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Changelog"];
                 };
             };
         };

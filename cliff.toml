@@ -1,0 +1,27 @@
+# git-cliff (https://git-cliff.org): the changelog and the next version from Conventional Commits (E19-S03).
+# scripts/release.sh tags the next version; deploy/deploy.sh writes deploy/release-notes/changelog.json for the app.
+
+[changelog]
+body = ""                                  # the app renders the JSON (--context): no text template
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true               # "Merge pull request …" and other free-form messages stay out
+protect_breaking_commits = true            # a breaking change is listed even when its type isn't
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+"  # releases only: no other tag is a version
+sort_commits = "newest"
+commit_preprocessors = [
+  { pattern = "(?m) \\(#[0-9]+\\)$", replace = "" },   # GitHub's "(#12)" after a squash merge, on the title line
+  { pattern = "\\\\'", replace = "'" },                 # an apostrophe escaped for the shell: platform\'s
+]
+commit_parsers = [
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Fixes" },
+  { message = "^perf", group = "Performance" },
+  { message = ".*", skip = true },         # refactor, docs, test, build, ci, chore, style: nothing users notice
+]
+
+[bump]
+features_always_bump_minor = true          # feat → 1.x.0
+breaking_always_bump_major = true          # ! or BREAKING CHANGE → x.0.0
