@@ -45,6 +45,18 @@ afterEach(() => {
 });
 
 describe("Reactions", () => {
+  it("names codes with several underscores in full", async () => {
+    vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
+      data: path === "/api/reactions" ? [{ code: "face_with_tears", emoji: "😂" }]
+        : { items: [{ id: "p1", reactionCounts: { face_with_tears: 1 }, myReactions: [] }], nextCursor: null },
+    })) as never);
+    render(<QueryClientProvider client={new QueryClient()}><Harness /></QueryClientProvider>);
+
+    expect(await chip(/face with tears/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add a reaction" }));
+    expect(await screen.findByRole("menuitem", { name: "face with tears" })).toBeTruthy();
+  });
+
   it("shows the emoji used, in the set's order, with mine pressed", async () => {
     renderBar();
 

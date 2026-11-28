@@ -28,7 +28,7 @@ export function ClubSettingsLayout() {
   const pending = requests?.length ?? 0;
   return (
     <div className="space-y-6">
-      <PageHeader title="Club settings" />
+      <PageHeader level={2} title="Club settings" />
       <nav aria-label="Club settings" className="flex overflow-x-auto border-b">
         {tabs.map(({ path, label }) => (
           <NavLink key={path} to={path} className={tabClass}>

@@ -39,7 +39,7 @@ export function Reactions({ target, counts, mine, readOnly }: {
           )}
         >
           <span aria-hidden="true">{emoji}</span>
-          <span className="sr-only">{code.replace("_", " ")}</span>
+          <span className="sr-only">{code.replaceAll("_", " ")}</span>
           {counts?.[code]}
         </button>
       ))}
@@ -53,7 +53,7 @@ export function Reactions({ target, counts, mine, readOnly }: {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="flex w-auto min-w-0 gap-1 p-1">
             {options.map(({ code = "", emoji }) => (
-              <DropdownMenuItem key={code} aria-label={code.replace("_", " ")} className="justify-center px-2 text-lg"
+              <DropdownMenuItem key={code} aria-label={code.replaceAll("_", " ")} className="justify-center px-2 text-lg"
                 onClick={() => react(code)}>
                 {emoji}
               </DropdownMenuItem>

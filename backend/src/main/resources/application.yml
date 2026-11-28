@@ -177,6 +177,7 @@ app:
   realtime:
     allowed-origins: ${app.public-url}
     redis-channel: vclubroom:rt
+    access-recheck-interval: PT10S     # pushes stop at most this long after someone loses access
   rate-limits:                         # E20-S03 (R-44): a bucket of `burst` requests, refilled `per-hour` an hour
     token: { burst: 60, per-hour: 1000 }          # each token
     token-writes: { burst: 10, per-hour: 60 }     # each token's POST, PUT, PATCH and DELETE
