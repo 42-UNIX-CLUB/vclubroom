@@ -23,10 +23,13 @@ class WebSocketConfig extends AbstractSessionWebSocketMessageBrokerConfigurer<Se
 
     private final RealtimeProperties properties;
     private final SubscriptionAuthorizationInterceptor authorizationInterceptor;
+    private final LiveAccessInterceptor liveAccessInterceptor;
 
-    WebSocketConfig(RealtimeProperties properties, SubscriptionAuthorizationInterceptor authorizationInterceptor) {
+    WebSocketConfig(RealtimeProperties properties, SubscriptionAuthorizationInterceptor authorizationInterceptor,
+                    LiveAccessInterceptor liveAccessInterceptor) {
         this.properties = properties;
         this.authorizationInterceptor = authorizationInterceptor;
+        this.liveAccessInterceptor = liveAccessInterceptor;
     }
 
     @Override
@@ -47,6 +50,11 @@ class WebSocketConfig extends AbstractSessionWebSocketMessageBrokerConfigurer<Se
     public void configureClientInboundChannel(ChannelRegistration registration) {
         super.configureClientInboundChannel(registration);                 // Spring Session: frames refresh the session
         registration.interceptors(authorizationInterceptor);
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(liveAccessInterceptor);                // access lost after SUBSCRIBE stops the pushes
     }
 
     @Bean

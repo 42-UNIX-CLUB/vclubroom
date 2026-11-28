@@ -92,6 +92,13 @@ class DirectoryIntegrationTests {
     }
 
     @Test
+    void aHugePageNumberGivesAnEmptyPageNotAnError() throws Exception {
+        mvc.perform(get("/api/public/clubs").param("page", "200000000"))               // page × size used to overflow
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    @Test
     void archivedClubsOnlyOnRequest() throws Exception {
         mvc.perform(get("/api/public/clubs").param("q", suffix).param("status", "ARCHIVED"))
             .andExpect(jsonPath("$.totalElements").value(0));
