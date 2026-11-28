@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
 import { UsersPage } from "./UsersPage";
 
-vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), POST: vi.fn(), PATCH: vi.fn() } }));
+vi.mock("@/shared/api/client", () => ({ api: { GET: vi.fn(), POST: vi.fn(), PATCH: vi.fn(), DELETE: vi.fn() } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const users = [
@@ -20,6 +20,7 @@ function renderPage() {
   })) as never);
   vi.mocked(api.POST).mockResolvedValue({ data: { ...users[1], id: "u-new", login: "omar", displayName: "Omar" } } as never);
   vi.mocked(api.PATCH).mockResolvedValue({ data: users[1] } as never);
+  vi.mocked(api.DELETE).mockResolvedValue({} as never);
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><UsersPage /></MemoryRouter></QueryClientProvider>);
 }
 
@@ -75,6 +76,16 @@ describe("UsersPage", () => {
 
     await waitFor(() => expect(api.POST).toHaveBeenCalledWith("/api/admin/users",
       { body: { username: "omar", displayName: "Omar Staff", email: undefined, temporaryPassword: password, admin: false } }));
+  });
+
+  it("revokes someone's personal access tokens after confirming", async () => {
+    renderPage();
+    fireEvent.click(within(await row("Sam Student")).getByRole("button", { name: "Revoke tokens" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Revoke Sam Student's tokens?")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Revoke tokens" }));
+
+    await waitFor(() => expect(api.DELETE).toHaveBeenCalledWith("/api/admin/users/{userId}/tokens", { params: { path: { userId: "u-sam" } } }));
   });
 
   it("resets a local account's password", async () => {

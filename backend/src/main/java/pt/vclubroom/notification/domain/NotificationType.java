@@ -22,7 +22,8 @@ public enum NotificationType {
     SUPPORT_TICKET_RECEIVED(false, true),       // E17: about your own tickets, in support emails (EmailDispatchJob)
     SUPPORT_TICKET_REPLIED(true, true),
     SUPPORT_TICKET_UPDATED(true, false),
-    SUPPORT_TICKET_CLOSED(true, true);
+    SUPPORT_TICKET_CLOSED(true, true),
+    ACCESS_TOKEN_EXPIRING(true, true);          // E20: a personal access token expires within a week
 
     private final boolean defaultInApp;
     private final boolean defaultEmail;

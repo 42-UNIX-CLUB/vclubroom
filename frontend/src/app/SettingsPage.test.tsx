@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/shared/api/client";
 import { SettingsPage } from "./SettingsPage";
@@ -10,7 +11,7 @@ function renderPage(provider: "LOCAL" | "FORTY_TWO") {
   vi.mocked(api.GET).mockImplementation(((path: string) => Promise.resolve({
     data: path === "/api/me" ? { id: "u1", login: "nina", provider, admin: false } : [],
   })) as never);
-  render(<QueryClientProvider client={new QueryClient()}><SettingsPage /></QueryClientProvider>);
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><SettingsPage /></MemoryRouter></QueryClientProvider>);
 }
 
 afterEach(() => {
@@ -22,6 +23,7 @@ describe("SettingsPage", () => {
   it("offers a password change to local accounts only", async () => {
     renderPage("LOCAL");
     expect(await screen.findByRole("heading", { name: "Password" }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Developer tokens" })).toBeTruthy();     // everyone (E20-S02)
     cleanup();
 
     renderPage("FORTY_TWO");

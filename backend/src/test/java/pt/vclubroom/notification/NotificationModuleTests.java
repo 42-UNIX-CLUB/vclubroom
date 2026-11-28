@@ -21,6 +21,7 @@ import pt.vclubroom.TestcontainersConfiguration;
 import pt.vclubroom.calendar.api.RsvpQuery;
 import pt.vclubroom.club.api.ClubCatalog;
 import pt.vclubroom.forum.events.PostPublished;
+import pt.vclubroom.identity.events.AccessTokenExpiring;
 import pt.vclubroom.identity.api.UserDirectory;
 import pt.vclubroom.membership.api.ClubAuthorization;
 import pt.vclubroom.realtime.api.RealtimePublisher;
@@ -100,6 +101,22 @@ class NotificationModuleTests {
             .andWaitForStateChange(() -> rowsFor(ada), count -> count == 2);
         assertThat(jdbc.queryForObject("select email_requested from notification.notifications where recipient_id = ? and type = 'SUPPORT_TICKET_RECEIVED'",
             Boolean.class, ada)).isTrue();
+    }
+
+    @Test
+    void aTokenAboutToExpireIsToldToItsOwnerInTheAppAndByEmail(Scenario scenario) {
+        UUID ada = UUID.randomUUID();
+        UUID token = UUID.randomUUID();
+
+        scenario.publish(new AccessTokenExpiring(token, ada, "Backup script", Instant.parse("2026-11-06T10:00:00Z")))
+            .andWaitForStateChange(() -> rowsFor(ada), count -> count == 1);
+
+        assertThat(jdbc.queryForMap("select type, title, link, in_app, email_requested from notification.notifications where recipient_id = ?", ada))
+            .containsEntry("type", "ACCESS_TOKEN_EXPIRING")
+            .containsEntry("title", "Your token “Backup script” expires on 6 Nov 2026")
+            .containsEntry("link", "/settings#tokens")
+            .containsEntry("in_app", true)
+            .containsEntry("email_requested", true);
     }
 
     @Test
