@@ -116,7 +116,7 @@ class TrackerSyncJobTests {
         assertThat(issue.type()).isEqualTo(TicketType.BUG);
         assertThat(issue.retry()).isFalse();
         assertThat(issue.body())
-            .contains("**" + t.ref() + "** · Bug · sent from the app by **Ada Lovelace** (`alovelace`)")
+            .contains("**" + t.ref() + "** · Bug · sent from the app by `Ada Lovelace` (`alovelace`)")
             .contains("Page: https://clubroom.test/c/chess")
             .contains("Browser: `Firefox/140.0`")
             .contains("~~~~text\nSteps: ~~~ click ~~~\n~~~~\n")           // a longer fence than the text's
@@ -187,7 +187,7 @@ class TrackerSyncJobTests {
         ArgumentCaptor<ReporterReply> sent = ArgumentCaptor.forClass(ReporterReply.class);
         verify(tracker, times(2)).addReporterReply(eq(5), sent.capture());
         assertThat(sent.getAllValues()).extracting(ReporterReply::retry).containsExactly(false, true);
-        assertThat(sent.getValue().body()).startsWith("**Ada Lovelace** replied in the app:").contains("Firefox 140, on Linux");
+        assertThat(sent.getValue().body()).startsWith("`Ada Lovelace` replied in the app:").contains("Firefox 140, on Linux");
         assertThat(messages(t.number()).getFirst()).containsEntry("tracker_comment_id", 301L);
     }
 
@@ -199,7 +199,7 @@ class TrackerSyncJobTests {
             List.of(new TrackerChanges.Issue(5, TicketStatus.WAITING_ON_REPORTER, List.of()), new TrackerChanges.Issue(99, TicketStatus.RESOLVED, List.of())),
             List.of(new TrackerChanges.Comment(201, 5, false, "Reproduced on Firefox"),             // between the team
                 new TrackerChanges.Comment(202, 5, false, "/reply Which browser do you use?"),
-                new TrackerChanges.Comment(203, 5, true, "**Ada Lovelace** replied in the app: …"),  // the app's own copy
+                new TrackerChanges.Comment(203, 5, true, "`Ada Lovelace` replied in the app: …"),  // the app's own copy
                 new TrackerChanges.Comment(204, 99, false, "/reply On an issue that isn't a ticket")), List.of()));
 
         Instant before = Instant.now();

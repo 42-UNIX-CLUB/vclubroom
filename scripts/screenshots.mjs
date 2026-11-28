@@ -5,7 +5,7 @@
 //   BASE=https://42clubroom.ensui.dev CLUB=<slug> ADMIN_PASSWORD=<password> \
 //   JOINER=<login> JOINER_PASSWORD=<password> JOIN_CLUB=<slug of a club JOINER is not in> node scripts/screenshots.mjs
 //
-// Writes docs/media/{landing,club,posts,calendar,history,admin}.png, and docs/media/join-flow.gif when JOINER is set
+// Writes docs/assets/{landing,club,posts,calendar,history,admin}.png, and docs/assets/join-flow.gif when JOINER is set
 // (needs ffmpeg). Run it from the repository root. Uses Node's built-in WebSocket (Node 22+): no dependencies.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
@@ -17,7 +17,7 @@ const BASE = env("BASE", "http://localhost:5173");
 const CLUB = env("CLUB");
 const ADMIN = env("ADMIN", "admin");
 const ADMIN_PASSWORD = env("ADMIN_PASSWORD");
-const OUT = "docs/media";
+const OUT = "docs/assets";
 mkdirSync(OUT, { recursive: true });
 
 // --- a minimal DevTools-protocol driver ---

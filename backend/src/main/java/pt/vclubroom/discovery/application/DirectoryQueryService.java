@@ -20,6 +20,7 @@ public class DirectoryQueryService {
 
     private static final int LANDING_LIST_SIZE = 6;
     private static final int MAX_PAGE_SIZE = 50;
+    static final int MAX_PAGE = 10_000;                                  // page × size stays far from int overflow
 
     private final DiscoveryProperties properties;
     private final DirectorySearchRepository search;
@@ -38,7 +39,7 @@ public class DirectoryQueryService {
     public PageResponse<ClubCardRow> search(DirectoryQuery query) {
         int size = Math.clamp(query.size(), 1, MAX_PAGE_SIZE);
         return search.search(new Criteria(blankToNull(query.q()), blankToNull(query.category()), blankToNull(query.tag()),
-            query.status().statuses(), query.sort(), Math.max(query.page(), 0), size));
+            query.status().statuses(), query.sort(), Math.clamp(query.page(), 0, MAX_PAGE), size));
     }
 
     public Landing landing() {
