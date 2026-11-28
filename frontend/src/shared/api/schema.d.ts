@@ -996,6 +996,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/landing": {
         parameters: {
             query?: never;
@@ -1036,6 +1052,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["club_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/changelog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["changelog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2108,6 +2140,19 @@ export interface components {
             code?: string;
             emoji?: string;
         };
+        PublicStatus: {
+            /** @enum {string} */
+            status?: "OPERATIONAL" | "DEGRADED" | "DOWN";
+            services?: components["schemas"]["ServiceStatus"][];
+            /** Format: date-time */
+            checkedAt?: string;
+        };
+        ServiceStatus: {
+            id?: string;
+            name?: string;
+            /** @enum {string} */
+            status?: "OPERATIONAL" | "DEGRADED" | "DOWN";
+        };
         CategoryCount: {
             name?: string;
             /** Format: int64 */
@@ -2174,6 +2219,25 @@ export interface components {
             foundedAt?: string;
             /** Format: date-time */
             lastActivityAt?: string;
+        };
+        Change: {
+            scope?: string;
+            description?: string;
+            breaking?: boolean;
+        };
+        Changelog: {
+            current?: string;
+            releases?: components["schemas"]["Release"][];
+        };
+        Release: {
+            version?: string;
+            /** Format: date-time */
+            date?: string;
+            sections?: components["schemas"]["Section"][];
+        };
+        Section: {
+            title?: string;
+            changes?: components["schemas"]["Change"][];
         };
         CursorPageCommentResponse: {
             items?: components["schemas"]["CommentResponse"][];
@@ -4536,6 +4600,26 @@ export interface operations {
             };
         };
     };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicStatus"];
+                };
+            };
+        };
+    };
     landing: {
         parameters: {
             query?: never;
@@ -4602,6 +4686,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ClubProfileResponse"];
+                };
+            };
+        };
+    };
+    changelog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Changelog"];
                 };
             };
         };

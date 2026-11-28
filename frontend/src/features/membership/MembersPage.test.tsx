@@ -54,6 +54,7 @@ describe("MembersPage", () => {
     expect(within(list).getByText("Owner")).toBeTruthy();
     expect(within(list).queryByText("Member")).toBeNull();                          // everyone is one
     expect(screen.getByText("2 members")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Members", level: 2 })).toBeTruthy();      // under the club's h1
     expect(screen.queryByRole("button", { name: "Remove Ada Founder" })).toBeNull();
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove Bob Martins" }));

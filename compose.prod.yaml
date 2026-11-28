@@ -48,6 +48,9 @@ services:
       TICKETS_FORGEJO_URL: http://forgejo:3000
       TICKETS_FORGEJO_TOKEN: ${TICKETS_FORGEJO_TOKEN:-}
       TICKETS_PUBLIC_URL: ${TICKETS_PUBLIC_URL:-}
+      RELEASE_NOTES_FILE: /release-notes/changelog.json
+    volumes:
+      - ./deploy/release-notes:/release-notes:ro    # changelog.json, written by deploy/deploy.sh (E19-S03)
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

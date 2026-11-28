@@ -3,11 +3,12 @@ import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { PostLoginRedirect, UserMenu, useMe } from "@/features/auth";
 import { OwnershipInvitations } from "@/features/membership";
 import { NotificationBell } from "@/features/notifications";
+import { SiteFooter } from "@/features/platform";
 import { RealtimeProvider } from "@/shared/realtime/RealtimeProvider";
 import { buttonVariants } from "@/shared/ui/button";
 import { navLinkClass } from "./navLinkClass";
 
-/** Top bar + page area for every route; logged-in users also get the live connection. */
+/** Top bar, page area and footer for every route; logged-in users also get the live connection. */
 export function AppLayout() {
   const { data: me } = useMe();
   const location = useLocation();
@@ -18,7 +19,7 @@ export function AppLayout() {
 
   return (
     <RealtimeProvider enabled={!!me}>
-      <div className="min-h-svh bg-background">
+      <div className="flex min-h-svh flex-col bg-background">
         <PostLoginRedirect />
         <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-1 px-4 sm:gap-2">
@@ -45,10 +46,11 @@ export function AppLayout() {
         </header>
         {/* A single-page app doesn't load pages: screen readers hear the new page's title instead (WCAG 4.1.3). */}
         <p aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</p>
-        <main className="mx-auto max-w-6xl px-4 py-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
           {me && <OwnershipInvitations />}
           <Outlet />
         </main>
+        <SiteFooter />
       </div>
     </RealtimeProvider>
   );

@@ -129,9 +129,13 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+    csrf:
+      enabled: true      # Try it out sends X-XSRF-TOKEN from the XSRF-TOKEN cookie, like the app (E19-S01)
 
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}
+  release-notes:
+    file: ${RELEASE_NOTES_FILE:../deploy/release-notes/changelog.json}   # written by deploy.sh (E19-S03); none: no changelog
   admin:
     # Comma-separated 42 logins that receive ROLE_ADMIN at login (R-09 bootstrap)
     bootstrap-logins: ${APP_ADMIN_BOOTSTRAP_LOGINS:}

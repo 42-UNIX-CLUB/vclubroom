@@ -122,6 +122,22 @@ wait_healthy() {
   fi
 }
 
+# The changelog page's data (E19-S03): the releases up to the checked-out version, and what's unreleased, computed
+# from the history. Not worth stopping a deploy for. git-cliff's messages are progress (stdout), and the file must be
+# readable by the backend, which reads it through a mount as another user.
+write_changelog() {
+  local output status=0
+  output=$(docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/app -w /app orhunp/git-cliff:2.14.2 --context \
+    -o deploy/release-notes/changelog.json 2>&1) || status=$?
+  # git-cliff colours its log even when it isn't on a terminal, and ignores NO_COLOR: strip the escape codes.
+  if [ -n "$output" ]; then printf '%s\n' "$output" | sed 's/\x1b\[[0-9;]*m//g'; fi
+  if [ "$status" = 0 ]; then
+    chmod a+r deploy/release-notes/changelog.json
+  else
+    say "Changelog not updated (git-cliff failed): the page keeps the last one."
+  fi
+}
+
 # Puts TARGET (a vX.Y.Z tag, or main@<commit> for a build on this server) in place and starts it.
 # It runs as an `if` condition, where set -e doesn't apply: every step returns on failure explicitly.
 switch_to() {
@@ -132,6 +148,7 @@ switch_to() {
     *)      git switch -q --detach "refs/tags/$target" || return 1 ;;
   esac
   deploy/seaweedfs/render-s3-config.sh 2>&1 || return 1
+  write_changelog
   if [[ $target =~ $VERSION_RE ]]; then
     grep -q 'APP_VERSION' compose.prod.yaml || { say "$target predates release images (E22-S02): it can't be deployed this way."; return 1; }
     export APP_VERSION=$target
